@@ -37,6 +37,7 @@
 		const maturityDays = Number(settings.maturityDays);
 		settings.maturityDays = Number.isFinite(maturityDays) ? Math.max(30, Math.floor(maturityDays)) : 90;
 		settings.neverAutoAdult = settings.neverAutoAdult === true;
+		settings.resetAgeOnTransfer = settings.resetAgeOnTransfer === true;
 	}
 
 	function inferSpecies(child, storedSpecies) {
@@ -60,14 +61,27 @@
 	function currentSerialDay() {
 		const time = window.Time;
 		if (!time) return null;
-		return Math.floor(Date.UTC(time.year, time.month - 1, time.monthDay) / millisecondsPerDay);
+		const current = Math.floor(Date.UTC(time.year, time.month - 1, time.monthDay) / millisecondsPerDay);
+		return Number.isFinite(current) ? current : null;
 	}
 
-	function getAgeDays(child) {
+	function getAgeDays(child, record) {
 		const born = serialDay(child?.born);
 		const current = currentSerialDay();
-		if (born === null || current === null) return 0;
-		return Math.max(0, current - born);
+		if (current === null) return 0;
+		const resetDay = record?.growthStartSerialDay;
+		const start = Number.isFinite(resetDay) ? resetDay : born;
+		if (start === null) return 0;
+		return Math.max(0, current - start);
+	}
+
+	function resetGrowthAge(record) {
+		if (!record) return false;
+		const current = currentSerialDay();
+		if (current === null) return false;
+		record.growthStartSerialDay = current;
+		record.ageResetAtTransfer = true;
+		return true;
 	}
 
 	function getThresholds(speciesKey, settings) {
@@ -95,7 +109,7 @@
 		if (!record || !child) return null;
 		normalizeSettings(settings);
 		const speciesKey = inferSpecies(child, record.species);
-		const ageDays = getAgeDays(child);
+		const ageDays = getAgeDays(child, record);
 		const thresholds = getThresholds(speciesKey, settings);
 		const lifeStage = getStage(ageDays, thresholds, settings.neverAutoAdult);
 
@@ -122,7 +136,9 @@
 		stageLabels,
 		normalizeSettings,
 		inferSpecies,
+		currentSerialDay,
 		getAgeDays,
+		resetGrowthAge,
 		getThresholds,
 		getStage,
 		syncRecord,

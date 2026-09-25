@@ -171,6 +171,9 @@
 				<<set $children[$eden.selectedChildId].location to "eden_home">>
 				<<set $eden.children[$eden.selectedChildId].status to "resident">>
 				<<set $eden.children[$eden.selectedChildId].transferPaid to true>>
+				<<if typeof $options.eden is "object" and $options.eden.resetAgeOnTransfer and typeof window.EdenAge is "object">>
+					<<run window.EdenAge.resetGrowthAge($eden.children[$eden.selectedChildId])>>
+				<</if>>
 					<<if !Number.isFinite($eden.children[$eden.selectedChildId].affection)>><<set $eden.children[$eden.selectedChildId].affection to 40>><</if>>
 			<</link>>
 		<</if>>

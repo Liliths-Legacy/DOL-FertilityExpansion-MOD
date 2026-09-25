@@ -1,7 +1,7 @@
 :: Eden Age Widgets [widget]
 <<widget "edenNormalizeAgeSettings">><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
-		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false }>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false }>>
 	<</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
 	<<set $eden.settings to clone($options.eden)>>
@@ -28,6 +28,11 @@
 			<label><<checkbox "$options.eden.neverAutoAdult" false true autocheck>> 不会自动成年</label>
 			<br>
 			<small>开启后，孩子仍会依照上方天数成长到少年期，但不会自动进入成年。</small>
+		</div>
+		<div class="settingsToggleItemWide">
+			<label><<checkbox "$options.eden.resetAgeOnTransfer" false true autocheck>> 将孩子从孤儿院带至伊甸园时重置年龄</label>
+			<br>
+			<small>开启后，之后接回的孩子会从入园当天按0天开始成长；不会追溯影响已经入住的孩子，也不会修改原版出生日期。</small>
 		</div>
 		<div class="settingsToggleItemWide">
 			<span class="gold">种族成年修正：</span>

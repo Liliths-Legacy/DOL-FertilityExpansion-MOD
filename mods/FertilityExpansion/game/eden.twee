@@ -7,11 +7,12 @@
 <<widget "edenSetup">><<silently>>
 	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
 		<<set $eden to {
-			schemaVersion: 9,
+			schemaVersion: 10,
 			children: {},
 			settings: {
 				maturityDays: 90,
-				neverAutoAdult: false
+				neverAutoAdult: false,
+				resetAgeOnTransfer: false
 			},
 			facility: {
 				owned: false,
@@ -99,12 +100,19 @@
 			<</if>>
 			<<set $eden.schemaVersion to 9>>
 		<</if>>
+		/* Schema 9 -> 10: optionally reset growth age when transferring from Bailey's orphanage. */
+		<<if $eden.schemaVersion lt 10>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
+			<<if typeof $eden.settings.resetAgeOnTransfer isnot "boolean">><<set $eden.settings.resetAgeOnTransfer to false>><</if>>
+			<<set $eden.schemaVersion to 10>>
+		<</if>>
 		<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
 			<<set $eden.settings to {}>>
 		<</if>>
 		<<if typeof window.EdenAge is "object">><<run window.EdenAge.normalizeSettings($eden.settings)>><<else>>
 			<<if typeof $eden.settings.maturityDays isnot "number" or $eden.settings.maturityDays lt 30>><<set $eden.settings.maturityDays to 90>><</if>>
 			<<if typeof $eden.settings.neverAutoAdult isnot "boolean">><<set $eden.settings.neverAutoAdult to false>><</if>>
+			<<if typeof $eden.settings.resetAgeOnTransfer isnot "boolean">><<set $eden.settings.resetAgeOnTransfer to false>><</if>>
 		<</if>>
 		<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
 			<<set $eden.facility to {}>>
