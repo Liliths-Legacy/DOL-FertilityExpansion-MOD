@@ -1,0 +1,180 @@
+:: Eden Facility Widgets [widget]
+<<widget "edenLocationIcon">><img class="icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAFKUlEQVR4nO2Wa0yTZxTHf2/lJlTEoiC3KmLpnBE+oLuQKXPdIkRQo9Nlmc5NIirb8DIwYDaXLWZB2HBozQRHNVl1Bu/BDNA4h2YYombqUhGxIlgYFK32oiKXPvvQra4izjk/LZ7k/fDmOc//9/6f85yTF57F/z2kpy0YrFAJ4ewFwHKraUB92ZMIBytUYqD1XXGwPswbTfgdHpXn9W+gW8fFisQYiTaHk6sdsSK3w6V7w9IoASiCokVYzruEAYrqSmLqO8g/8h/BL0QpSZkeRcbeC5TOeZ7wiybygcQYiffPKYXxtq8EsOVMDQDdddfY2+g3oN5j19iQqhY5BhvpadGUVTSxcpSccLmMWqMgxs8HY1c3MX4+hKx7i4bqSgAy9J3u03gwHqvGpmyNqDUKCrSZABRoMyk12+BPx6ERPSTGuPSlb/Wop6Vwqr7jkZr/CDakqoX1oolTgXcJHyUH4PMcLSXlueQYbAx9LhKANocTgI5Wb05mf4/F1s2uuCcEG1LVotYoKO68Q37ZKuIKNzLi5k0AhgxXo92eRcbeCwAMsvoSGtFD39B7jA4VLB/hz9UOCUVQ9ENv9oDgI6+qRJvDyWHJSm5BJsvqNhEYDEtHdHFykj9bf8slSh2PdnsWtUZBrCaUWqMgXC4jXC5jx+VuAPZEBzye42CFSpiyNQJg910XZIquFP10LbYbrpym9ZvRVtoJW5xJlDoexRvDsV40kTI9ilqjoNYoiJa83fU3pKr7uX7ojQtWqMRrI218VvghrZFH0J02kaSUcyijk8gQVwfmFmSSerAUc6NgX9Bg9JccmMyuiZUdFAxAaEQPbQ4nx9p72dLuOcm8HgTesDRKPfH3pMN+fmK93Iv0omt0WQROYwf6ilzmpxWgr1hNW7ODCeMljja6zGw+WAKA/XqDW29+WsF9hzK5hzk3OFihYuexMOauuCcClYOomrcIgC6LoKdXsPOnbXy64CPixvpTsFLL+ct3CBjsJCTZn87eYQB8MHMJN+3dxETch+grVpOcsqFfP/+9xkJ32kT+miC6LILkch1TdKXsWKfE28u1Z9K4UPcDYEj2Z8PCKLeAItAHgLVFM1hbNIP0tGgAhnv19JvbbvANi7eUpJSjrbTz89J07GYnVfMW8c4nLXyRFehxTNV11wBorXfy3dsNPBgnnGc44TzjHiKppSPoib/nkeMGH18gxKGMTsyNAv0329GpIkj8ait+Com1G23Yrze4haa96HLZVLiCqcWhLGlqA8Bic7XQZFkCk2UJGFsdbpD3Od+HgzuHDSNgsJN9QYPdi9smRPLyqTtMNd4lNq+4n7PYvGLeG6lBM0tG2OJMdvlLlJTn0iUpUa7ZT0l5Lq/oNpJXZOX1wj6PYeJxq5vtvsy+dZfZtj4A5Ole3K6QERnixZizTjL0S9y5rXUldDucTNx2AHOjoEb4MjQhkmV1mwDQzJJxdkEZhzVjeCnkClV7+rDeau7fTsutv3PpxzmccJ7hWHYrp+o7UJoDWH5Axd6MJnRbFvdz7COXYfq1jwsJKj4e18Qvx69QfdGHxL4uDOPHMn7kZTDY2d8+hLnNnjV2f0HkwmjRZRH4KSTKVkVhNN9CW2l3T6vzOVkAHCvd7d68qLGV5DcHkaSU86Xejq2lj6/b/cge7Qnx9pK4XnHVo508XoamjPK48hHjZByamUFRzVEAViVpAKjq/oGaFgeLJkaiO20CIEkpp6bFwV+dMWG8RJJSTl6RFWtl81P/t3sWz2LA+AOakBOQerbd7wAAAABJRU5ErkJggg=="> <</widget>>
+<<widget "edenResidentIds">><<silently>>
+	<<set _edenResidentIds to []>>
+	<<if $children and typeof $children is "object">>
+		<<set _edenResidentIds to Object.keys($children).filter(id => $children[id].location === "eden_home")>>
+	<</if>>
+	<<set _edenResidentCount to _edenResidentIds.length>>
+<</silently>><</widget>>
+
+<<widget "edenFarmlandLink">>
+	<<edenSetup>>
+	<<if $farm_stage isnot undefined>>
+		<div class="eden-world-entry">
+			<<if $eden.facility.owned>>
+				<<edenLocationIcon>><<link [[前往伊甸园 (0:05)|Eden Home]]>><<pass 5>><</link>>
+			<<else>>
+				<<link [[查看待售房产|Eden Property]]>><</link>>
+			<</if>>
+		</div>
+	<</if>>
+<</widget>>
+
+:: Eden Property
+<<edenSetup>><<set $outside to 1>><<set $location to "farm">><<effects>>
+<div class="eden-panel">
+	<<if $farm_stage is undefined>>
+		<p>你还不知道这处房产位于哪里。</p>
+	<<elseif $eden.facility.owned>>
+		<p>这座小屋已经属于你。你给它取名为“伊甸园”。</p>
+		<<edenLocationIcon>><<link [[前往伊甸园|Eden Home]]>><</link>>
+	<<else>>
+		<p>Alex的农场附近有一座带围地的小屋正在出售。小屋带有卧室、浴室、玩具房、图书室和小花园，初始可以照看三名孩子。</p>
+		<p>购房价格：<<printmoney 35000000>></p>
+		<<if $money gte 35000000>>
+			<<link [[购买伊甸园|Eden Home]]>>
+				<<money -35000000 "edenProperty">>
+				<<set $eden.facility.owned to true>>
+				<<set $eden.facility.expanded to false>>
+				<<set $eden.facility.capacity to 3>>
+			<</link>>
+		<<else>>
+			<span class="red">你的钱不够。</span>
+		<</if>>
+	<</if>>
+	<br><br>
+	<<link [[离开|Farmland]]>><</link>>
+</div>
+
+:: Eden Home
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">>
+<<set _edenDueParentId to typeof window.EdenBreeding is "object" ? window.EdenBreeding.nextDue($eden) : null>>
+<<if _edenDueParentId>><<set $eden.breeding.activeBirthParentId to _edenDueParentId>><<goto "Eden Adult Birth">><</if>>
+<<effects>>
+<div class="eden-panel">
+	<<if !$eden.facility.owned>>
+		<p class="red">你还没有买下这里。</p>
+		<<link [[返回农场道路|Farmland]]>><</link>>
+	<<else>>
+		<<edenResidentIds>>
+		<p>这座小屋位于小镇外，紧邻Alex的农场。远离镇上的喧嚣后，周围显得格外安静。</p>
+		<p>当前入住：<<= _edenResidentCount>> / <<= $eden.facility.capacity>></p>
+		<<link [[前往育儿室|Eden Nursery]]>><</link>>
+		<br>
+		<<link [[查看通讯录|Eden Contacts]]>><</link>>
+		<br>
+		<<if !$eden.facility.expanded>>
+			<<link [[扩建小屋|Eden Expansion]]>><</link>>
+			<br>
+		<</if>>
+		<<link [[返回农场道路 (0:05)|Farmland]]>><<pass 5>><</link>>
+	<</if>>
+</div>
+
+:: Eden Expansion
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel">
+	<<if !$eden.facility.owned>>
+		<p class="red">你还没有买下这里。</p>
+	<<elseif $eden.facility.expanded>>
+		<p>小屋已经完成扩建，目前可以照看六名孩子。</p>
+	<<else>>
+		<p>扩建新的卧室和生活空间后，伊甸园可以容纳六名孩子。</p>
+		<p>扩建费用：<<printmoney 5000000>></p>
+		<<if $money gte 5000000>>
+			<<link [[支付扩建费用|Eden Home]]>>
+				<<money -5000000 "edenExpansion">>
+				<<set $eden.facility.expanded to true>>
+				<<set $eden.facility.capacity to 6>>
+			<</link>>
+		<<else>>
+			<span class="red">你的钱不够。</span>
+		<</if>>
+	<</if>>
+	<br><br>
+	<<link [[返回伊甸园|Eden Home]]>><</link>>
+</div>
+
+:: Eden Nursery
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel">
+	<<if !$eden.facility.owned>>
+		<p class="red">你还没有买下这里。</p>
+	<<else>>
+		<<if $storedChildrenToys is undefined>><<set $storedChildrenToys to {}>><</if>>
+		<<if $storedChildrenToys["eden_home"] is undefined>><<set $storedChildrenToys["eden_home"] to []>><</if>>
+		<<getChildrenIds `{location: "eden_home"}`>>
+		<<if _childrenIds.length>>
+			<p>你在育儿室里找到了自己的<<= _childrenIds.length > 1 ? "孩子们" : "孩子">>。</p>
+			<<childViewerDisplay _childrenIds>>
+		<<else>>
+			<p>育儿室已经准备好了，但目前还没有孩子入住。</p>
+		<</if>>
+	<</if>>
+	<br>
+	<<link [[返回伊甸园|Eden Home]]>><</link>>
+</div>
+
+:: Eden Bailey Negotiation
+<<edenSetup>><<effects>>
+<div class="eden-panel">
+	<<set _edenChildId to $eden.selectedChildId>>
+	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<edenResidentIds>>
+	<<if !$eden.facility.owned>>
+		<p class="red">你还没有能安置孩子的地方。</p>
+	<<elseif !_edenChild or (_edenChild.mother isnot "pc" and _edenChild.father isnot "pc")>>
+		<p class="red">贝利不知道你在说哪个孩子。</p>
+	<<elseif _edenChild.location isnot "home">>
+		<p>这个孩子已经不在孤儿院了。</p>
+	<<else>>
+		<<if !$eden.facility.baileyIntroduced>>
+			<<set _edenOtherParentRole to "的另一位家长">>
+			<<set _edenOtherParentName to "">>
+			<<set _edenOtherParentGender to "">>
+			<<if _edenChild.mother is "pc" and _edenChild.father isnot "pc">>
+				<<set _edenOtherParentRole to "父亲">>
+				<<set _edenOtherParentName to _edenChild.father>>
+				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $parentList?.fathers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
+			<<elseif _edenChild.father is "pc" and _edenChild.mother isnot "pc">>
+				<<set _edenOtherParentRole to "母亲">>
+				<<set _edenOtherParentName to _edenChild.mother>>
+				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $parentList?.mothers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
+			<</if>>
+			<<set _edenOtherParentPronoun to _edenOtherParentGender is "m" ? "他" : _edenOtherParentGender is "f" ? "她" : _edenOtherParentRole is "父亲" ? "他" : _edenOtherParentRole is "母亲" ? "她" : "对方">>
+			<<set _edenBaileyPronoun to C.npc.Bailey.pronoun is "m" ? "他" : "她">>
+			<p>你抱着孩子，和贝利说出了孩子<<= _edenOtherParentRole>>想要<<= _edenOtherParentPronoun>>的抚养权的事。</p>
+			<p>“有人想要和你这个小婊子的野种？”贝利盯着你，“你觉得我会相信吗？”</p>
+			<p>你感到热血上涌。被贝利羞辱让你感到愤怒，但是你知道这本身就不是一个容易的事。</p>
+			<p>“如果<<= _edenOtherParentPronoun>>想要，叫<<= _edenOtherParentPronoun>>自己来孤儿院和我谈。”</p>
+			<p>你抬起头，硬着头皮声称对方不方便出面。你看到贝利的嘴角动了动，一声冷笑随之滚落你的耳边。</p>
+			<p>“那就让这小崽子继续待在这。”<<= _edenBaileyPronoun>>说，“我不会把监护权交给一个我一无所知的人。”</p>
+			<p><<= _edenBaileyPronoun>>戏谑的语调让你发寒，你不知道<<= _edenBaileyPronoun>>是否已经看出你在撒谎。但是你仍然将对话继续了下去。你告诉<<= _edenBaileyPronoun>>，如果孩子<<= _edenOtherParentRole>>不能如愿带走孩子，将会从镇外走法律程序。</p>
+			<p>贝利没接话。<<= _edenBaileyPronoun>>沉默了，视线锁在你的脸上。你努力不让自己的肌肉颤抖。随后你听到<<= _edenBaileyPronoun>>的声音。</p>
+			<p>“可以。但回去告诉<<= _edenOtherParentPronoun>>，<<= _edenOtherParentPronoun>>碰了我的财产，在我不知情的情况下把我的被监护人搞大了肚子。如果不想也吃一场官司的话……我要见到<<printmoney 10000000>>的歉意。”</p>
+			<p>你睁大眼睛。这个价格超出了你的预期。</p>
+			<p>你动了动喉咙。“你凭什么认为我会配合你……诉讼？”</p>
+			<p>“我有一万种方式让你配合。现在，把孩子放下，然后出去，把钱给我带回来。”<<= _edenBaileyPronoun>>说。</p>
+			<<set $eden.facility.baileyIntroduced to true>>
+		<<else>>
+			<p>贝利瞥了<<= Util.escapeMarkup(_edenChild.name || "孩子")>>一眼。</p>
+			<p>“你知道规矩。”</p>
+		<</if>>
+		<<if _edenResidentCount gte $eden.facility.capacity>>
+			<p class="red">伊甸园已经没有空位。</p>
+		<<elseif $money lt 10000000>>
+			<p class="red">你拿不出贝利要求的<<printmoney 10000000>>。</p>
+		<<else>>
+			<<link [[向贝利支付 £100,000|Eden Nursery]]>>
+				<<money -10000000 "edenChildTransfer">>
+				<<set $children[$eden.selectedChildId].location to "eden_home">>
+				<<set $eden.children[$eden.selectedChildId].status to "resident">>
+				<<set $eden.children[$eden.selectedChildId].transferPaid to true>>
+					<<if !Number.isFinite($eden.children[$eden.selectedChildId].affection)>><<set $eden.children[$eden.selectedChildId].affection to 40>><</if>>
+			<</link>>
+		<</if>>
+	<</if>>
+	<br><br>
+	<<link [[离开|$eden.returnPassage]]>><</link>>
+</div>

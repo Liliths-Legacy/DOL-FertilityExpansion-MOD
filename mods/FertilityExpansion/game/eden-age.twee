@@ -1,0 +1,41 @@
+:: Eden Age Widgets [widget]
+<<widget "edenNormalizeAgeSettings">><<silently>>
+	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false }>>
+	<</if>>
+	<<run window.EdenAge.normalizeSettings($options.eden)>>
+	<<set $eden.settings to clone($options.eden)>>
+	<<run window.EdenAge.syncAll($eden, $children)>>
+<</silently>><</widget>>
+
+<<widget "edenSettings">>
+	<<edenSetup>><<edenNormalizeAgeSettings>>
+	<div id="eden-age-settings" class="solidBorderContainer settings-container">
+		<div class="settingsHeader">生育拓展·成长设置</div>
+		<div class="settingsToggleItemWide">
+			<label>
+				成年基准天数：
+				<<numberbox "$options.eden.maturityDays" $options.eden.maturityDays>>
+			</label>
+			<<button "应用">>
+				<<edenNormalizeAgeSettings>>
+				<<replace "#eden-age-settings">><<edenSettings>><</replace>>
+			<</button>>
+			<br>
+			<small>默认90天，最低30天，不设上限。修改后所有孩子会按出生日期重新计算阶段。</small>
+		</div>
+		<div class="settingsToggleItemWide">
+			<label><<checkbox "$options.eden.neverAutoAdult" false true autocheck>> 不会自动成年</label>
+			<br>
+			<small>开启后，孩子仍会依照上方天数成长到少年期，但不会自动进入成年。</small>
+		</div>
+		<div class="settingsToggleItemWide">
+			<span class="gold">种族成年修正：</span>
+			鸟 ×0.75｜猫 ×0.9｜狐狸 ×1｜狼 ×1.1｜牛 ×1.25｜其他 ×1
+		</div>
+		<div class="settingsToggleItemWide">
+			<span class="gold">阶段占比：</span>
+			婴儿期 10%｜幼儿期 20%｜少儿期 30%｜少年期 40%
+		</div>
+	</div>
+<</widget>>

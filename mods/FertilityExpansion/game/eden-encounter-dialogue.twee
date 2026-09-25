@@ -1,0 +1,89 @@
+:: Eden Adult Encounter Dialogue [widget]
+/*
+	成年孩子遭遇战的语录集中放在这里。
+	可以直接替换反引号中的中文句子；不要删除 widget、if、elseif、else 和结束标签。
+*/
+<<widget "edenAdultCombatSpeech">>
+	<<set _edenDialogueId to $eden.activeEncounterChildId>>
+	<<set _edenDialogueChild to _edenDialogueId ? $children[_edenDialogueId] : undefined>>
+	<<set _edenDialogueRecord to _edenDialogueId ? $eden.children[_edenDialogueId] : undefined>>
+	/* 称呼只按原版亲缘关系决定，不读取 PC 当前的生理性别。 */
+	<<set _edenDialogueParentTitle to _edenDialogueChild?.mother is "pc" ? "妈妈" : "爸爸">>
+	<<if _edenDialogueChild and _edenDialogueRecord and ($NPCList[0].mouth is 0 or $NPCList[0].mouth is "speech_only")>>
+		<<if $consensual isnot 1 or $enemyanger gte 20>>
+			<br><span class="red"><<print [
+				`“不要……停下……”`,
+				`“我不喜欢这样。”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>皱起眉，与你拉开了距离。`
+			].random()>></span>
+		<<elseif $edenEncounterTurn is 0 and (_edenDialogueRecord.adult.encounter?.count || 0) is 0>>
+			<br><span class="lblue"><<print [
+				`“<<= _edenDialogueParentTitle>>，我有点紧张……”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>深吸了一口气，然后认真地看向你。`,
+				`“如果有哪里不舒服，我们都要说出来。”`
+			].random()>></span>
+		<<elseif $speechaskrough is 1>>
+			<br><span class="lblue"><<print [
+				`“你确定吗？”`,
+				`“我会注意分寸。”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>观察着你的反应。`
+			].random()>></span>
+		<<elseif $speechsextoy is 1>>
+			<br><span class="lblue"><<print [
+				`“这是你准备的吗？”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>好奇地看着你手中的玩具。`,
+				`“先让我看看……”`
+			].random()>></span>
+		<<elseif $speechcum is 1>>
+			<br><span class="lblue"><<print [
+				`“看着我，<<= _edenDialogueParentTitle>>。”`,
+				`“没关系，<<= _edenDialogueParentTitle>>，不用忍着。”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>贴近你，声音也变得轻柔。`
+			].random()>></span>
+		<<elseif random(1, 100) lte 50>>
+			/* 第二层：通用语录始终存在，满足条件的语录追加进同一个池子。 */
+			<<set _edenDialoguePool to [
+				`“<<= _edenDialogueParentTitle>>，这样很舒服。”`,
+				`“<<= _edenDialogueParentTitle>>……继续……”`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>注视着你的眼睛。`,
+				`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>渴求着深入，在你耳边难耐地喘息着。`
+			]>>
+			<<if _edenDialogueRecord.affection gte 80>>
+				<<run _edenDialoguePool.push(
+					`“再靠近一点……<<= _edenDialogueParentTitle>>。”`,
+					`“我真的好想和你永远这样，<<= _edenDialogueParentTitle>>。”`,
+					`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>亲昵地靠在你身上。`,
+					`<<= _edenDialogueParentTitle>>……别离开我。`,
+					`“我爱你，<<= _edenDialogueParentTitle>>。我感觉好开心。”`
+				)>>
+			<</if>>
+			<<if _edenDialogueRecord.innate?.personality is "quiet">>
+				<<run _edenDialoguePool.push(
+					`“慢一点……<<= _edenDialogueParentTitle>>”`,
+					`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>没有说话，只是羞涩地握住了你的手。`,
+					`“这样就好。”`
+				)>>
+			<</if>>
+			<<if _edenDialogueRecord.species is "bird">>
+				<<run _edenDialoguePool.push(
+					`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>身上的羽毛因为紧张而微微蓬起。`,
+					`“摸摸我的我的羽毛……”`,
+					`一声短促的轻鸣从<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>喉间溢出。`
+				)>>
+			<<elseif ["cat", "fox", "wolf"].includes(_edenDialogueRecord.species)>>
+				<<run _edenDialoguePool.push(
+					`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>的耳朵轻轻颤了一下。`,
+					`一条尾巴悄悄缠上了你。`,
+					`“别……别盯着我的尾巴看……”`
+				)>>
+			<<elseif _edenDialogueRecord.species is "cow">>
+				<<run _edenDialoguePool.push(
+					`<<= Util.escapeMarkup(_edenDialogueChild.name || "对方")>>有些笨拙却认真地拥住你。`,
+					`“这样会不会太用力？”`,
+					`“你可以再抱紧一点。”`
+				)>>
+			<</if>>
+			<br><span class="lblue"><<print _edenDialoguePool.random()>></span>
+		<</if>>
+	<</if>>
+<</widget>>

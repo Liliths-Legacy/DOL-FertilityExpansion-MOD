@@ -1,0 +1,73 @@
+{
+  "name": "FertilityExpansion",
+  "nickName": {
+    "cn": "生育拓展",
+    "en": "FertilityExpansion"
+  },
+  "version": "0.8.11",
+  "styleFileList": [],
+  "scriptFileList": [],
+  "tweeFileList": [],
+  "imgFileList": [],
+  "additionFile": [
+    "README.md"
+  ],
+  "addonPlugin": [
+    {
+      "modName": "TweeReplacer",
+      "addonName": "TweeReplacerAddon",
+      "modVersion": "^1.7.0",
+      "params": [
+        {
+          "passage": "StoryCaption",
+          "findString": "<div id=\"debugWindow\"></div>",
+          "replace": "<div id=\"debugWindow\"></div>\n<<edenSetup>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Children Activity Events",
+          "findString": "<<childInteratedWith>>",
+          "replace": "<<childInteratedWith>>\n<<edenRecordChildInteraction $childActivityEvent.childid $childActivityEvent.event>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets children",
+          "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $children[_args[0]].type>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
+          "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, $children, _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets Orgasm",
+          "findString": "<<if $consensual is 1 and ((random(0, 1 + $_count) is 0 and $_count lte 10) or (setup.pregnancy.randomAlwaysKeep.includes($location) and $_count lte 15))>>",
+          "replace": "<<if $NPCList[$penistarget].edenChildId or ($consensual is 1 and ((random(0, 1 + $_count) is 0 and $_count lte 10) or (setup.pregnancy.randomAlwaysKeep.includes($location) and $_count lte 15)))>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets Orgasm",
+          "findString": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
+          "replace": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>\n\t\t\t\t\t\t\t\t<<case \"hawk\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", false)>>\n\t\t\t\t\t\t\t\t<<case \"harpy\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
+          "debug": false,
+          "all": false
+        }
+      ]
+    }
+  ],
+  "dependenceInfo": [
+    {
+      "modName": "ModLoader",
+      "version": "^2.101.0"
+    },
+    {
+      "modName": "GameVersion",
+      "version": "=0.5.11.9"
+    },
+    {
+      "modName": "TweeReplacer",
+      "version": "^1.7.0"
+    }
+  ]
+}

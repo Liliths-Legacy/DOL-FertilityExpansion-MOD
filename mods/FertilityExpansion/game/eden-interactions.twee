@@ -1,0 +1,121 @@
+:: Eden Interaction Widgets [widget]
+/*
+	原作婴儿互动完成时的伊甸园接口，以及伊甸园幼儿、少儿、少年互动池。
+	互动状态、按钮和结果正文集中放在本文件，不直接改写发行版源码。
+*/
+<<widget "edenRecordChildInteraction">><<silently>>
+	<<if _args[0] and typeof window.EdenInteractions is "object">>
+		<<run window.EdenInteractions.recordInteraction($eden, $children, _args[0], _args[1])>>
+	<</if>>
+<</silently>><</widget>>
+
+<<widget "edenStageChildActivity">>
+	<<set _edenStageChildId to _args[0]>>
+	<<set _edenStageActivity to window.EdenInteractions.prepareStageActivity($eden, $children, _edenStageChildId)>>
+	<<if _edenStageActivity>>
+		<<set _edenStatusText to "">>
+		<<set _edenActionText to "">>
+		<<set _edenActionMinutes to 20>>
+		<<switch _edenStageActivity.id>>
+			<<case "toddlerCuddle">>
+				<<set _edenStatusText to "孩子向你张开双臂，眼巴巴地等着你。">><<set _edenActionText to "抱起孩子">><<set _edenActionMinutes to 20>>
+			<<case "toddlerPictureBook">>
+				<<set _edenStatusText to "孩子抱着一本图画书，试图从图画里看懂故事。">><<set _edenActionText to "给孩子讲故事">><<set _edenActionMinutes to 20>>
+			<<case "toddlerBlocks">>
+				<<set _edenStatusText to "孩子坐在散落的积木中间，正努力把它们垒高。">><<set _edenActionText to "一起搭积木">><<set _edenActionMinutes to 20>>
+			<<case "toddlerMess">>
+				<<set _edenStatusText to "孩子在玩耍时弄脏了自己，正低头看着身上的污渍。">><<set _edenActionText to "帮孩子清洗">><<set _edenActionMinutes to 10>>
+			<<case "toddlerGarden">>
+				<<set _edenStatusText to "孩子趴在窗边，好奇地望着外面的花园。">><<set _edenActionText to "带孩子去花园">><<set _edenActionMinutes to 30>>
+			<<case "toddlerTantrum">>
+				<<set _edenStatusText to "孩子因为一件小事闹起了脾气，委屈地掉着眼泪。">><<set _edenActionText to "蹲下来安抚">><<set _edenActionMinutes to 25>>
+
+			<<case "childHomework">>
+				<<set _edenStatusText to "孩子对着摊开的习题皱起了眉头。">><<set _edenActionText to "陪孩子解题">><<set _edenActionMinutes to 30>>
+			<<case "childReading">>
+				<<set _edenStatusText to "孩子正读着一本书，时不时偷偷看你一眼。">><<set _edenActionText to "坐下来一起读">><<set _edenActionMinutes to 30>>
+			<<case "childOutdoorGame">>
+				<<set _edenStatusText to "孩子在门边蹦蹦跳跳，期待地邀请你出去玩。">><<set _edenActionText to "陪孩子玩一会儿">><<set _edenActionMinutes to 30>>
+			<<case "childChores">>
+				<<set _edenStatusText to "孩子拿着不太趁手的工具，试图帮忙收拾房间。">><<set _edenActionText to "和孩子一起收拾">><<set _edenActionMinutes to 20>>
+			<<case "childWorry">>
+				<<set _edenStatusText to "孩子看起来心事重重，在看到你时又欲言又止。">><<set _edenActionText to "问问发生了什么">><<set _edenActionMinutes to 30>>
+			<<case "childQuestions">>
+				<<set _edenStatusText to "孩子脑子里冒出了一连串问题，追在你身边等待回答。">><<set _edenActionText to "耐心回答">><<set _edenActionMinutes to 20>>
+			<<case "childQuietCompany">>
+				<<set _edenStatusText to "孩子安静地待在你附近，专心做着自己的事。">><<set _edenActionText to "陪在孩子身边">><<set _edenActionMinutes to 20>>
+
+			<<case "adolescentFuture">>
+				<<set _edenStatusText to "孩子正在思考自己的未来，桌上散落着几张写满想法的纸。">><<set _edenActionText to "谈谈未来">><<set _edenActionMinutes to 30>>
+			<<case "adolescentSchoolTrouble">>
+				<<set _edenStatusText to "孩子从外面回来后一直很沉默，看来今天过得并不顺利。">><<set _edenActionText to "坐下来听孩子说">><<set _edenActionMinutes to 30>>
+			<<case "adolescentWalk">>
+				<<set _edenStatusText to "孩子站在门口透气，朝你轻轻挥了挥手。">><<set _edenActionText to "一起散步">><<set _edenActionMinutes to 30>>
+			<<case "adolescentCook">>
+				<<set _edenStatusText to "孩子在厨房里笨拙地准备食物，看见你时松了口气。">><<set _edenActionText to "一起做点吃的">><<set _edenActionMinutes to 40>>
+			<<case "adolescentHobby">>
+				<<set _edenStatusText to "孩子正折腾一项新爱好，很想让你看看成果。">><<set _edenActionText to "认真听孩子介绍">><<set _edenActionMinutes to 30>>
+			<<case "adolescentSpace">>
+				<<set _edenStatusText to "孩子独自坐在一边，似乎想要一点自己的空间。">><<set _edenActionText to "打个招呼后安静陪伴">><<set _edenActionMinutes to 15>>
+		<</switch>>
+		<<set _edenStageActivityId to _edenStageActivity.id>>
+		<<= Util.escapeMarkup(_edenStatusText)>>
+		<<if _edenStageActivity.completed>>
+			<br><span class="grey">你的陪伴让<<childname _edenStageChildId>>很开心，看起来可以持续一段时间。</span>
+		<<else>>
+			<<capture _edenStageChildId _edenStageActivityId _edenActionText _edenActionMinutes>>
+				<br><<link `_edenActionText + "（" + _edenActionMinutes + "分钟）"` "Eden Child Interaction Event">>
+					<<set $eden.interactionEvent to window.EdenInteractions.createStageEvent($eden, _edenStageChildId, _edenStageActivityId, _edenActionMinutes)>>
+					<<pass _edenActionMinutes>>
+				<</link>>
+			<</capture>>
+		<</if>>
+	<</if>>
+<</widget>>
+
+:: Eden Child Interaction Event
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel">
+	<<set _edenInteractionEvent to $eden.interactionEvent>>
+	<<set _edenInteractionChild to _edenInteractionEvent ? $children[_edenInteractionEvent.childId] : undefined>>
+	<<if !_edenInteractionEvent or !_edenInteractionChild>>
+		<p class="red">无法找到这次互动的记录。</p>
+	<<else>>
+		<<childSelect _edenInteractionEvent.childId>>
+		<<if !_edenInteractionEvent.completed>>
+			<<childInteratedWith _edenInteractionEvent.childId>>
+			<<set _edenInteractionResult to window.EdenInteractions.completeStageInteraction($eden, $children, _edenInteractionEvent)>>
+		<<else>>
+			<<set _edenInteractionResult to { ok: false, gain: 0 }>>
+		<</if>>
+		<<switch _edenInteractionEvent.eventId>>
+			<<case "toddlerCuddle">><p>你抱起<<childname>>，让孩子靠在你怀里。孩子很快放松下来，紧紧抓着你的衣服。</p>
+			<<case "toddlerPictureBook">><p>你把<<childname>>抱到身边，指着图画慢慢讲完了一个故事。孩子听得很认真，偶尔还会抢着翻页。</p>
+			<<case "toddlerBlocks">><p>你和<<childname>>一起把积木垒得很高。它们倒下时，孩子笑着要求再来一次。</p>
+			<<case "toddlerMess">><p>你耐心擦去<<childname>>身上的污渍，又帮孩子换好干净的衣服。孩子又变得神气起来。</p>
+			<<case "toddlerGarden">><p>你牵着<<childname>>在花园里慢慢走了一圈。孩子对每样东西都充满好奇，一路上不停拉着你看这看那。</p>
+			<<case "toddlerTantrum">><p>你蹲下来陪着<<childname>>，等孩子把委屈和不满都发泄出来。哭声渐渐停了，孩子最后还是靠进了你怀里。</p>
+
+			<<case "childHomework">><p>你没有直接说出答案，而是陪<<childname>>一步步理清思路。当答案终于出现时，孩子露出了得意的笑容。</p>
+			<<case "childReading">><p>你坐到<<childname>>身边，和孩子轮流读着书中的段落。遇到不懂的地方时，你们便停下来一起讨论。</p>
+			<<case "childOutdoorGame">><p>你陪<<childname>>在户外玩了好一会儿。回到屋里时，你们都有些气喘吁吁，孩子却还在兴奋地讲着刚才的事。</p>
+			<<case "childChores">><p>你接过<<childname>>手里不太趁手的工具，示范该怎么做。你们一起收拾完了房间，孩子对成果颇为满意。</p>
+			<<case "childWorry">><p>你问起<<childname>>的心事。孩子起初有些犹豫，最后还是把困扰自己的事告诉了你。你认真听完，没有取笑孩子。</p>
+			<<case "childQuestions">><p><<childname>>的问题一个接着一个。你耐心回答，遇到自己也不确定的地方，就和孩子一起寻找答案。</p>
+			<<case "childQuietCompany">><p>你没有打扰<<childname>>，只是留在附近做自己的事。你们偶尔交换一个眼神，屋里的安静令人安心。</p>
+
+			<<case "adolescentFuture">><p>你和<<childname>>讨论了很久的未来。你没有替孩子做决定，而是帮孩子把每条路可能带来的结果理清。</p>
+			<<case "adolescentSchoolTrouble">><p>你坐在<<childname>>身边，听孩子慢慢讲完今天发生的事。说出来之后，孩子的神情明显轻松了一些。</p>
+			<<case "adolescentWalk">><p>你和<<childname>>沿着附近的小路走了一圈。你们有一搭没一搭地聊着，即使沉默时也不觉得尴尬。</p>
+			<<case "adolescentCook">><p>你和<<childname>>在厨房里忙活了好一阵。成品并不完美，但孩子还是把它们认真地端上了桌。</p>
+			<<case "adolescentHobby">><p><<childname>>兴致勃勃地向你介绍自己的新爱好。你认真听着，还问了几个问题，让孩子说得更加起劲。</p>
+			<<case "adolescentSpace">><p>你和<<childname>>打了个招呼，没有追问孩子为什么沉默。你只是安静地留在附近，给孩子需要的空间。</p>
+			<<default>><p>你和<<childname>>一起度过了一段时间。</p>
+		<</switch>>
+		<<if _edenInteractionResult.ok and _edenInteractionResult.gain gt 0>>
+			<p class="green">好感 +<<= _edenInteractionResult.gain.toFixed(2)>></p>
+		<</if>>
+	<</if>>
+	<br>
+	<<link [[返回育儿室|Eden Nursery]]>><<unset $eden.interactionEvent>><</link>>
+</div>

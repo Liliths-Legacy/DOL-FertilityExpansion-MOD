@@ -1,0 +1,159 @@
+.eden-panel {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+}
+
+.eden-child-list {
+	display: grid;
+	gap: 0.45rem;
+	margin: 1rem 0;
+}
+
+.eden-contact-list {
+	display: grid;
+	gap: 0.45rem;
+	margin: 1rem 0;
+}
+
+.eden-contact-row {
+	min-width: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--700);
+	border-radius: 0.25rem;
+}
+
+.eden-contact-row p {
+	margin: 0.35rem 0;
+}
+
+.eden-contact-actions {
+	margin: 0.35rem 0;
+}
+
+.eden-child-row {
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--700);
+	border-radius: 0.25rem;
+}
+
+.eden-child-meta {
+	color: var(--400);
+	font-size: 0.9em;
+}
+
+.eden-profile-editor {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.eden-profile-editor textarea {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	min-height: 14rem;
+	resize: vertical;
+}
+
+.eden-profile-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.eden-child-profile {
+	margin: 0.35rem 0;
+}
+
+.eden-child-age {
+	margin-bottom: 0.2rem;
+}
+
+.eden-child-traits {
+	margin-bottom: 0.2rem;
+}
+
+.eden-child-training {
+	margin-bottom: 0.2rem;
+}
+
+.eden-child-trait-details {
+	margin-top: 0.35rem;
+}
+
+#eden-age-settings input[type="number"] {
+	box-sizing: border-box;
+	width: 7rem;
+	max-width: 100%;
+}
+
+button[data-eden-options-tab]::before {
+	content: "生育拓展";
+}
+
+button.eden-child-profile-button {
+	display: inline;
+	width: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--link);
+	cursor: pointer;
+	font: inherit;
+}
+
+button.eden-child-profile-button:hover,
+button.eden-child-profile-button:focus-visible {
+	border: 0;
+	background: none;
+	color: var(--link-hover);
+}
+
+.eden-child-profile-content {
+	white-space: pre-wrap;
+}
+
+.eden-world-entry {
+	margin-top: 0.5rem;
+}
+
+.eden-training-slots {
+	display: grid;
+	gap: 0.55rem;
+	width: 100%;
+	max-width: 30rem;
+	min-width: 0;
+}
+
+.eden-training-slot {
+	display: grid;
+	grid-template-columns: minmax(4.5rem, auto) minmax(0, 1fr);
+	align-items: center;
+	gap: 0.65rem;
+	min-width: 0;
+}
+
+.eden-training-slot select {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.eden-training-last {
+	margin-top: 0.75rem;
+}
+
+@media (max-width: 30rem) {
+	.eden-training-slot {
+		grid-template-columns: 1fr;
+		gap: 0.2rem;
+	}
+}

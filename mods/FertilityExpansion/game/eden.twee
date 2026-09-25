@@ -1,0 +1,235 @@
+:: Eden Widgets [widget]
+/*
+	$eden is deliberately kept separate from the base game's $children object.
+	That makes the mod removable and lets future schema migrations avoid touching
+	the base pregnancy save structure.
+*/
+<<widget "edenSetup">><<silently>>
+	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
+		<<set $eden to {
+			schemaVersion: 9,
+			children: {},
+			settings: {
+				maturityDays: 90,
+				neverAutoAdult: false
+			},
+			facility: {
+				owned: false,
+				expanded: false,
+				capacity: 3,
+				baileyIntroduced: false
+			},
+			breeding: {
+				dataVersion: 1,
+				parentsByDescription: {},
+				activeBirthParentId: null,
+				lastBirthResult: null
+			},
+			selectedChildId: null,
+			activeEncounterChildId: null,
+			returnPassage: "Bedroom"
+		}>>
+	<<else>>
+		/* Schema 0 -> 1, including saves made by early development builds. */
+		<<if $eden.schemaVersion is undefined>>
+			<<set $eden.schemaVersion to 0>>
+		<</if>>
+		<<if $eden.schemaVersion lt 1>>
+			<<if $eden.children is undefined or typeof $eden.children isnot "object" or Array.isArray($eden.children)>>
+				<<set $eden.children to {}>>
+			<</if>>
+			<<set $eden.schemaVersion to 1>>
+		<</if>>
+		<<if $eden.children is undefined or typeof $eden.children isnot "object" or Array.isArray($eden.children)>>
+			<<set $eden.children to {}>>
+		<</if>>
+		/* Schema 1 -> 2: rename the user-facing journal field to profile. */
+		<<if $eden.schemaVersion lt 2>>
+			<<for _edenChildId, _edenRecord range $eden.children>>
+				<<if typeof _edenRecord.profile isnot "string">>
+					<<set _edenRecord.profile to typeof _edenRecord.journal is "string" ? _edenRecord.journal : "">>
+				<</if>>
+				<<run delete _edenRecord.journal>>
+				<<set _edenRecord.dataVersion to 2>>
+			<</for>>
+			<<set $eden.schemaVersion to 2>>
+		<</if>>
+		/* Schema 2 -> 3: add the Eden property and transfer state. */
+		<<if $eden.schemaVersion lt 3>>
+			<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
+				<<set $eden.facility to {
+					owned: false,
+					expanded: false,
+					capacity: 3,
+					baileyIntroduced: false
+				}>>
+			<</if>>
+			<<set $eden.schemaVersion to 3>>
+		<</if>>
+		/* Schema 3 -> 4: add accelerated life stages and their settings. */
+		<<if $eden.schemaVersion lt 4>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
+				<<set $eden.settings to {}>>
+			<</if>>
+			<<if $eden.settings.maturityDays is undefined>><<set $eden.settings.maturityDays to 90>><</if>>
+			<<if $eden.settings.neverAutoAdult is undefined>><<set $eden.settings.neverAutoAdult to false>><</if>>
+			<<set $eden.schemaVersion to 4>>
+		<</if>>
+		/* Schema 4 -> 5: add stable innate attributes and personality. */
+		<<if $eden.schemaVersion lt 5>>
+			<<set $eden.schemaVersion to 5>>
+		<</if>>
+		/* Schema 5 -> 6: add trainable skills and daily activity plans. */
+		<<if $eden.schemaVersion lt 6>>
+			<<set $eden.schemaVersion to 6>>
+		<</if>>
+		/* Schema 6 -> 7: add affection, adult settlement and contacts. */
+		<<if $eden.schemaVersion lt 7>>
+			<<set $eden.schemaVersion to 7>>
+		<</if>>
+		/* Schema 7 -> 8: add the active adult encounter pointer. */
+		<<if $eden.schemaVersion lt 8>>
+			<<if $eden.activeEncounterChildId is undefined>><<set $eden.activeEncounterChildId to null>><</if>>
+			<<set $eden.schemaVersion to 8>>
+		<</if>>
+		/* Schema 8 -> 9: persist adult-child pregnancy and genetic-parent links. */
+		<<if $eden.schemaVersion lt 9>>
+			<<if $eden.breeding is undefined or typeof $eden.breeding isnot "object" or Array.isArray($eden.breeding)>>
+				<<set $eden.breeding to { dataVersion: 1, parentsByDescription: {}, activeBirthParentId: null, lastBirthResult: null }>>
+			<</if>>
+			<<set $eden.schemaVersion to 9>>
+		<</if>>
+		<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
+			<<set $eden.settings to {}>>
+		<</if>>
+		<<if typeof window.EdenAge is "object">><<run window.EdenAge.normalizeSettings($eden.settings)>><<else>>
+			<<if typeof $eden.settings.maturityDays isnot "number" or $eden.settings.maturityDays lt 30>><<set $eden.settings.maturityDays to 90>><</if>>
+			<<if typeof $eden.settings.neverAutoAdult isnot "boolean">><<set $eden.settings.neverAutoAdult to false>><</if>>
+		<</if>>
+		<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
+			<<set $eden.facility to {}>>
+		<</if>>
+		<<if typeof $eden.facility.owned isnot "boolean">><<set $eden.facility.owned to false>><</if>>
+		<<if typeof $eden.facility.expanded isnot "boolean">><<set $eden.facility.expanded to false>><</if>>
+		<<if typeof $eden.facility.baileyIntroduced isnot "boolean">><<set $eden.facility.baileyIntroduced to false>><</if>>
+		<<set $eden.facility.capacity to $eden.facility.expanded ? 6 : 3>>
+		<<if $eden.children is undefined or typeof $eden.children isnot "object" or Array.isArray($eden.children)>>
+			<<set $eden.children to {}>>
+		<</if>>
+		<<if $eden.selectedChildId is undefined>>
+			<<set $eden.selectedChildId to null>>
+		<</if>>
+		<<if $eden.activeEncounterChildId is undefined>>
+			<<set $eden.activeEncounterChildId to null>>
+		<</if>>
+		<<if !$eden.returnPassage>>
+			<<set $eden.returnPassage to "Bedroom">>
+		<</if>>
+	<</if>>
+	/* Options overlays restore passage state on close, so settings live in $options. */
+	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
+		<<set $options.eden to clone($eden.settings)>>
+	<</if>>
+	<<if typeof window.EdenAge is "object">><<run window.EdenAge.normalizeSettings($options.eden)>><</if>>
+	<<set $eden.settings to clone($options.eden)>>
+	<<edenSyncChildren>>
+	<<if typeof window.EdenAge is "object">><<run window.EdenAge.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenTraits is "object">><<run window.EdenTraits.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenTraining is "object">><<run window.EdenTraining.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenAdult is "object">><<run window.EdenAdult.syncAll($eden, $children)>><</if>>
+<</silently>><</widget>>
+
+<<widget "edenSyncChildren">><<silently>>
+	<<if $children isnot undefined and typeof $children is "object">>
+		<<for _edenChildId, _edenBaseChild range $children>>
+			<<if _edenBaseChild and (_edenBaseChild.mother is "pc" or _edenBaseChild.father is "pc")>>
+				<<if $eden.children[_edenChildId] is undefined or typeof $eden.children[_edenChildId] isnot "object">>
+					<<set $eden.children[_edenChildId] to {
+						childId: _edenChildId,
+						profile: "",
+						status: "active",
+						dataVersion: 6
+					}>>
+				<<else>>
+					<<if typeof $eden.children[_edenChildId].profile isnot "string">>
+						<<set $eden.children[_edenChildId].profile to "">>
+					<</if>>
+					<<if !$eden.children[_edenChildId].status>>
+						<<set $eden.children[_edenChildId].status to "active">>
+					<</if>>
+					<<set $eden.children[_edenChildId].dataVersion to 6>>
+				<</if>>
+			<</if>>
+		<</for>>
+	<</if>>
+<</silently>><</widget>>
+
+:: Eden Journal Index
+<<edenSetup>>
+<div class="eden-panel">
+	<<set _edenKnownIds to Object.keys($eden.children)>>
+	<<if _edenKnownIds.length is 0>>
+		<p>目前还没有登记到你的孩子。孩子出生后会自动出现在这里。</p>
+	<<else>>
+		<p>已登记 <<= _edenKnownIds.length>> 个孩子。简介只用于记录和展示，不会改变原版属性。</p>
+		<div class="eden-child-list">
+			<<for _edenIndex, _edenChildId range _edenKnownIds>>
+				<<set _edenChild to $children ? $children[_edenChildId] : undefined>>
+				<div class="eden-child-row">
+					<<if _edenChild>>
+						<<capture _edenChildId>>
+							<<link `Util.escapeMarkup(_edenChild.name || "未命名的孩子")` "Eden Child Journal">>
+								<<set $eden.selectedChildId to _edenChildId>>
+								<<set $eden.returnPassage to "Eden Journal Index">>
+							<</link>>
+						<</capture>>
+						<span class="eden-child-meta">（<<= _edenChild.type || "unknown">>）</span>
+					<<else>>
+						<span class="grey">无法读取的孩子记录：<<= Util.escapeMarkup(_edenChildId)>></span>
+					<</if>>
+				</div>
+			<</for>>
+		</div>
+	<</if>>
+	<br>
+	<<link [[返回上一地点|$eden.returnPassage]]>><</link>>
+</div>
+
+:: Eden Child Journal
+<<edenSetup>>
+<div class="eden-panel">
+	<<set _edenChildId to $eden.selectedChildId>>
+	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<if _edenRecord and _edenChild>>
+		<p class="eden-child-meta">
+			类型：<<= _edenChild.type || "unknown">>
+			| 成长：<<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">>
+			<<if _edenRecord.innate and typeof window.EdenTraits is "object">>
+				| 容貌 <<= window.EdenTraits.grade(_edenRecord.innate.appearance)>>
+				· 体能 <<= window.EdenTraits.grade(_edenRecord.innate.fitness)>>
+				· 智力 <<= window.EdenTraits.grade(_edenRecord.innate.intelligence)>>
+				· 性格 <<= window.EdenTraits.personalityLabel(_edenRecord.innate.personality)>>
+			<</if>>
+			<<if _edenChild.motherKnown>> | 母亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.mother, true))>><</if>>
+			<<if _edenChild.fatherKnown>> | 父亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.father, true))>><</if>>
+		</p>
+		<p>可以在这里记录孩子的来历与设定。并不会影响到游戏数值。</p>
+		<<set _edenProfileDraft to _edenRecord.profile>>
+		<div class="eden-profile-editor">
+			<<textarea "_edenProfileDraft" `_edenRecord.profile`>>
+		</div>
+		<div class="eden-profile-actions">
+			<<button "保存简介">>
+				<<set $eden.children[$eden.selectedChildId].profile to _edenProfileDraft>>
+				<<replace "#eden-save-status">><span class="green">已保存。</span><</replace>>
+			<</button>>
+			<span id="eden-save-status"></span>
+		</div>
+	<<else>>
+		<p class="red">无法找到这个孩子的原版记录。已有简介数据不会被自动删除。</p>
+	<</if>>
+	<br>
+	<<link [[返回|$eden.returnPassage]]>><</link>>
+</div>

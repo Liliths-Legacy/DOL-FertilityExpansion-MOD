@@ -1,0 +1,49 @@
+:: Eden Training
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel">
+	<<set _edenChildId to $eden.selectedChildId>>
+	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<if !_edenRecord or !_edenChild>>
+		<p class="red">无法找到这个孩子的记录。</p>
+	<<elseif typeof window.EdenTraining isnot "object" or !window.EdenTraining.isEligible(_edenRecord, _edenChild)>>
+		<p>这个孩子目前不能参加伊甸园的养成活动。</p>
+	<<else>>
+		<p><span class="gold"><<= Util.escapeMarkup(_edenChild.name || "未命名的孩子")>></span>当前处于<<= _edenRecord.lifeStageLabel>>。</p>
+		<p class="eden-training-skills">
+			学识 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.knowledge)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.knowledge)>>）｜
+			体能 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.fitness)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.fitness)>>）｜
+			社交 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.social)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.social)>>）｜
+			意识 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.awareness)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.awareness)>>）
+		</p>
+		<<set _edenCurrentStage to $eden.children[$eden.selectedChildId].lifeStage>>
+		<<set _edenActivityOptions to window.EdenTraining.getActivityOptions(_edenCurrentStage)>>
+		<<set _edenPlanningDay to window.EdenTraining.getPlanningDay()>>
+		<<set _edenPlan to window.EdenTraining.sanitizePlanForStage(window.EdenTraining.getPlanForDay($eden.children[$eden.selectedChildId].training, _edenPlanningDay), _edenCurrentStage)>>
+		<<set _edenSlot1 to _edenPlan[0]>>
+		<<set _edenSlot2 to _edenPlan[1]>>
+		<<set _edenSlot3 to _edenPlan[2]>>
+		<p>现在安排的是<<= Time.hour lt 8 ? "今天" : "明天">>的活动。若不另行安排，之后会继续重复上一日的计划。</p>
+		<div class="eden-training-slots">
+			<label class="eden-training-slot"><span>第一项</span><<listbox "_edenSlot1" autoselect>><<optionsfrom _edenActivityOptions>><</listbox>></label>
+			<label class="eden-training-slot"><span>第二项</span><<listbox "_edenSlot2" autoselect>><<optionsfrom _edenActivityOptions>><</listbox>></label>
+			<label class="eden-training-slot"><span>第三项</span><<listbox "_edenSlot3" autoselect>><<optionsfrom _edenActivityOptions>><</listbox>></label>
+		</div>
+		<div class="eden-profile-actions">
+			<<button "保存安排">>
+				<<set _edenPlanResult to window.EdenTraining.setPlan($eden.children[$eden.selectedChildId], $children[$eden.selectedChildId], [_edenSlot1, _edenSlot2, _edenSlot3])>>
+				<<replace "#eden-training-save-status">><<if _edenPlanResult.ok>><span class="green"><<= _edenPlanResult.message>></span><<else>><span class="red"><<= _edenPlanResult.message>></span><</if>><</replace>>
+			<</button>>
+			<span id="eden-training-save-status"></span>
+		</div>
+		<<if _edenRecord.training.lastResult>>
+			<<set _edenLast to _edenRecord.training.lastResult>>
+			<p class="eden-training-last grey">上次结算：学识 <<= _edenLast.changes.knowledge >= 0 ? "+" : "">><<= _edenLast.changes.knowledge.toFixed(2)>>｜体能 <<= _edenLast.changes.fitness >= 0 ? "+" : "">><<= _edenLast.changes.fitness.toFixed(2)>>｜社交 <<= _edenLast.changes.social >= 0 ? "+" : "">><<= _edenLast.changes.social.toFixed(2)>>｜意识 <<= _edenLast.changes.awareness >= 0 ? "+" : "">><<= _edenLast.changes.awareness.toFixed(2)>><<if _edenLast.changes.affection isnot undefined>>｜好感 <<= _edenLast.changes.affection >= 0 ? "+" : "">><<= _edenLast.changes.affection.toFixed(2)>><</if>><<if _edenLast.spent gt 0>>｜支出 <<printmoney _edenLast.spent>><</if>></p>
+			<<if _edenLast.failedActivities and _edenLast.failedActivities.length>>
+				<p class="red">资金不足，未执行：<<= _edenLast.failedActivities.map(activity => activity.label + "（" + formatMoney(activity.cost) + "）").join("、")>>。这些活动没有产生属性或好感变化。</p>
+			<</if>>
+		<</if>>
+	<</if>>
+	<br>
+	<<link [[返回|$eden.returnPassage]]>><</link>>
+</div>

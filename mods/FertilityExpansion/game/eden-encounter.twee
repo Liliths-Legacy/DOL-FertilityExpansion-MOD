@@ -1,0 +1,89 @@
+:: Eden Adult Encounter Start
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel">
+	<<set _edenChildId to $eden.activeEncounterChildId>>
+	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<if !_edenRecord or !_edenChild or !window.EdenAdult.canInviteIntimacy(_edenRecord)>>
+		<p class="red">这次邀请已经无法继续。</p>
+	<<else>>
+		<p><<= Util.escapeMarkup(_edenChild.name || "孩子")>>接受了你的邀请，和你一起找了个不会被打扰的地方。</p>
+		<<link [[继续|Eden Adult Encounter]]>><<set $sexstart to 1>><</link>>
+	<</if>>
+	<br><br>
+	<<link [[返回通讯录|Eden Contacts]]>><<set $eden.activeEncounterChildId to null>><</link>>
+</div>
+
+:: Eden Adult Encounter
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">>
+<<set _edenChildId to $eden.activeEncounterChildId>>
+<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+<<if !_edenRecord or !_edenChild or !window.EdenAdult.canInviteIntimacy(_edenRecord)>>
+	<p class="red">无法找到这次遭遇对应的成年孩子。</p>
+	<<if $combat is 1>><<clotheson>><<endcombat>><</if>>
+	<br><br>
+	<<link [[返回通讯录|Eden Contacts]]>><</link>>
+<<else>>
+	<<if $sexstart is 1>>
+		<<set $sexstart to 0>>
+		<<set _edenEncounter to window.EdenAdult.ensureEncounterState(_edenRecord, _edenChildId)>>
+		<<set _edenPersistentKey to _edenEncounter.persistentKey>>
+		<<if $per_npc and $per_npc[_edenPersistentKey]>>
+			<<loadNPC 0 _edenPersistentKey>>
+		<<else>>
+			<<set _edenPronoun to _edenChild.gender is "m" ? "m" : "f">>
+			<<set _edenGender to ["m", "f", "h"].includes(_edenChild.gender) ? _edenChild.gender : "f">>
+			<<generateNPC 1 "a" _edenPronoun _edenGender>>
+			<<run window.EdenAdult.prepareEncounterNpc(_edenRecord, _edenChild, _edenChildId, $NPCList[0])>>
+			<<saveNPC 0 _edenPersistentKey>>
+		<</if>>
+		<<run window.EdenAdult.prepareEncounterNpc(_edenRecord, _edenChild, _edenChildId, $NPCList[0])>>
+		<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.prepareEncounterNpc(_edenRecord, $NPCList[0])>><</if>>
+		<<set $NPCList[0].per to _edenPersistentKey>>
+		<<if $per_npc and $per_npc[_edenPersistentKey]>><<set $per_npc[_edenPersistentKey].per to _edenPersistentKey>><</if>>
+		<<run window.EdenAdult.beginEncounter(_edenRecord, _edenChildId)>>
+		<<set $edenEncounterTurn to 0>>
+		<<consensual true>><<set $consensual to 1>>
+		<<set $speechdisable to 1>>
+		<<neutral 1>><<maninit>><<set $enemytrust += 100>><<promiscuity5>>
+	<</if>>
+	<<set $speechdisable to 1>>
+	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
+	<<if typeof $edenEncounterTurn isnot "number">><<set $edenEncounterTurn to 0>><</if>>
+	<<effects>>
+	<<effectsman>>
+	<<man>>
+	<<edenAdultCombatSpeech>>
+	<<set $edenEncounterTurn += 1>>
+	<<stateman>>
+	<br><br>
+	<<actionsman>>
+	<<if _combatend or $enemyanger gte 80 or $consensual isnot 1>>
+		<span id="next"><<link [[继续|Eden Adult Encounter Finish]]>><</link>></span><<nexttext>>
+	<<else>>
+		<span id="next"><<link [[继续|Eden Adult Encounter]]>><</link>></span><<nexttext>>
+	<</if>>
+<</if>>
+
+:: Eden Adult Encounter Finish
+<<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<<set _edenChildId to $eden.activeEncounterChildId>>
+<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+<<if $enemyarousal gte $enemyarousalmax>>
+	<<ejaculation>>
+	<p><<= Util.escapeMarkup(_edenChild?.name || "对方")>>平复着呼吸，依偎在你身旁。</p>
+<<elseif $enemyhealth lte 0>>
+	<p>这场亲密接触以并不愉快的方式结束了。</p>
+<<elseif $enemyanger gte 80 or $consensual isnot 1>>
+	<p><<= Util.escapeMarkup(_edenChild?.name || "对方")>>明确地结束了这次接触。你们各自整理好衣服。</p>
+<<else>>
+	<p>你们在彼此都愿意停下的时候结束了这次亲密接触。</p>
+<</if>>
+<<if _edenRecord>><<run window.EdenAdult.completeEncounter(_edenRecord, _edenChildId)>><</if>>
+<<if _edenRecord and typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
+<<clotheson>><<endcombat>>
+<<set $eden.activeEncounterChildId to null>>
+<br><br>
+<<link [[返回通讯录|Eden Contacts]]>><</link>>

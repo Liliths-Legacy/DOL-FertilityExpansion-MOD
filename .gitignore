@@ -1,0 +1,32 @@
+/.idea/
+/data/tmp/
+/data/passage/
+/degrees-of-lewdity-master/
+/degrees-of-lewdity-0.5.11.9/
+/degrees-of-lewdity/
+/results/
+/scripts/
+/modloader/
+/node_modules/
+/.venv/
+
+*.pyc
+*.7z
+*.zip
+*.rar
+commits.json
+.env
+package-lock.json
+
+# Local plans and editor settings
+/plan/
+/.vscode/
+/.codex/
+/.agents/
+
+# Caches and private local configuration
+__pycache__/
+.pytest_cache/
+.DS_Store
+.env.*
+*.log
