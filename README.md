@@ -24,7 +24,7 @@
 - 育种与养成数值优化；
 - 更多的结局与养成项目；
 - 离开小镇结局接入大模型以生成离开后的故事；
-- 更多与成年孩子的活动；
+- 更多与成年孩子的互动；
 
 ## 下载与安装
 
@@ -32,20 +32,6 @@
 
 - 适配游戏版本：DoL `0.5.11.9`。
 - 前置：ModLoader `^2.101.0`、TweeReplacer `^1.7.0`；本地测试使用 ModLoader `2.101.1`。
-- 从旧版 Eden 更新时，先移除旧的 Eden 模组，避免同时加载；内部存档字段保持兼容。
-- 游戏本体、原版图片及前置模组需另行准备。
-
-## 本地开发
-
-模组源码位于 `mods/FertilityExpansion/`。
-
-1. 安装 Python 3.10 或以上版本及 uv，在仓库根目录执行 `uv sync`。
-2. 将 DoL `0.5.11.9` 原版源码放入 `degrees-of-lewdity-0.5.11.9/`，确保其中包含 `game/`。
-3. 准备包含 ModLoader 的游戏发行版和 `img/`，在 `configs/dev.json` 中设置 `runtime_dir` 和 `html`。相对路径从仓库根目录解析。
-4. 在仓库根目录执行 `uv run main.py build`，生成 `results/FertilityExpansion.mod.zip`。
-5. 执行 `uv run main.py dev --open` 可构建并启动本地测试游戏。
-
-当前构建校验需要同时准备原版源码和游戏发行版。
 
 ## 工具来源
 
