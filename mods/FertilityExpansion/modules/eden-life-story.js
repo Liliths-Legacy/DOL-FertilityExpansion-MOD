@@ -47,6 +47,7 @@
 
 	function isUniversityOutcome(record) {
 		return Boolean(
+			record?.bodyForm !== "beast" &&
 			record?.adult?.settled &&
 			record.adult.destination === "away" &&
 			record.adult.education === "university" &&

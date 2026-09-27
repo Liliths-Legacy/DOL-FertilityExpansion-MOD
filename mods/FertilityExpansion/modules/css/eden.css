@@ -27,6 +27,18 @@
 	margin: 0.35rem 0;
 }
 
+.eden-contact-heading {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.eden-contact-child-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
 .eden-contact-actions {
 	margin: 0.35rem 0;
 }

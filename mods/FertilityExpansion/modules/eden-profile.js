@@ -79,13 +79,42 @@
 
 	function openBaileyNegotiation(childId) {
 		const sugarCube = getSugarCube();
-		const variables = sugarCube?.State?.variables;
+		const state = sugarCube?.State;
+		const variables = state?.variables;
 		const child = variables?.children?.[childId];
-		if (!variables?.eden?.facility?.owned || child?.location !== "home") return;
+		const record = variables?.eden?.children?.[childId];
+		if (!variables?.eden?.facility?.owned || child?.location !== "home" || window.EdenAge?.isHumanoid(record, child) !== true) return;
 
 		variables.eden.selectedChildId = childId;
-		variables.eden.returnPassage = sugarCube.State.passage || "Childrens Home";
+		variables.eden.returnPassage = state.passage || "Childrens Home";
+		rememberChildListReturn(variables, state);
 		sugarCube.Engine.play("Eden Bailey Negotiation");
+	}
+
+	function openChildTransfer(childId) {
+		const sugarCube = getSugarCube();
+		const state = sugarCube?.State;
+		const variables = state?.variables;
+		const child = variables?.children?.[childId];
+		const record = variables?.eden?.children?.[childId];
+		const source = child?.location;
+		const supportedSource = ["wolf_cave", "tower", "alex_cottage"].includes(source);
+		const isPcChild = child?.mother === "pc" || child?.father === "pc";
+		const isAdoptedHawk = source === "tower" && child?.type === "hawk" && Boolean(child?.adopted);
+		const isHatched = source !== "tower" || child?.eggTimer === undefined;
+		if (
+			!variables?.eden?.facility?.owned ||
+			!supportedSource ||
+			(!isPcChild && !isAdoptedHawk) ||
+			!isHatched ||
+			window.EdenAge?.isHumanoid(record, child) !== true
+		) return;
+
+		variables.eden.selectedChildId = childId;
+		variables.eden.transferSource = source;
+		variables.eden.returnPassage = state.passage || "Childrens Home";
+		rememberChildListReturn(variables, state);
+		sugarCube.Engine.play("Eden Child Transfer");
 	}
 
 	function buildProfileBlock(childId, record, child, variables) {
@@ -99,7 +128,7 @@
 		ageLabel.className = "gold";
 		ageLabel.textContent = "成长：";
 		const ageText = document.createElement("span");
-		ageText.textContent = `${record.speciesLabel || "其他"} · ${record.ageDays || 0}天 · ${record.lifeStageLabel || "婴儿期"}`;
+		ageText.textContent = `${record.speciesLabel || "其他"} · ${record.bodyFormLabel || "人形"} · ${record.ageDays || 0}天 · ${record.lifeStageLabel || "婴儿期"}`;
 		age.append(ageLabel, ageText);
 
 		const traits = document.createElement("div");
@@ -124,7 +153,8 @@
 
 		const training = document.createElement("div");
 		training.className = "eden-child-training";
-		const supportsTraining = window.EdenTraining?.eligibleSpecies.includes(record.species);
+		const supportsAffection = window.EdenInteractions?.eligibleSpecies.includes(record.species);
+		const supportsTraining = window.EdenTraining?.eligibleSpecies.includes(record.species) && window.EdenAge?.isHumanoid(record, child) === true;
 		const trainingLabel = document.createElement("span");
 		trainingLabel.className = "gold";
 		trainingLabel.textContent = "养成：";
@@ -155,7 +185,7 @@
 
 		row.append(age, traits);
 		if (supportsTraining) row.append(training);
-		if (supportsTraining && Number.isFinite(record.affection)) {
+		if (supportsAffection && Number.isFinite(record.affection)) {
 			const affection = document.createElement("div");
 			const affectionLabel = document.createElement("span");
 			affectionLabel.className = "gold";
@@ -183,18 +213,31 @@
 			row.append(document.createTextNode(" | "), adultLink);
 		}
 
-		if (variables.eden.facility?.owned && child?.location === "home") {
+		if (variables.eden.facility?.owned && child?.location === "home" && window.EdenAge?.isHumanoid(record, child) === true) {
 			const transferLink = document.createElement("button");
 			transferLink.type = "button";
 			transferLink.className = "link-internal eden-child-profile-button";
 			transferLink.textContent = "向贝利要求带走孩子";
 			transferLink.addEventListener("click", () => openBaileyNegotiation(childId));
 			row.append(document.createTextNode(" | "), transferLink);
+		} else if (
+			variables.eden.facility?.owned &&
+			["wolf_cave", "tower", "alex_cottage"].includes(child?.location) &&
+			window.EdenAge?.isHumanoid(record, child) === true &&
+			(child?.mother === "pc" || child?.father === "pc" || (child?.location === "tower" && child?.type === "hawk" && child?.adopted)) &&
+			(child?.location !== "tower" || child?.eggTimer === undefined)
+		) {
+			const transferLink = document.createElement("button");
+			transferLink.type = "button";
+			transferLink.className = "link-internal eden-child-profile-button";
+			transferLink.textContent = "将孩子带至伊甸园";
+			transferLink.addEventListener("click", () => openChildTransfer(childId));
+			row.append(document.createTextNode(" | "), transferLink);
 		}
 		return row;
 	}
 
-	function buildTraitDetails(childId, record) {
+	function buildTraitDetails(childId, record, child) {
 		const innate = record.innate;
 		if (!innate || !window.EdenTraits) return null;
 		const block = document.createElement("div");
@@ -221,7 +264,7 @@
 			source.append(sourceLabel, document.createTextNode(innate.fitnessSource.label));
 			block.append(source);
 		}
-		if (record.training?.skills && window.EdenTraining?.eligibleSpecies.includes(record.species)) {
+		if (record.training?.skills && window.EdenTraining?.eligibleSpecies.includes(record.species) && window.EdenAge?.isHumanoid(record, child) === true) {
 			const skills = document.createElement("div");
 			const skillsLabel = document.createElement("span");
 			skillsLabel.className = "gold";
@@ -263,7 +306,7 @@
 				details.insertBefore(buildProfileBlock(childId, record, child, variables), element);
 			}
 			if (!element.querySelector(":scope > [data-eden-child-trait-details]")) {
-				const traitDetails = buildTraitDetails(childId, record);
+				const traitDetails = buildTraitDetails(childId, record, child);
 				if (traitDetails) element.append(traitDetails);
 			}
 		});
@@ -284,7 +327,7 @@
 		inject(passages);
 	}
 
-	window.EdenProfileUi = Object.freeze({ inject, openProfile, openTraining, openAdultSettlement, restoreChildListPage, openBaileyNegotiation });
+	window.EdenProfileUi = Object.freeze({ inject, openProfile, openTraining, openAdultSettlement, restoreChildListPage, openBaileyNegotiation, openChildTransfer });
 
 	$(document).on(":storyready.edenProfile :passagedisplay.edenProfile", () => {
 		observeChildViewer();

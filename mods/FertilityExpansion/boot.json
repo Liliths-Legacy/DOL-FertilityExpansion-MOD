@@ -4,7 +4,7 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.2.0",
+  "version": "1.3.0",
   "styleFileList": [],
   "scriptFileList": [],
   "tweeFileList": [],
@@ -39,6 +39,13 @@
           "passage": "Widgets children",
           "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $children[_args[0]].type>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
           "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, $children, _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Bird Tower",
+          "findString": "\t<<if Object.values($children).find(child => (child.type is \"hawk\" and child.location is \"tower\" and child.eggTimer is undefined))>>\n\t\t<<set _childrenTotal to Object.values($children).filter(child => child.location is \"tower\" and child.eggTimer is undefined).length>>",
+          "replace": "\t<<if Object.values($children).find(child => child.location is \"tower\" and child.eggTimer is undefined)>>\n\t\t<<set _childrenTotal to Object.values($children).filter(child => child.location is \"tower\" and child.eggTimer is undefined).length>>",
           "debug": false,
           "all": false
         },

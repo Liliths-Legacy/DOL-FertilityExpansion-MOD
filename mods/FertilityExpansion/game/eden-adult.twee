@@ -1,3 +1,40 @@
+:: Eden Adult Widgets [widget]
+<<widget "edenOriginalChildDetails">>
+	<<set _edenOriginalChildId to _args[0]>>
+	<<set _edenOriginalChild to $children[_edenOriginalChildId]>>
+	<<if _edenOriginalChild>>
+		<p>
+			<<childTypeDisplay _edenOriginalChild>><br>
+			<span class="gold">母亲：</span>
+			<<if _edenOriginalChild.motherKnown>><<= Util.escapeMarkup(pregnancyNameCorrection(_edenOriginalChild.mother, true))>><<else>>????<</if>>
+			｜<span class="gold">父亲：</span>
+			<<if _edenOriginalChild.fatherKnown>><<= Util.escapeMarkup(pregnancyNameCorrection(_edenOriginalChild.father, true))>><<else>>????<</if>><br>
+			<<if _edenOriginalChild.laid>>
+				<span class="gold">产卵：</span><<= _edenOriginalChild.laid.day>> <<= _edenOriginalChild.laid.month>> <<= _edenOriginalChild.laid.year>>｜
+				<span class="gold">孵化：</span><<= _edenOriginalChild.born.day>> <<= _edenOriginalChild.born.month>> <<= _edenOriginalChild.born.year>>
+			<<elseif _edenOriginalChild.born>>
+				<span class="gold">出生：</span><<= _edenOriginalChild.born.day>> <<= _edenOriginalChild.born.month>> <<= _edenOriginalChild.born.year>>
+			<</if>>
+			<<if _edenOriginalChild.adopted>>
+				｜<span class="gold">收养：</span><<= _edenOriginalChild.adopted.day>> <<= _edenOriginalChild.adopted.month>> <<= _edenOriginalChild.adopted.year>>
+			<</if>><br>
+			<span class="gold">原版年龄：</span><<childAge _edenOriginalChildId "full">><br>
+			<span class="gold">体型：</span><<= Util.escapeMarkup(_edenOriginalChild.features?.size || "unknown")>>
+			<<if _edenOriginalChild.features?.hairColour>>
+				<<if _edenOriginalChild.type.includes("human")>>｜<span class="gold">头发：</span>
+				<<elseif _edenOriginalChild.type.includes("hawk")>>｜<span class="gold">羽毛：</span>
+				<<else>>｜<span class="gold">毛皮：</span><</if>>
+				<<hairmapcolourtext _edenOriginalChild.features.hairColour>>
+			<</if>>
+			<<if _edenOriginalChild.features?.skinColour>>｜<span class="gold">肤色：</span><<skinColourName _edenOriginalChild.features.skinColour>><</if>><br>
+			<<if _edenOriginalChild.features?.identical>><span class="gold">同卵：</span><<= Util.escapeMarkup(_edenOriginalChild.features.identical)>><br><</if>>
+			<<if _edenOriginalChild.localVariables?.interactionsTotal>><span class="gold">互动总数：</span><<= _edenOriginalChild.localVariables.interactionsTotal>><br><</if>>
+			<span class="gold">改名：</span><<link "随机名字" "Eden Child Info">><<set $children[_edenOriginalChildId].name to generateBabyName(undefined, _edenOriginalChild.gender, _edenOriginalChildId)>><</link>>
+			<<if $debug is 1>><br><small>ChildId: <<= _edenOriginalChild.childId>>｜saveId: <<= $saveId>><<if $saveName isnot "">>｜name: <<= Util.escapeMarkup($saveName)>><</if>></small><</if>>
+		</p>
+	<</if>>
+<</widget>>
+
 :: Eden Adult Settlement
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
@@ -136,17 +173,17 @@
 						<<if !_edenContactChild>>
 							<span class="grey">无法读取的通讯录记录：<<= Util.escapeMarkup(_edenContactId)>></span>
 						<<else>>
-							<p><span class="gold"><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>></span> ｜ <<link "孩子信息" "Eden Child Info">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
+							<p class="eden-contact-heading"><span class="eden-contact-child-icon"><<childrenicon _edenContactId>></span><span class="gold"><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>></span> ｜ <<link "孩子信息" "Eden Child Info">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
 							<p><span class="gold">天性：</span>
-								容貌 <<= Math.round(_edenContactRecord.innate.appearance)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.appearance)>>）｜
-								体能 <<= Math.round(_edenContactRecord.innate.fitness)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.fitness)>>）｜
-								智力 <<= Math.round(_edenContactRecord.innate.intelligence)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.intelligence)>>）｜
+								容貌 <<= Math.round(_edenContactRecord.innate.appearance)>>｜
+								体能 <<= Math.round(_edenContactRecord.innate.fitness)>>｜
+								智力 <<= Math.round(_edenContactRecord.innate.intelligence)>>｜
 								性格 <<= window.EdenTraits.personalityLabel(_edenContactRecord.innate.personality)>><br>
 								<span class="gold">特质：</span>
-								学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.knowledge)>>）｜
-								体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.fitness)>>）｜
-								社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.social)>>）｜
-								意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.awareness)>>）｜
+								学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>｜
+								体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>｜
+								社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>｜
+								意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>｜
 								好感 <<= Math.round(_edenContactRecord.affection)>></p>
 							<<if _edenPregnancyStatus>>
 								<p>孕期：<<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</p>
@@ -217,15 +254,12 @@
 	<<if !_edenRecord or !_edenChild>>
 		<p class="red">无法找到这个孩子的记录。</p>
 	<<else>>
-		<p><span class="gold"><<= Util.escapeMarkup(_edenChild.name || "未命名的孩子")>></span> <span class="eden-child-meta">（<<= window.EdenAdult.outcomeLabel(_edenRecord)>>）</span></p>
-		<p>类型：<<= Util.escapeMarkup(_edenChild.type || "unknown")>><br>
-			成长：<<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">><br>
-			<<if _edenRecord.adult?.settled>>成年时间：已成年 <<= window.EdenAdult.adulthoodDays(_edenRecord)>> 天<br><</if>>
-			<<if _edenChild.born>>出生：<<= _edenChild.born.year>>年 <<= _edenChild.born.month>> <<= _edenChild.born.day>>日<br><</if>>
-			<<if _edenChild.motherKnown>>母亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.mother, true))>><br><</if>>
-			<<if _edenChild.fatherKnown>>父亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.father, true))>><</if>></p>
+		<p class="eden-contact-heading"><span class="eden-contact-child-icon"><<childrenicon _edenChildId>></span><span class="gold"><<= Util.escapeMarkup(_edenChild.name || "未命名的孩子")>></span> <span class="eden-child-meta">（<<= window.EdenAdult.outcomeLabel(_edenRecord)>>）</span></p>
+		<<edenOriginalChildDetails _edenChildId>>
+		<p><span class="gold">模组成长：</span><<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.bodyFormLabel || "人形">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">>
+			<<if _edenRecord.adult?.settled>><br><span class="gold">成年时间：</span>已成年 <<= window.EdenAdult.adulthoodDays(_edenRecord)>> 天<</if>></p>
 		<<if _edenRecord.innate and typeof window.EdenTraits is "object">>
-			<p>天生属性：<br>
+			<p><span class="gold">天性：</span><br>
 				容貌 <<= _edenRecord.innate.appearance>>（<<= window.EdenTraits.grade(_edenRecord.innate.appearance)>>）｜
 				体能 <<= _edenRecord.innate.fitness>>（<<= window.EdenTraits.grade(_edenRecord.innate.fitness)>>）｜
 				智力 <<= _edenRecord.innate.intelligence>>（<<= window.EdenTraits.grade(_edenRecord.innate.intelligence)>>）｜
@@ -233,7 +267,7 @@
 				<<if _edenRecord.innate.fitnessSource?.label>>体能来源：<<= Util.escapeMarkup(_edenRecord.innate.fitnessSource.label)>><</if>></p>
 		<</if>>
 		<<if _edenRecord.training?.skills>>
-			<p>养成技能：<br>
+			<p><span class="gold">特质：</span><br>
 				学识 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.knowledge)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.knowledge)>>）｜
 				体能 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.fitness)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.fitness)>>）｜
 				社交 <<= window.EdenTraining.displayValue(_edenRecord.training.skills.social)>>（<<= window.EdenTraits.grade(_edenRecord.training.skills.social)>>）｜

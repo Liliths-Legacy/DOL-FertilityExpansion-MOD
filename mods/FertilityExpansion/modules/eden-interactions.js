@@ -67,7 +67,12 @@
 		const record = eden?.children?.[id];
 		const child = children?.[id];
 		return Boolean(
-			record && child && child.location === "eden_home" && eligibleSpecies.includes(record.species) && config.stagePools[record.lifeStage]
+			record &&
+			child &&
+			child.location === "eden_home" &&
+			eligibleSpecies.includes(record.species) &&
+			window.EdenAge?.isHumanoid(record, child) === true &&
+			config.stagePools[record.lifeStage]
 		);
 	}
 

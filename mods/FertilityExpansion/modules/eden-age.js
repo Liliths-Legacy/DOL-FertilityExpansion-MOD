@@ -31,6 +31,10 @@
 		adolescent: "少年期",
 		adult: "成年",
 	});
+	const bodyFormLabels = Object.freeze({
+		humanoid: "人形",
+		beast: "纯动物",
+	});
 
 	function normalizeSettings(settings) {
 		if (!settings || typeof settings !== "object" || Array.isArray(settings)) return;
@@ -50,6 +54,19 @@
 		if (child?.type === "hawk") return "bird";
 		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
 		return "human";
+	}
+
+	function inferBodyForm(child) {
+		const type = String(child?.type || "human");
+		if (type === "human" || type.includes("human")) return "humanoid";
+		if (["wolfboy", "wolfgirl", "harpy"].includes(type)) return "humanoid";
+		if (["wolf", "hawk"].includes(type)) return child?.features?.monster === "monster" ? "humanoid" : "beast";
+		return "humanoid";
+	}
+
+	function isHumanoid(record, child) {
+		const bodyForm = child ? inferBodyForm(child) : record?.bodyForm;
+		return bodyForm !== "beast";
 	}
 
 	function serialDay(date) {
@@ -112,17 +129,21 @@
 		if (!record || !child) return null;
 		normalizeSettings(settings);
 		const speciesKey = inferSpecies(child, record.species);
+		const bodyForm = inferBodyForm(child);
 		const ageDays = getAgeDays(child, record);
 		const thresholds = getThresholds(speciesKey, settings);
 		const lifeStage = getStage(ageDays, thresholds, settings.neverAutoAdult);
 
 		record.species = speciesKey;
 		record.speciesLabel = species[speciesKey].label;
+		record.bodyForm = bodyForm;
+		record.bodyFormLabel = bodyFormLabels[bodyForm];
+		record.developmentTrack = bodyForm === "beast" ? "animal" : "humanoid";
 		record.ageDays = ageDays;
 		record.lifeStage = lifeStage;
 		record.lifeStageLabel = stageLabels[lifeStage];
 		record.stageThresholds = thresholds;
-		record.ageDataVersion = 1;
+		record.ageDataVersion = 2;
 		return record;
 	}
 
@@ -137,8 +158,11 @@
 	window.EdenAge = Object.freeze({
 		species,
 		stageLabels,
+		bodyFormLabels,
 		normalizeSettings,
 		inferSpecies,
+		inferBodyForm,
+		isHumanoid,
 		currentSerialDay,
 		getAgeDays,
 		resetGrowthAge,

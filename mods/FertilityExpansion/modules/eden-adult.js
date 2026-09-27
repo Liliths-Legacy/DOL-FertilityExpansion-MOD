@@ -334,7 +334,13 @@
 	}
 
 	function settle(record, child, choice = "resolve") {
-		if (!record || !child || record.lifeStage !== "adult" || !eligibleSpecies.includes(record.species)) {
+		if (
+			!record ||
+			!child ||
+			record.lifeStage !== "adult" ||
+			!eligibleSpecies.includes(record.species) ||
+			window.EdenAge?.isHumanoid(record, child) !== true
+		) {
 			return { ok: false, message: "这个孩子目前不能进行成年结算。" };
 		}
 		const adult = normalizeAdultState(record);
@@ -364,6 +370,13 @@
 		const adult = normalizeAdultState(record);
 		if (!eligibleSpecies.includes(record.species)) return adult;
 		ensureAffection(record, child);
+		if (window.EdenAge?.isHumanoid(record, child) !== true) {
+			if (!adult.settled) {
+				adult.pending = false;
+				if (record.status === "adult_pending") record.status = "resident";
+			}
+			return adult;
+		}
 		if (!adult.settled && record.lifeStage === "adult" && child.location === "eden_home") {
 			adult.pending = true;
 			record.status = "adult_pending";
@@ -381,6 +394,7 @@
 			record &&
 			child &&
 			eligibleSpecies.includes(record.species) &&
+			window.EdenAge?.isHumanoid(record, child) === true &&
 			record.lifeStage === "adult" &&
 			child.location === "eden_home" &&
 			!record.adult?.settled
@@ -507,6 +521,7 @@
 
 	function canInviteIntimacy(record) {
 		return Boolean(
+			record?.bodyForm !== "beast" &&
 			record?.adult?.settled &&
 			record.adult.destination === "town" &&
 			record.adult.contactStatus === "active" &&
@@ -537,7 +552,7 @@
 	}
 
 	function prepareEncounterNpc(record, child, childId, npc) {
-		if (!record || !child || !npc) return null;
+		if (!record || !child || !npc || window.EdenAge?.isHumanoid(record, child) !== true) return null;
 		const encounter = ensureEncounterState(record, childId);
 		const name = String(child.name || "未命名的孩子");
 		const gender = ["m", "f", "h"].includes(child.gender) ? child.gender : "f";
@@ -556,6 +571,7 @@
 	}
 
 	function beginEncounter(record, childId) {
+		if (record?.bodyForm === "beast") return null;
 		const encounter = ensureEncounterState(record, childId);
 		if (!encounter) return null;
 		encounter.inProgress = true;

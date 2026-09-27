@@ -8,6 +8,21 @@
 	<<set _edenResidentCount to _edenResidentIds.length>>
 <</silently>><</widget>>
 
+<<widget "edenMoveSelectedChildHome">><<silently>>
+	<<set _edenTransferChildId to $eden.selectedChildId>>
+	<<if $children?.[_edenTransferChildId] and $eden.children?.[_edenTransferChildId] and window.EdenAge.isHumanoid($eden.children[_edenTransferChildId], $children[_edenTransferChildId])>>
+		<<set $children[_edenTransferChildId].location to "eden_home">>
+		<<set $eden.children[_edenTransferChildId].status to "resident">>
+		<<set $eden.children[_edenTransferChildId].transferSource to $eden.transferSource>>
+		<<if typeof $options.eden is "object" and $options.eden.resetAgeOnTransfer and typeof window.EdenAge is "object">>
+			<<run window.EdenAge.resetGrowthAge($eden.children[_edenTransferChildId])>>
+		<</if>>
+		<<if !Number.isFinite($eden.children[_edenTransferChildId].affection)>><<set $eden.children[_edenTransferChildId].affection to 40>><</if>>
+		<<run delete $eden.childListReturn>>
+		<<run delete $eden.transferSource>>
+	<</if>>
+<</silently>><</widget>>
+
 <<widget "edenFarmlandLink">>
 	<<edenSetup>>
 	<<if $farm_stage isnot undefined>>
@@ -115,7 +130,7 @@
 	<<else>>
 		<<if $storedChildrenToys is undefined>><<set $storedChildrenToys to {}>><</if>>
 		<<if $storedChildrenToys["eden_home"] is undefined>><<set $storedChildrenToys["eden_home"] to []>><</if>>
-		<<getChildrenIds `{location: "eden_home"}`>>
+		<<getChildrenIds `{location: "eden_home"}` "both">>
 		<<if _childrenIds.length>>
 			<p>你在育儿室里找到了自己的<<= _childrenIds.length > 1 ? "孩子们" : "孩子">>。</p>
 			<<childViewerDisplay _childrenIds>>
@@ -127,16 +142,69 @@
 	<<link [[返回伊甸园|Eden Home]]>><</link>>
 </div>
 
+:: Eden Child Transfer
+<<edenSetup>><<effects>>
+<div class="eden-panel">
+	<<set _edenChildId to $eden.selectedChildId>>
+	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenTransferSource to $eden.transferSource>>
+	<<set _edenIsPcChild to _edenChild and (_edenChild.mother is "pc" or _edenChild.father is "pc")>>
+	<<set _edenIsAdoptedHawk to _edenChild and _edenTransferSource is "tower" and _edenChild.type is "hawk" and _edenChild.adopted>>
+	<<set _edenIsHumanoid to _edenRecord and _edenChild and window.EdenAge.isHumanoid(_edenRecord, _edenChild)>>
+	<<edenResidentIds>>
+	<<if !$eden.facility.owned>>
+		<p class="red">你还没有能安置孩子的地方。</p>
+	<<elseif !_edenChild or (!_edenIsPcChild and !_edenIsAdoptedHawk)>>
+		<p class="red">你无法确认要带走的孩子。</p>
+	<<elseif !_edenIsHumanoid>>
+		<p>这个孩子保持着纯动物的形态，暂时不适合带到伊甸园抚养。</p>
+	<<elseif _edenChild.location isnot _edenTransferSource>>
+		<p>这个孩子已经不在这里了。</p>
+	<<elseif _edenTransferSource is "tower" and _edenChild.eggTimer isnot undefined>>
+		<p>这枚蛋还没有孵化，现在还不能带去伊甸园。</p>
+	<<elseif _edenTransferSource is "wolf_cave">>
+		<p>你抱起<<= Util.escapeMarkup(_edenChild.name || "孩子")>>，向守在幼崽身边的狼群说明了伊甸园的事。那是你在农场附近买下的房子，有干净的房间、充足的食物，也有能让孩子奔跑玩耍的地方。</p>
+		<p>狼群低声骚动起来。几只成年狼挡在通道前，警惕地打量着你。黑狼从它们中间走出，绕着你和孩子慢慢走了一圈。</p>
+		<p>你低下头，告诉它们，你会经常带孩子回来，这里依然是孩子的家。</p>
+		<p>黑狼凝视了你很久，最后伸出鼻子蹭了蹭幼崽，向后退开。守在通道前的狼群也慢慢让出一条路。</p>
+	<<elseif _edenTransferSource is "tower">>
+		<p>你抱起<<= Util.escapeMarkup(_edenChild.name || "孩子")>>，向巨鹰说起了伊甸园。那是你在农场附近买下的房子，更宽敞，也更适合孩子长大。</p>
+		<p>巨鹰立刻张开翅膀，挡在你和巢穴之间。鸟嗓里滚出不满的低鸣，羽毛也一根根竖了起来。</p>
+		<p>你耐心地重复，伊甸园离农场不远，巨鹰随时都可以去看望孩子。你也不会让孩子忘记这座高塔和天空。</p>
+		<p>巨鹰低头梳理着孩子的羽毛，迟迟不肯离开。过了很久，才终于收起翅膀，用额头轻轻碰了碰你。</p>
+	<<elseif _edenTransferSource is "alex_cottage">>
+		<<npc "Alex">><<person1>>
+		<p>你找到Alex，告诉<<him>>，你在农场旁边买下了一栋房子，专门用来照顾和抚养孩子。</p>
+		<p>Alex惊讶地看着你。“你买下了一栋房子？就在农场旁边？”</p>
+		<p>你点点头，说那里有宽敞的房间、玩具房和花园。从农场走过去不需要多久，Alex随时都可以去看他们。</p>
+		<p>“你还真的想好了。”Alex沉默了一会儿，看向育儿室。“要是真的这么近……好吧。这里永远有他们的位置。我也会过去看他们。”</p>
+	<</if>>
+
+	<<if ["wolf_cave", "tower", "alex_cottage"].includes(_edenTransferSource) and _edenChild and _edenChild.location is _edenTransferSource and _edenIsHumanoid and (_edenIsPcChild or _edenIsAdoptedHawk) and !(_edenTransferSource is "tower" and _edenChild.eggTimer isnot undefined)>>
+		<<if _edenResidentCount gte $eden.facility.capacity>>
+			<p class="red">伊甸园已经没有空位。</p>
+		<<else>>
+			<<link [[将孩子带至伊甸园|Eden Nursery]]>><<edenMoveSelectedChildHome>><</link>>
+		<</if>>
+	<</if>>
+	<br><br>
+	<<link [[返回|$eden.returnPassage]]>><<run delete $eden.transferSource>><</link>>
+</div>
+
 :: Eden Bailey Negotiation
 <<edenSetup>><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
 	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
 	<<edenResidentIds>>
 	<<if !$eden.facility.owned>>
 		<p class="red">你还没有能安置孩子的地方。</p>
 	<<elseif !_edenChild or (_edenChild.mother isnot "pc" and _edenChild.father isnot "pc")>>
 		<p class="red">贝利不知道你在说哪个孩子。</p>
+	<<elseif !_edenRecord or !window.EdenAge.isHumanoid(_edenRecord, _edenChild)>>
+		<p>这个孩子保持着纯动物的形态，暂时不适合带到伊甸园抚养。</p>
 	<<elseif _edenChild.location isnot "home">>
 		<p>这个孩子已经不在孤儿院了。</p>
 	<<else>>
@@ -179,9 +247,10 @@
 		<<else>>
 			<<link [[向贝利支付 £100,000|Eden Nursery]]>>
 				<<money -10000000 "edenChildTransfer">>
-				<<set $children[$eden.selectedChildId].location to "eden_home">>
-				<<set $eden.children[$eden.selectedChildId].status to "resident">>
-				<<set $eden.children[$eden.selectedChildId].transferPaid to true>>
+					<<set $children[$eden.selectedChildId].location to "eden_home">>
+					<<set $eden.children[$eden.selectedChildId].status to "resident">>
+					<<set $eden.children[$eden.selectedChildId].transferPaid to true>>
+					<<run delete $eden.childListReturn>>
 				<<if typeof $options.eden is "object" and $options.eden.resetAgeOnTransfer and typeof window.EdenAge is "object">>
 					<<run window.EdenAge.resetGrowthAge($eden.children[$eden.selectedChildId])>>
 				<</if>>

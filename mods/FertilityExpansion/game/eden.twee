@@ -177,7 +177,7 @@
 <<widget "edenSyncChildren">><<silently>>
 	<<if $children isnot undefined and typeof $children is "object">>
 		<<for _edenChildId, _edenBaseChild range $children>>
-			<<if _edenBaseChild and (_edenBaseChild.mother is "pc" or _edenBaseChild.father is "pc")>>
+			<<if _edenBaseChild and (_edenBaseChild.mother is "pc" or _edenBaseChild.father is "pc" or _edenBaseChild.adopted)>>
 				<<if $eden.children[_edenChildId] is undefined or typeof $eden.children[_edenChildId] isnot "object">>
 					<<set $eden.children[_edenChildId] to {
 						childId: _edenChildId,
@@ -239,7 +239,7 @@
 	<<if _edenRecord and _edenChild>>
 		<p class="eden-child-meta">
 			类型：<<= _edenChild.type || "unknown">>
-			| 成长：<<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">>
+			| 成长：<<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.bodyFormLabel || "人形">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">>
 			<<if _edenRecord.innate and typeof window.EdenTraits is "object">>
 				| 容貌 <<= window.EdenTraits.grade(_edenRecord.innate.appearance)>>
 				· 体能 <<= window.EdenTraits.grade(_edenRecord.innate.fitness)>>

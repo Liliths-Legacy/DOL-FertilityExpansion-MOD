@@ -146,7 +146,12 @@
 	}
 
 	function isSupportedResident(record, child) {
-		return Boolean(record && child) && child.location === "eden_home" && eligibleSpecies.includes(record.species);
+		return (
+			Boolean(record && child) &&
+			child.location === "eden_home" &&
+			eligibleSpecies.includes(record.species) &&
+			window.EdenAge?.isHumanoid(record, child) === true
+		);
 	}
 
 	function getAvailableActivities(stage) {
