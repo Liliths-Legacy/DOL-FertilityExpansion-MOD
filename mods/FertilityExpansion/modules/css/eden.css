@@ -18,9 +18,6 @@
 
 .eden-contact-row {
 	min-width: 0;
-	padding: 0.55rem 0.7rem;
-	border: 1px solid var(--700);
-	border-radius: 0.25rem;
 }
 
 .eden-contact-row p {

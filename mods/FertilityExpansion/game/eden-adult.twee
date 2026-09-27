@@ -4,7 +4,7 @@
 	<<set _edenOriginalChild to $children[_edenOriginalChildId]>>
 	<<if _edenOriginalChild>>
 		<p>
-			<<childTypeDisplay _edenOriginalChild>><br>
+			<<if _args[1] isnot "inline">><<childTypeDisplay _edenOriginalChild>><br><</if>>
 			<span class="gold">母亲：</span>
 			<<if _edenOriginalChild.motherKnown>><<= Util.escapeMarkup(pregnancyNameCorrection(_edenOriginalChild.mother, true))>><<else>>????<</if>>
 			｜<span class="gold">父亲：</span>
@@ -29,10 +29,85 @@
 			<<if _edenOriginalChild.features?.skinColour>>｜<span class="gold">肤色：</span><<skinColourName _edenOriginalChild.features.skinColour>><</if>><br>
 			<<if _edenOriginalChild.features?.identical>><span class="gold">同卵：</span><<= Util.escapeMarkup(_edenOriginalChild.features.identical)>><br><</if>>
 			<<if _edenOriginalChild.localVariables?.interactionsTotal>><span class="gold">互动总数：</span><<= _edenOriginalChild.localVariables.interactionsTotal>><br><</if>>
-			<span class="gold">改名：</span><<link "随机名字" "Eden Child Info">><<set $children[_edenOriginalChildId].name to generateBabyName(undefined, _edenOriginalChild.gender, _edenOriginalChildId)>><</link>>
 			<<if $debug is 1>><br><small>ChildId: <<= _edenOriginalChild.childId>>｜saveId: <<= $saveId>><<if $saveName isnot "">>｜name: <<= Util.escapeMarkup($saveName)>><</if>></small><</if>>
 		</p>
 	<</if>>
+<</widget>>
+
+<<widget "edenContactCard">>
+	<<set _edenContactId to _args[0]>>
+	<<set _edenContactIndex to _args[1]>>
+	<<set _edenContactChild to $children[_edenContactId]>>
+	<<set _edenContactRecord to $eden.children[_edenContactId]>>
+	<<set _edenPregnancyStatus to typeof window.EdenBreeding is "object" ? window.EdenBreeding.pregnancyStatus(_edenContactRecord) : null>>
+	<<set _edenResponseId to "eden-contact-response-" + _edenContactIndex>>
+	<<set _edenDetailsId to "eden-contact-details-" + _edenContactIndex>>
+	<<capture _edenContactId _edenContactChild _edenContactRecord _edenPregnancyStatus _edenResponseId _edenDetailsId>>
+		<div class="eden-contact-row">
+			<<if !_edenContactChild or !_edenContactRecord>>
+				<div class="childItem m-0 childDetails"><span class="grey">无法读取的通讯录记录：<<= Util.escapeMarkup(_edenContactId)>></span></div>
+			<<else>>
+				<div class="childItem m-0 childName">
+					<div><label><div><<childrenicon _edenContactId>></div><div><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>><span class="eden-child-meta">（<<= window.EdenAdult.destinationLabel(_edenContactRecord)>>｜<<= window.EdenAdult.adultRoleLabel(_edenContactRecord)>>）</span></div></label></div>
+				</div>
+				<div class="childItem m-0 childDetails">
+					<<childTypeDisplay _edenContactChild>>
+					<span class="no-numberify">｜<<link "详细信息">><<toggleclass `"#" + _edenDetailsId` "hidden">><</link>></span>
+					<div @id="_edenDetailsId" class="eden-contact-details hidden"><<edenOriginalChildDetails _edenContactId "inline">></div>
+					<div class="eden-child-profile">
+						<div class="eden-child-age"><span class="gold">成长：</span><<= _edenContactRecord.speciesLabel || "其他">> · <<= _edenContactRecord.bodyFormLabel || "人形">> · <<= _edenContactRecord.ageDays || 0>>天 · 已成年 <<= window.EdenAdult.adulthoodDays(_edenContactRecord)>>天</div>
+						<<if _edenContactRecord.innate>>
+							<div class="eden-child-traits"><span class="gold">天生属性：</span>容貌 <<= Math.round(_edenContactRecord.innate.appearance)>>｜体格 <<= Math.round(_edenContactRecord.innate.fitness)>>｜智力 <<= Math.round(_edenContactRecord.innate.intelligence)>>｜性格 <<= window.EdenTraits.personalityLabel(_edenContactRecord.innate.personality)>></div>
+						<</if>>
+						<<if _edenContactRecord.training?.skills>>
+							<div class="eden-child-training"><span class="gold">养成：</span>学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>｜体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>｜社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>｜意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>｜好感 <<= Math.round(_edenContactRecord.affection)>></div>
+						<</if>>
+						<<if _edenPregnancyStatus>>
+							<div><span class="gold">孕期：</span><<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</div>
+						<</if>>
+						<div><span class="gold">简介：</span><<if _edenContactRecord.profile>><<= Util.escapeMarkup(_edenContactRecord.profile)>><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></div>
+						<<if typeof window.EdenLifeStory is "object" and window.EdenLifeStory.canRead(_edenContactRecord)>>
+							<div><span class="gold">人生来信：</span><<link "再看一遍孩子的来信" "Eden Life Story Reread">><<set $eden.selectedChildId to _edenContactId>><</link>></div>
+						<<elseif typeof window.EdenLifeStory is "object" and window.EdenLifeStory.hasLetter(_edenContactRecord)>>
+							<div><span class="gold">人生来信：</span><<link "打开来信" "Eden Life Story Generate">><<set $eden.selectedChildId to _edenContactId>><</link>></div>
+						<</if>>
+					</div>
+					<hr>
+					<<if _edenContactRecord.adult.contactStatus is "lost">>
+						<div class="grey">你无法与<<= _edenContactChild.gender is "m" ? "他" : "她">>取得联系。</div>
+					<<else>>
+						<div class="eden-contact-actions">
+							<<link "聊天">>
+								<<replace `"#" + _edenResponseId`>><span><<= Util.escapeMarkup(_edenContactChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
+							<</link>>
+							<<if window.EdenAdult.getUnclaimedMonths(_edenContactRecord) gt 0>>
+								｜<<link "查收汇款">>
+									<<set _edenRemittance to window.EdenAdult.claimRemittance($eden.children[_edenContactId])>>
+									<<if _edenRemittance.pennies gt 0>><<money _edenRemittance.pennies "edenAdultRemittance">><</if>>
+									<<replace `"#" + _edenResponseId`>><span class="green"><<= _edenRemittance.message>><<if _edenRemittance.pennies gt 0>> 金额：<<printmoney _edenRemittance.pennies>><</if>></span><</replace>>
+								<</link>>
+							<</if>>
+							<<if window.EdenAdult.canInviteIntimacy(_edenContactRecord)>>
+								｜<<link "发出亲密邀请">>
+									<<set _edenInviteResult to window.EdenAdult.checkIntimacy($eden.children[_edenContactId], $attractiveness, currentSkillValue("seductionskill"))>>
+									<<set $eden.activeEncounterChildId to _edenInviteResult.success ? _edenContactId : null>>
+									<<replace `"#" + _edenResponseId`>>
+										<<if _edenInviteResult.success>>
+											<span class="green">邀请检定通过（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。</span><br>
+											<<link [[继续|Eden Adult Encounter Start]]>><</link>>
+										<<else>>
+											<span class="red">邀请检定失败（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。</span>
+										<</if>>
+									<</replace>>
+								<</link>>
+							<</if>>
+						</div>
+						<div @id="_edenResponseId"></div>
+					<</if>>
+				</div>
+			<</if>>
+		</div>
+	<</capture>>
 <</widget>>
 
 :: Eden Adult Settlement
@@ -161,74 +236,9 @@
 				<<goto "Eden Contacts">>
 			<</button>>
 		</div>
-		<div class="eden-contact-list">
+		<div class="settingsGrid m-0 childContainer eden-contact-list">
 			<<for _edenPageIndex, _edenContactId range _edenVisibleContactIds>>
-				<<set _edenIndex to _edenContactPageStart + _edenPageIndex>>
-				<<set _edenContactChild to $children[_edenContactId]>>
-				<<set _edenContactRecord to $eden.children[_edenContactId]>>
-				<<set _edenPregnancyStatus to typeof window.EdenBreeding is "object" ? window.EdenBreeding.pregnancyStatus(_edenContactRecord) : null>>
-				<<set _edenResponseId to "eden-contact-response-" + _edenIndex>>
-				<<capture _edenIndex _edenContactId _edenContactChild _edenContactRecord _edenResponseId>>
-					<div class="eden-contact-row">
-						<<if !_edenContactChild>>
-							<span class="grey">无法读取的通讯录记录：<<= Util.escapeMarkup(_edenContactId)>></span>
-						<<else>>
-							<p class="eden-contact-heading"><span class="eden-contact-child-icon"><<childrenicon _edenContactId>></span><span class="gold"><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>></span> ｜ <<link "孩子信息" "Eden Child Info">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
-							<p><span class="gold">天性：</span>
-								容貌 <<= Math.round(_edenContactRecord.innate.appearance)>>｜
-								体能 <<= Math.round(_edenContactRecord.innate.fitness)>>｜
-								智力 <<= Math.round(_edenContactRecord.innate.intelligence)>>｜
-								性格 <<= window.EdenTraits.personalityLabel(_edenContactRecord.innate.personality)>><br>
-								<span class="gold">特质：</span>
-								学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>｜
-								体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>｜
-								社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>｜
-								意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>｜
-								好感 <<= Math.round(_edenContactRecord.affection)>></p>
-							<<if _edenPregnancyStatus>>
-								<p>孕期：<<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</p>
-							<</if>>
-							<p><span class="gold">简介：</span><<if _edenContactRecord.profile>><<= Util.escapeMarkup(_edenContactRecord.profile)>><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
-							<p><span class="gold">成年去向：</span><<= window.EdenAdult.destinationLabel(_edenContactRecord)>> ｜ <<= window.EdenAdult.adultRoleLabel(_edenContactRecord)>></p>
-							<<if typeof window.EdenLifeStory is "object" and window.EdenLifeStory.canRead(_edenContactRecord)>>
-								<p><span class="gold">人生来信：</span><<link "再看一遍孩子的来信" "Eden Life Story Reread">><<set $eden.selectedChildId to _edenContactId>><</link>></p>
-							<<elseif typeof window.EdenLifeStory is "object" and window.EdenLifeStory.hasLetter(_edenContactRecord)>>
-								<p><<link "打开来信" "Eden Life Story Generate">><<set $eden.selectedChildId to _edenContactId>><</link>></p>
-							<</if>>
-							<<if _edenContactRecord.adult.contactStatus is "lost">>
-								<p class="grey">你无法与<<= _edenContactChild.gender is "m" ? "他" : "她">>取得联系。</p>
-							<<else>>
-								<div class="eden-contact-actions">
-									<<link "聊天">>
-										<<replace `"#" + _edenResponseId`>><span><<= Util.escapeMarkup(_edenContactChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
-									<</link>>
-									<<if window.EdenAdult.getUnclaimedMonths(_edenContactRecord) gt 0>>
-										 | <<link "查收汇款">>
-											<<set _edenRemittance to window.EdenAdult.claimRemittance($eden.children[_edenContactId])>>
-											<<if _edenRemittance.pennies gt 0>><<money _edenRemittance.pennies "edenAdultRemittance">><</if>>
-											<<replace `"#" + _edenResponseId`>><span class="green"><<= _edenRemittance.message>><<if _edenRemittance.pennies gt 0>> 金额：<<printmoney _edenRemittance.pennies>><</if>></span><</replace>>
-										<</link>>
-									<</if>>
-									<<if window.EdenAdult.canInviteIntimacy(_edenContactRecord)>>
-										 | <<link "发出亲密邀请">>
-											<<set _edenInviteResult to window.EdenAdult.checkIntimacy($eden.children[_edenContactId], $attractiveness, currentSkillValue("seductionskill"))>>
-											<<set $eden.activeEncounterChildId to _edenInviteResult.success ? _edenContactId : null>>
-											<<replace `"#" + _edenResponseId`>>
-												<<if _edenInviteResult.success>>
-													<span class="green">邀请检定通过（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。</span>
-													<br><<link [[继续|Eden Adult Encounter Start]]>><</link>>
-												<<else>>
-													<span class="red">邀请检定失败（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。</span>
-												<</if>>
-											<</replace>>
-										<</link>>
-									<</if>>
-								</div>
-								<p @id="_edenResponseId"></p>
-							<</if>>
-						<</if>>
-					</div>
-				<</capture>>
+				<<edenContactCard _edenContactId `_edenContactPageStart + _edenPageIndex`>>
 			<</for>>
 		</div>
 		<div class="eden-contact-pagination">

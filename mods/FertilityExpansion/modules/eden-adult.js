@@ -3,6 +3,9 @@
 
 	const dataVersion = 3;
 	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow"]);
+	function isSupportedSpecies(record) {
+		return Boolean(record && window.EdenAge?.isCultivableSpecies(record));
+	}
 	const config = Object.freeze({
 		affection: Object.freeze({
 			newResident: 40,
@@ -338,7 +341,7 @@
 			!record ||
 			!child ||
 			record.lifeStage !== "adult" ||
-			!eligibleSpecies.includes(record.species) ||
+			!isSupportedSpecies(record) ||
 			window.EdenAge?.isHumanoid(record, child) !== true
 		) {
 			return { ok: false, message: "这个孩子目前不能进行成年结算。" };
@@ -368,7 +371,7 @@
 	function syncRecord(record, child) {
 		if (!record || !child) return null;
 		const adult = normalizeAdultState(record);
-		if (!eligibleSpecies.includes(record.species)) return adult;
+		if (!isSupportedSpecies(record)) return adult;
 		ensureAffection(record, child);
 		if (window.EdenAge?.isHumanoid(record, child) !== true) {
 			if (!adult.settled) {
@@ -393,7 +396,7 @@
 		return Boolean(
 			record &&
 			child &&
-			eligibleSpecies.includes(record.species) &&
+			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true &&
 			record.lifeStage === "adult" &&
 			child.location === "eden_home" &&
@@ -591,6 +594,7 @@
 		dataVersion,
 		contactPageSize,
 		eligibleSpecies,
+		isSupportedSpecies,
 		config,
 		ensureAffection,
 		applyAffection,

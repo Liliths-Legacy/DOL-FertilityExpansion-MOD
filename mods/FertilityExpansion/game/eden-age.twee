@@ -1,7 +1,7 @@
 :: Eden Age Widgets [widget]
 <<widget "edenNormalizeAgeSettings">><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
-		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false }>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false }>>
 	<</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
 	<<set $eden.settings to clone($options.eden)>>
@@ -31,6 +31,11 @@
 			<label><<checkbox "$options.eden.resetAgeOnTransfer" false true autocheck>> 将孩子带至伊甸园时重置年龄</label>
 			<br>
 			<small>开启后，之后接回的孩子会从入园当天按0天开始成长；不会追溯影响已经入住的孩子，也不会修改原版出生日期。</small>
+		</div>
+		<div class="settingsToggleItemWide">
+			<label><<checkbox "$options.eden.allowHumanDescendants" false true autocheck>> 允许培养人类后代</label>
+			<br>
+			<small>开启后可以将培养对象扩展至非动物转化的纯人类。仅为功能性选项，不考虑年龄逻辑。</small>
 		</div>
 		<div class="settingsToggleItemWide">
 			<span class="gold">种族成年修正：</span>

@@ -33,7 +33,7 @@
 	});
 	const bodyFormLabels = Object.freeze({
 		humanoid: "人形",
-		beast: "纯动物",
+		beast: "动物",
 	});
 
 	function normalizeSettings(settings) {
@@ -42,6 +42,7 @@
 		settings.maturityDays = Number.isFinite(maturityDays) ? Math.max(30, Math.floor(maturityDays)) : 90;
 		settings.neverAutoAdult = settings.neverAutoAdult === true;
 		settings.resetAgeOnTransfer = settings.resetAgeOnTransfer === true;
+		settings.allowHumanDescendants = settings.allowHumanDescendants === true;
 		settings.lifeStoryPrompt = typeof settings.lifeStoryPrompt === "string" ? settings.lifeStoryPrompt : "";
 		settings.immediateLifeStory = settings.immediateLifeStory === true;
 		settings.allowSterilePregnancy = settings.allowSterilePregnancy === true;
@@ -67,6 +68,18 @@
 	function isHumanoid(record, child) {
 		const bodyForm = child ? inferBodyForm(child) : record?.bodyForm;
 		return bodyForm !== "beast";
+	}
+
+	function allowsHumanDescendants(settings) {
+		const variables = window.SugarCube?.State?.variables;
+		const activeSettings = settings || variables?.options?.eden || variables?.eden?.settings;
+		return activeSettings?.allowHumanDescendants === true;
+	}
+
+	function isCultivableSpecies(record, settings) {
+		if (!record) return false;
+		if (["bird", "cat", "fox", "wolf", "cow"].includes(record.species)) return true;
+		return record.species === "human" && allowsHumanDescendants(settings);
 	}
 
 	function serialDay(date) {
@@ -163,6 +176,8 @@
 		inferSpecies,
 		inferBodyForm,
 		isHumanoid,
+		allowsHumanDescendants,
+		isCultivableSpecies,
 		currentSerialDay,
 		getAgeDays,
 		resetGrowthAge,

@@ -7,12 +7,13 @@
 <<widget "edenSetup">><<silently>>
 	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
 		<<set $eden to {
-			schemaVersion: 13,
+			schemaVersion: 15,
 			children: {},
 			settings: {
 				maturityDays: 90,
 				neverAutoAdult: false,
 				resetAgeOnTransfer: false,
+				allowHumanDescendants: false,
 				lifeStoryPrompt: "",
 				immediateLifeStory: false,
 				allowSterilePregnancy: false
@@ -21,7 +22,12 @@
 				owned: false,
 				expanded: false,
 				capacity: 3,
-				baileyIntroduced: false
+				baileyIntroduced: false,
+				transferIntroduced: {
+					wolf_cave: false,
+					tower: false,
+					alex_cottage: false
+				}
 			},
 			breeding: {
 				dataVersion: 1,
@@ -127,6 +133,22 @@
 			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
 			<<set $eden.schemaVersion to 13>>
 		<</if>>
+		/* Schema 13 -> 14: remember the first transfer negotiation at each external nursery. */
+		<<if $eden.schemaVersion lt 14>>
+			<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>><<set $eden.facility to {}>><</if>>
+			<<set $eden.facility.transferIntroduced to {
+				wolf_cave: Object.values($eden.children).some(record => record?.transferSource === "wolf_cave"),
+				tower: Object.values($eden.children).some(record => record?.transferSource === "tower"),
+				alex_cottage: Object.values($eden.children).some(record => record?.transferSource === "alex_cottage")
+			}>>
+			<<set $eden.schemaVersion to 14>>
+		<</if>>
+		/* Schema 14 -> 15: optionally extend cultivation to fully human descendants. */
+		<<if $eden.schemaVersion lt 15>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
+			<<if typeof $eden.settings.allowHumanDescendants isnot "boolean">><<set $eden.settings.allowHumanDescendants to false>><</if>>
+			<<set $eden.schemaVersion to 15>>
+		<</if>>
 		<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
 			<<set $eden.settings to {}>>
 		<</if>>
@@ -134,6 +156,7 @@
 			<<if typeof $eden.settings.maturityDays isnot "number" or $eden.settings.maturityDays lt 30>><<set $eden.settings.maturityDays to 90>><</if>>
 			<<if typeof $eden.settings.neverAutoAdult isnot "boolean">><<set $eden.settings.neverAutoAdult to false>><</if>>
 			<<if typeof $eden.settings.resetAgeOnTransfer isnot "boolean">><<set $eden.settings.resetAgeOnTransfer to false>><</if>>
+			<<if typeof $eden.settings.allowHumanDescendants isnot "boolean">><<set $eden.settings.allowHumanDescendants to false>><</if>>
 			<<if typeof $eden.settings.lifeStoryPrompt isnot "string">><<set $eden.settings.lifeStoryPrompt to "">><</if>>
 			<<if typeof $eden.settings.immediateLifeStory isnot "boolean">><<set $eden.settings.immediateLifeStory to false>><</if>>
 			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
@@ -144,6 +167,10 @@
 		<<if typeof $eden.facility.owned isnot "boolean">><<set $eden.facility.owned to false>><</if>>
 		<<if typeof $eden.facility.expanded isnot "boolean">><<set $eden.facility.expanded to false>><</if>>
 		<<if typeof $eden.facility.baileyIntroduced isnot "boolean">><<set $eden.facility.baileyIntroduced to false>><</if>>
+		<<if $eden.facility.transferIntroduced is undefined or typeof $eden.facility.transferIntroduced isnot "object" or Array.isArray($eden.facility.transferIntroduced)>><<set $eden.facility.transferIntroduced to {}>><</if>>
+		<<if typeof $eden.facility.transferIntroduced.wolf_cave isnot "boolean">><<set $eden.facility.transferIntroduced.wolf_cave to Object.values($eden.children).some(record => record?.transferSource === "wolf_cave")>><</if>>
+		<<if typeof $eden.facility.transferIntroduced.tower isnot "boolean">><<set $eden.facility.transferIntroduced.tower to Object.values($eden.children).some(record => record?.transferSource === "tower")>><</if>>
+		<<if typeof $eden.facility.transferIntroduced.alex_cottage isnot "boolean">><<set $eden.facility.transferIntroduced.alex_cottage to Object.values($eden.children).some(record => record?.transferSource === "alex_cottage")>><</if>>
 		<<set $eden.facility.capacity to $eden.facility.expanded ? 6 : 3>>
 		<<if $eden.children is undefined or typeof $eden.children isnot "object" or Array.isArray($eden.children)>>
 			<<set $eden.children to {}>>

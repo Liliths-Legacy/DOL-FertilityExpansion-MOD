@@ -153,8 +153,8 @@
 
 		const training = document.createElement("div");
 		training.className = "eden-child-training";
-		const supportsAffection = window.EdenInteractions?.eligibleSpecies.includes(record.species);
-		const supportsTraining = window.EdenTraining?.eligibleSpecies.includes(record.species) && window.EdenAge?.isHumanoid(record, child) === true;
+		const supportsAffection = window.EdenInteractions?.isSupportedSpecies(record);
+		const supportsTraining = window.EdenTraining?.isSupportedSpecies(record) && window.EdenAge?.isHumanoid(record, child) === true;
 		const trainingLabel = document.createElement("span");
 		trainingLabel.className = "gold";
 		trainingLabel.textContent = "养成：";
@@ -264,7 +264,7 @@
 			source.append(sourceLabel, document.createTextNode(innate.fitnessSource.label));
 			block.append(source);
 		}
-		if (record.training?.skills && window.EdenTraining?.eligibleSpecies.includes(record.species) && window.EdenAge?.isHumanoid(record, child) === true) {
+		if (record.training?.skills && window.EdenTraining?.isSupportedSpecies(record) && window.EdenAge?.isHumanoid(record, child) === true) {
 			const skills = document.createElement("div");
 			const skillsLabel = document.createElement("span");
 			skillsLabel.className = "gold";

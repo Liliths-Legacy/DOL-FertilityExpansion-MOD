@@ -62,6 +62,10 @@
 		return record.bonding;
 	}
 
+	function isSupportedSpecies(record) {
+		return Boolean(record && window.EdenAge?.isCultivableSpecies(record));
+	}
+
 	function usesStagePool(eden, children, childId) {
 		const id = String(childId || "");
 		const record = eden?.children?.[id];
@@ -70,7 +74,7 @@
 			record &&
 			child &&
 			child.location === "eden_home" &&
-			eligibleSpecies.includes(record.species) &&
+			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true &&
 			config.stagePools[record.lifeStage]
 		);
@@ -138,7 +142,7 @@
 		const id = String(childId || "");
 		const record = eden?.children?.[id];
 		const child = children?.[id];
-		if (!record || !child || !eligibleSpecies.includes(record.species)) return { ok: false, gain: 0 };
+		if (!record || !child || !isSupportedSpecies(record)) return { ok: false, gain: 0 };
 		const category = categoryFor(eventId);
 		const baseGain = config.gains[category] || config.gains[config.defaultCategory];
 		const scale = timeScale(record, eden.settings);
@@ -165,6 +169,7 @@
 		eligibleSpecies,
 		config,
 		ensureBonding,
+		isSupportedSpecies,
 		usesStagePool,
 		prepareStageActivity,
 		createStageEvent,

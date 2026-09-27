@@ -149,9 +149,13 @@
 		return (
 			Boolean(record && child) &&
 			child.location === "eden_home" &&
-			eligibleSpecies.includes(record.species) &&
+			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true
 		);
+	}
+
+	function isSupportedSpecies(record) {
+		return Boolean(record && window.EdenAge?.isCultivableSpecies(record));
 	}
 
 	function getAvailableActivities(stage) {
@@ -361,6 +365,7 @@
 		normalizeTraining,
 		isEligible,
 		isSupportedResident,
+		isSupportedSpecies,
 		getAvailableActivities,
 		getActivityOptions,
 		sanitizePlanForStage,
