@@ -55,6 +55,11 @@
 <div class="eden-panel">
 	<<set _edenRecord to $eden.children[$eden.selectedChildId]>>
 	<<set _edenChild to $children[$eden.selectedChildId]>>
+	<<if _edenRecord and $eden.settings.immediateLifeStory and !$eden.lifeStoryVisitHandled and _edenRecord.adult?.outcome is "awayWork" and window.EdenLifeStory.ensureState(_edenRecord)?.status is "waiting">>
+		<<set $eden.lifeStoryVisitHandled to true>>
+		<<run window.EdenLifeStory.markDiscovered(_edenRecord)>>
+		<<goto "Eden Life Story Arrival">>
+	<</if>>
 	<<if !_edenRecord or !_edenChild or !_edenRecord.adult.settled>>
 		<p class="red">没有可以显示的成年结算。</p>
 	<<elseif _edenRecord.adult.outcome is "released">>
@@ -63,9 +68,9 @@
 	<<elseif _edenRecord.adult.outcome is "lost">>
 		<p><<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>离开了小镇，没有告诉你去向。</p>
 		<p>你仍在通讯录中保留了<<= _edenChild.gender is "m" ? "他" : "她">>的记录，但已无法与其取得联系。</p>
-	<<elseif _edenRecord.adult.outcome is "university">>
-		<p><<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>决定离开小镇，去外面上大学。</p>
-		<p>你们仍然可以通过通讯录保持联系。</p>
+	<<elseif _edenRecord.adult.outcome is "awayWork">>
+		<p><<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>决定离开小镇，去外面上大学，后来成为了<span class="gold"><<= window.EdenAdult.config.universityCareers[_edenRecord.adult.career]?.label || "公司职员">></span>。</p>
+		<p>你们仍然可以通过通讯录保持联系，今后<<= _edenChild.gender is "m" ? "他" : "她">>也可能每月给你汇钱。</p>
 	<<else>>
 		<p><<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>决定留在小镇，以<span class="gold"><<= window.EdenAdult.config.careers[_edenRecord.adult.career].label>></span>的身份生活。</p>
 		<<if _edenRecord.adult.career is "survival">>
@@ -88,13 +93,40 @@
 <<if _edenDueParentId>><<set $eden.breeding.activeBirthParentId to _edenDueParentId>><<goto "Eden Adult Birth">><</if>>
 <<effects>>
 <div class="eden-panel">
-	<<set _edenContactIds to Object.keys($eden.children).filter(id => window.EdenAdult.isContact($eden.children[id]))>>
+	<<set _edenContactsView to window.EdenAdult.ensureContactView($eden)>>
+	<<set _edenContactIds to window.EdenAdult.getSortedContactIds($eden)>>
 	<<if _edenContactIds.length is 0>>
 		<p>通讯录还是空的。在伊甸园长大的孩子成年并完成结算后，会出现在这里。</p>
 	<<else>>
+		<<set _edenContactPageSize to window.EdenAdult.contactPageSize>>
+		<<set _edenContactTotalPages to Math.max(1, Math.ceil(_edenContactIds.length / _edenContactPageSize))>>
+		<<set _edenContactsView.page to Math.clamp(_edenContactsView.page, 1, _edenContactTotalPages)>>
+		<<set _edenContactPageStart to (_edenContactsView.page - 1) * _edenContactPageSize>>
+		<<set _edenVisibleContactIds to _edenContactIds.slice(_edenContactPageStart, _edenContactPageStart + _edenContactPageSize)>>
 		<p>通讯录中有 <<= _edenContactIds.length>> 条记录。</p>
+		<div class="eden-contact-controls">
+			<label>时间
+				<<listbox "$eden.contactsView.timeOrder" autoselect>>
+					<<option "从新到旧" "newest">>
+					<<option "从旧到新" "oldest">>
+				<</listbox>>
+			</label>
+			<label>地点
+				<<listbox "$eden.contactsView.locationOrder" autoselect>>
+					<<option "不优先" "none">>
+					<<option "留在小镇优先" "townFirst">>
+					<<option "离开小镇优先" "awayFirst">>
+				<</listbox>>
+			</label>
+			<label><<checkbox "$eden.contactsView.remittanceFirst" false true autocheck>> 有未完成汇款的优先</label>
+			<<button "应用排序">>
+				<<set $eden.contactsView.page to 1>>
+				<<goto "Eden Contacts">>
+			<</button>>
+		</div>
 		<div class="eden-contact-list">
-			<<for _edenIndex, _edenContactId range _edenContactIds>>
+			<<for _edenPageIndex, _edenContactId range _edenVisibleContactIds>>
+				<<set _edenIndex to _edenContactPageStart + _edenPageIndex>>
 				<<set _edenContactChild to $children[_edenContactId]>>
 				<<set _edenContactRecord to $eden.children[_edenContactId]>>
 				<<set _edenPregnancyStatus to typeof window.EdenBreeding is "object" ? window.EdenBreeding.pregnancyStatus(_edenContactRecord) : null>>
@@ -104,13 +136,28 @@
 						<<if !_edenContactChild>>
 							<span class="grey">无法读取的通讯录记录：<<= Util.escapeMarkup(_edenContactId)>></span>
 						<<else>>
-							<p><span class="gold"><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>></span> <span class="eden-child-meta">（<<= window.EdenAdult.outcomeLabel(_edenContactRecord)>>）</span> ｜ <<link "孩子信息" "Eden Child Info">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
-							<p>好感：<<= Math.round(_edenContactRecord.affection)>><br>
-								学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>｜体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>｜社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>｜意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>></p>
+							<p><span class="gold"><<= Util.escapeMarkup(_edenContactChild.name || "未命名的孩子")>></span> ｜ <<link "孩子信息" "Eden Child Info">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
+							<p><span class="gold">天性：</span>
+								容貌 <<= Math.round(_edenContactRecord.innate.appearance)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.appearance)>>）｜
+								体能 <<= Math.round(_edenContactRecord.innate.fitness)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.fitness)>>）｜
+								智力 <<= Math.round(_edenContactRecord.innate.intelligence)>>（<<= window.EdenTraits.grade(_edenContactRecord.innate.intelligence)>>）｜
+								性格 <<= window.EdenTraits.personalityLabel(_edenContactRecord.innate.personality)>><br>
+								<span class="gold">特质：</span>
+								学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.knowledge)>>）｜
+								体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.fitness)>>）｜
+								社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.social)>>）｜
+								意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>（<<= window.EdenTraits.grade(_edenContactRecord.training.skills.awareness)>>）｜
+								好感 <<= Math.round(_edenContactRecord.affection)>></p>
 							<<if _edenPregnancyStatus>>
 								<p>孕期：<<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</p>
 							<</if>>
 							<p><span class="gold">简介：</span><<if _edenContactRecord.profile>><<= Util.escapeMarkup(_edenContactRecord.profile)>><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></p>
+							<p><span class="gold">成年去向：</span><<= window.EdenAdult.destinationLabel(_edenContactRecord)>> ｜ <<= window.EdenAdult.adultRoleLabel(_edenContactRecord)>></p>
+							<<if typeof window.EdenLifeStory is "object" and window.EdenLifeStory.canRead(_edenContactRecord)>>
+								<p><span class="gold">人生来信：</span><<link "再看一遍孩子的来信" "Eden Life Story Reread">><<set $eden.selectedChildId to _edenContactId>><</link>></p>
+							<<elseif typeof window.EdenLifeStory is "object" and window.EdenLifeStory.hasLetter(_edenContactRecord)>>
+								<p><<link "打开来信" "Eden Life Story Generate">><<set $eden.selectedChildId to _edenContactId>><</link>></p>
+							<</if>>
 							<<if _edenContactRecord.adult.contactStatus is "lost">>
 								<p class="grey">你无法与<<= _edenContactChild.gender is "m" ? "他" : "她">>取得联系。</p>
 							<<else>>
@@ -118,7 +165,7 @@
 									<<link "聊天">>
 										<<replace `"#" + _edenResponseId`>><span><<= Util.escapeMarkup(_edenContactChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
 									<</link>>
-									<<if _edenContactRecord.adult.outcome is "work" and window.EdenAdult.getUnclaimedMonths(_edenContactRecord) gt 0>>
+									<<if window.EdenAdult.getUnclaimedMonths(_edenContactRecord) gt 0>>
 										 | <<link "查收汇款">>
 											<<set _edenRemittance to window.EdenAdult.claimRemittance($eden.children[_edenContactId])>>
 											<<if _edenRemittance.pennies gt 0>><<money _edenRemittance.pennies "edenAdultRemittance">><</if>>
@@ -147,6 +194,15 @@
 				<</capture>>
 			<</for>>
 		</div>
+		<div class="eden-contact-pagination">
+			<<if _edenContactsView.page gt 1>>
+				<<link "上一页" "Eden Contacts">><<set $eden.contactsView.page to $eden.contactsView.page - 1>><</link>>
+			<<else>><span class="grey">上一页</span><</if>>
+			<span>第 <<= _edenContactsView.page>> / <<= _edenContactTotalPages>> 页</span>
+			<<if _edenContactsView.page lt _edenContactTotalPages>>
+				<<link "下一页" "Eden Contacts">><<set $eden.contactsView.page to $eden.contactsView.page + 1>><</link>>
+			<<else>><span class="grey">下一页</span><</if>>
+		</div>
 	<</if>>
 	<br>
 		<<link [[返回伊甸园|Eden Home]]>><</link>>
@@ -164,6 +220,7 @@
 		<p><span class="gold"><<= Util.escapeMarkup(_edenChild.name || "未命名的孩子")>></span> <span class="eden-child-meta">（<<= window.EdenAdult.outcomeLabel(_edenRecord)>>）</span></p>
 		<p>类型：<<= Util.escapeMarkup(_edenChild.type || "unknown")>><br>
 			成长：<<= _edenRecord.speciesLabel || "其他">> · <<= _edenRecord.ageDays || 0>>天 · <<= _edenRecord.lifeStageLabel || "婴儿期">><br>
+			<<if _edenRecord.adult?.settled>>成年时间：已成年 <<= window.EdenAdult.adulthoodDays(_edenRecord)>> 天<br><</if>>
 			<<if _edenChild.born>>出生：<<= _edenChild.born.year>>年 <<= _edenChild.born.month>> <<= _edenChild.born.day>>日<br><</if>>
 			<<if _edenChild.motherKnown>>母亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.mother, true))>><br><</if>>
 			<<if _edenChild.fatherKnown>>父亲：<<= Util.escapeMarkup(pregnancyNameCorrection(_edenChild.father, true))>><</if>></p>
@@ -228,15 +285,13 @@
 			<<button "聊天">>
 				<<replace "#eden-contact-response">><span><<= Util.escapeMarkup(_edenChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
 			<</button>>
-			<<if _edenRecord.adult.outcome is "work">>
-				<<set _edenUnclaimedMonths to window.EdenAdult.getUnclaimedMonths(_edenRecord)>>
-				<<if _edenUnclaimedMonths gt 0>>
-					<<button "查收汇款">>
-						<<set _edenRemittance to window.EdenAdult.claimRemittance($eden.children[$eden.selectedChildId])>>
-						<<if _edenRemittance.pennies gt 0>><<money _edenRemittance.pennies "edenAdultRemittance">><</if>>
-						<<replace "#eden-contact-response">><span class="green"><<= _edenRemittance.message>><<if _edenRemittance.pennies gt 0>> 金额：<<printmoney _edenRemittance.pennies>><</if>></span><</replace>>
-					<</button>>
-				<</if>>
+			<<set _edenUnclaimedMonths to window.EdenAdult.getUnclaimedMonths(_edenRecord)>>
+			<<if _edenUnclaimedMonths gt 0>>
+				<<button "查收汇款">>
+					<<set _edenRemittance to window.EdenAdult.claimRemittance($eden.children[$eden.selectedChildId])>>
+					<<if _edenRemittance.pennies gt 0>><<money _edenRemittance.pennies "edenAdultRemittance">><</if>>
+					<<replace "#eden-contact-response">><span class="green"><<= _edenRemittance.message>><<if _edenRemittance.pennies gt 0>> 金额：<<printmoney _edenRemittance.pennies>><</if>></span><</replace>>
+				<</button>>
 			<</if>>
 			<<if window.EdenAdult.canInviteIntimacy(_edenRecord)>>
 				<<button "发出亲密邀请">>

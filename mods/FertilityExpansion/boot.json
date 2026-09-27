@@ -4,13 +4,16 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "0.8.12",
+  "version": "1.2.0",
   "styleFileList": [],
   "scriptFileList": [],
   "tweeFileList": [],
   "imgFileList": [],
   "additionFile": [
     "README.md"
+  ],
+  "ignoreList": [
+    "img/ui/eden-letter-opening.png"
   ],
   "addonPlugin": [
     {
@@ -50,6 +53,20 @@
           "passage": "Widgets Orgasm",
           "findString": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
           "replace": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>\n\t\t\t\t\t\t\t\t<<case \"hawk\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", false)>>\n\t\t\t\t\t\t\t\t<<case \"harpy\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets Combat",
+          "findString": "\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"hand\"}`>>\n\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"hand\"}`>>",
+          "replace": "\t<<if typeof window.EdenPregnancySettings is \"object\" and window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"hand\")>>\n\t\t/* Gwylan's fairy-pregnancy contact was handled by FertilityExpansion. */\n\t<<else>>\n\t\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"hand\"}`>>\n\t\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"hand\"}`>>\n\t<</if>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets Combat",
+          "findString": "\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"kiss\"}`>>\n\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"kiss\"}`>>",
+          "replace": "\t<<if typeof window.EdenPregnancySettings is \"object\" and window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"kiss\")>>\n\t\t/* Gwylan's fairy-pregnancy contact was handled by FertilityExpansion. */\n\t<<else>>\n\t\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"kiss\"}`>>\n\t\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"kiss\"}`>>\n\t<</if>>",
           "debug": false,
           "all": false
         }

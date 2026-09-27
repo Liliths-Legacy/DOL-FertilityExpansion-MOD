@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const dataVersion = 1;
+	const dataVersion = 3;
 	const gradeRanges = Object.freeze([
 		Object.freeze({ min: 95, grade: "S" }),
 		Object.freeze({ min: 80, grade: "A" }),
@@ -16,15 +16,30 @@
 		fit: Object.freeze({ min: 60, max: 79, label: "健壮体格" }),
 		strong: Object.freeze({ min: 75, max: 100, label: "强壮体格" }),
 	});
+	const speciesInnateModifiers = Object.freeze({
+		human: Object.freeze({ appearance: 0, fitness: 0, intelligence: 0, temperament: 0 }),
+		bird: Object.freeze({ appearance: 4, fitness: -3, intelligence: 2, temperament: 5 }),
+		cat: Object.freeze({ appearance: 0, fitness: 1, intelligence: 2, temperament: -5 }),
+		fox: Object.freeze({ appearance: 3, fitness: -2, intelligence: 2, temperament: 2 }),
+		wolf: Object.freeze({ appearance: 0, fitness: 4, intelligence: -1, temperament: 3 }),
+		cow: Object.freeze({ appearance: 0, fitness: 5, intelligence: -2, temperament: -4 }),
+	});
+	const innateFields = Object.freeze(["appearance", "fitness", "intelligence", "temperament"]);
 	const physiqueDescriptions = Object.freeze({
 		weak: Object.freeze(["slight", "petite", "thin", "slender", "slim", "mousy"]),
 		light: Object.freeze(["lithe", "lean", "lanky", "lissome", "graceful", "trim", "cute"]),
+		average: Object.freeze(["wide-eyed", "curvy", "plump", "plush", "voluptuous", "lush"]),
 		fit: Object.freeze(["taut", "fit", "toned", "shapely", "robust", "rugged", "broad", "large", "fierce"]),
 		strong: Object.freeze([
 			"muscular",
 			"bulky",
 			"burly",
 			"brutish",
+			"vulgar",
+			"chubby",
+			"heavyset",
+			"minor demon",
+			"demon",
 			"enormous",
 			"huge",
 			"mighty",
@@ -32,7 +47,6 @@
 			"colossal",
 			"humongous",
 			"girthy",
-			"demon",
 		]),
 	});
 
@@ -67,6 +81,37 @@
 		return ["identical", child.mother, child.father, child.birthId, child.type, dateKey(child.conceived), dateKey(child.born)].join("|");
 	}
 
+	function inferSpecies(child, storedSpecies) {
+		if (speciesInnateModifiers[storedSpecies]) return storedSpecies;
+		const transformation = child?.features?.beastTransform;
+		if (["bird", "cat", "fox", "wolf", "cow"].includes(transformation)) return transformation;
+		if (child?.type === "hawk") return "bird";
+		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
+		return "human";
+	}
+
+	function getSpeciesModifiers(speciesKey) {
+		return speciesInnateModifiers[speciesKey] || speciesInnateModifiers.human;
+	}
+
+	function applySpeciesModifiers(values, modifiers, appearanceMinimum = 1) {
+		return {
+			appearance: clamp(values.appearance + modifiers.appearance, appearanceMinimum, 100),
+			fitness: clamp(values.fitness + modifiers.fitness),
+			intelligence: clamp(values.intelligence + modifiers.intelligence),
+			temperament: clamp(values.temperament + modifiers.temperament),
+		};
+	}
+
+	function speciesModifierDelta(childModifiers, parentModifiers) {
+		return {
+			appearance: childModifiers.appearance - parentModifiers.appearance,
+			fitness: childModifiers.fitness - parentModifiers.fitness,
+			intelligence: childModifiers.intelligence - parentModifiers.intelligence,
+			temperament: childModifiers.temperament - parentModifiers.temperament,
+		};
+	}
+
 	function getVariables() {
 		return window.SugarCube?.State?.variables || {};
 	}
@@ -82,44 +127,60 @@
 		return isNamedParent(child?.mother, variables) || isNamedParent(child?.father, variables);
 	}
 
-	function findFatherRecord(fatherName, variables = getVariables()) {
-		const fathers = variables.parentList?.fathers;
-		if (!Array.isArray(fathers)) return null;
-		return fathers.find(parent => parent?.name === fatherName) || null;
+	function getNonPcParent(child) {
+		for (const [role, side] of [
+			["mother", "mothers"],
+			["father", "fathers"],
+		]) {
+			const name = child?.[role];
+			if (name && String(name).toLowerCase() !== "pc") return { name, role, side };
+		}
+		return null;
+	}
+
+	function findParentRecord(parent, variables = getVariables()) {
+		if (!parent) return null;
+		const primary = variables.parentList?.[parent.side];
+		if (Array.isArray(primary)) {
+			const match = primary.find(entry => entry?.name === parent.name);
+			if (match) return match;
+		}
+		for (const side of ["mothers", "fathers"]) {
+			const list = variables.parentList?.[side];
+			if (!Array.isArray(list)) continue;
+			const match = list.find(entry => entry?.name === parent.name);
+			if (match) return match;
+		}
+		return null;
 	}
 
 	function categorizeDescription(description) {
 		const normalized = String(description || "").toLowerCase();
-		for (const category of ["strong", "fit", "light", "weak"]) {
+		for (const category of ["strong", "fit", "average", "light", "weak"]) {
 			if (physiqueDescriptions[category].some(word => normalized === word || normalized.startsWith(`${word} `))) return category;
 		}
 		return "average";
 	}
 
 	function getFitnessBasis(child, variables = getVariables()) {
-		if (child?.father === "pc") {
-			const physique = Number(variables.physique);
-			const physiqueSize = Number(variables.physiquesize);
-			if (Number.isFinite(physique) && Number.isFinite(physiqueSize) && physiqueSize > 0) {
-				return {
-					fixed: clamp((physique / physiqueSize) * 100),
-					label: "PC体格",
-					kind: "pc",
-				};
-			}
-		}
-
-		const father = findFatherRecord(child?.father, variables);
-		const description = father?.npc?.description || father?.npc?.fullDescription || father?.name || child?.father;
+		const nonPcParent = getNonPcParent(child);
+		const parentRecord = findParentRecord(nonPcParent, variables);
+		const namedNpc = nonPcParent ? window.C?.npc?.[nonPcParent.name] : null;
+		const parentNpc = parentRecord?.npc || namedNpc;
+		const description = parentNpc?.description || parentNpc?.fullDescription || parentRecord?.name || nonPcParent?.name;
 		const categoryKey = categorizeDescription(description);
 		const category = fitnessCategories[categoryKey];
-		const named = isNamedParent(child?.father, variables);
+		const named = isNamedParent(nonPcParent?.name, variables);
+		const roleLabel = nonPcParent?.role === "mother" ? "非PC母亲" : nonPcParent?.role === "father" ? "非PC父亲" : "非PC父母未知";
+		const categoryLabel = named && categoryKey === "average" ? "普通体格（命名NPC）" : category.label;
 		return {
 			min: category.min,
 			max: category.max,
-			label: named && categoryKey === "average" ? "普通体格（命名NPC）" : category.label,
-			kind: named ? "namedNpc" : father ? "recordedNpc" : "fallback",
+			label: `${roleLabel}·${categoryLabel}`,
+			kind: named ? "namedNpc" : parentRecord ? "recordedNpc" : "fallback",
 			description: description || null,
+			parentName: nonPcParent?.name || null,
+			parentRole: nonPcParent?.role || null,
 		};
 	}
 
@@ -134,16 +195,21 @@
 		const namedParent = hasNamedParent(child, variables);
 		const appearanceMinimum = namedParent ? 60 : 1;
 		const fitnessBasis = getFitnessBasis(child, variables);
-		const base = shared?.base || {
+		const speciesKey = inferSpecies(child);
+		const speciesModifiers = getSpeciesModifiers(speciesKey);
+		const rawBase = {
 			appearance: stableInteger(`${seedPrefix}|appearance`, appearanceMinimum, 100),
 			fitness: fitnessBasis.fixed ?? stableInteger(`${seedPrefix}|fitness`, fitnessBasis.min, fitnessBasis.max),
 			intelligence: stableInteger(`${seedPrefix}|intelligence`, 1, 100),
 			temperament: stableInteger(`${seedPrefix}|temperament`, 1, 100),
 		};
+		const base = shared?.base || applySpeciesModifiers(rawBase, speciesModifiers, appearanceMinimum);
 		const fitnessSource = shared?.fitnessSource || {
 			kind: fitnessBasis.kind,
 			label: fitnessBasis.label,
 			description: fitnessBasis.description || null,
+			parentName: fitnessBasis.parentName || null,
+			parentRole: fitnessBasis.parentRole || null,
 		};
 
 		const appearance = clamp(base.appearance + (identical ? individualOffset(childId, "appearance", 3) : 0), appearanceMinimum, 100);
@@ -161,6 +227,8 @@
 			groupKey,
 			identical,
 			namedParentAppearanceFloor: namedParent,
+			speciesAtGeneration: speciesKey,
+			speciesModifiersApplied: { ...speciesModifiers },
 			base: { ...base },
 			fitnessSource: { ...fitnessSource },
 		};
@@ -172,11 +240,16 @@
 		const identical = Boolean(child?.features?.identical);
 		const parent = parentRecord?.innate;
 		if (!isValidInnate(parent)) return generateInnate(childId, child, variables, shared);
+		const speciesKey = inferSpecies(child);
+		const speciesModifiers = getSpeciesModifiers(speciesKey);
+		const parentSpeciesKey = parent.speciesAtGeneration || parentRecord.species || "human";
+		const parentSpeciesModifiers = parent.speciesModifiersApplied || getSpeciesModifiers(parentSpeciesKey);
+		const modifierDelta = speciesModifierDelta(speciesModifiers, parentSpeciesModifiers);
 		const base = shared?.base || {
-			appearance: clamp(parent.appearance + stableInteger(`${seedPrefix}|appearance`, -10, 10)),
-			fitness: clamp(parent.fitness + stableInteger(`${seedPrefix}|fitness`, -10, 10)),
-			intelligence: clamp(parent.intelligence + stableInteger(`${seedPrefix}|intelligence`, -10, 10)),
-			temperament: clamp(parent.temperament + stableInteger(`${seedPrefix}|temperament`, -15, 15)),
+			appearance: clamp(parent.appearance + stableInteger(`${seedPrefix}|appearance`, -10, 10) + modifierDelta.appearance),
+			fitness: clamp(parent.fitness + stableInteger(`${seedPrefix}|fitness`, -10, 10) + modifierDelta.fitness),
+			intelligence: clamp(parent.intelligence + stableInteger(`${seedPrefix}|intelligence`, -10, 10) + modifierDelta.intelligence),
+			temperament: clamp(parent.temperament + stableInteger(`${seedPrefix}|temperament`, -15, 15) + modifierDelta.temperament),
 		};
 		const appearance = clamp(base.appearance + (identical ? individualOffset(childId, "appearance", 3) : 0));
 		const fitness = clamp(base.fitness + (identical ? individualOffset(childId, "fitness", 3) : 0));
@@ -192,23 +265,66 @@
 			groupKey,
 			identical,
 			namedParentAppearanceFloor: false,
+			speciesAtGeneration: speciesKey,
+			speciesModifiersApplied: { ...speciesModifiers },
 			base: { ...base },
 			fitnessSource: { kind: "edenParent", label: "成年孩子遗传", description: null },
 			inheritedFrom: String(parentRecord.childId),
 		};
 	}
 
-	function isValidInnate(innate) {
+	function hasCompleteInnateValues(innate) {
 		return (
-			innate?.dataVersion === dataVersion &&
-			[innate.appearance, innate.fitness, innate.intelligence, innate.temperament].every(value => Number.isFinite(value)) &&
-			[innate.base?.appearance, innate.base?.fitness, innate.base?.intelligence, innate.base?.temperament].every(value => Number.isFinite(value)) &&
-			["quiet", "active"].includes(innate.personality)
+			[innate?.appearance, innate?.fitness, innate?.intelligence, innate?.temperament].every(value => Number.isFinite(value)) &&
+			[innate?.base?.appearance, innate?.base?.fitness, innate?.base?.intelligence, innate?.base?.temperament].every(value => Number.isFinite(value)) &&
+			["quiet", "active"].includes(innate?.personality)
 		);
+	}
+
+	function migrateInnate(record, child, childId, variables = getVariables(), shared = null) {
+		const innate = record?.innate;
+		if (!hasCompleteInnateValues(innate)) return;
+		if (innate.dataVersion === 1) {
+			/* Backcross descendants already inherit fitness from the non-PC Eden parent. */
+			if (!innate.inheritedFrom) {
+				const groupKey = getGroupKey(childId, child);
+				const identical = Boolean(child?.features?.identical);
+				const fitnessBasis = getFitnessBasis(child, variables);
+				const seedPrefix = `eden-traits|v2|${groupKey}`;
+				const baseFitness = shared?.base?.fitness ?? stableInteger(`${seedPrefix}|fitness`, fitnessBasis.min, fitnessBasis.max);
+				innate.groupKey = groupKey;
+				innate.identical = identical;
+				innate.base = { ...innate.base, fitness: baseFitness };
+				innate.fitness = clamp(baseFitness + (identical ? individualOffset(childId, "fitness", 3) : 0));
+				innate.fitnessSource = {
+					kind: fitnessBasis.kind,
+					label: fitnessBasis.label,
+					description: fitnessBasis.description || null,
+					parentName: fitnessBasis.parentName || null,
+					parentRole: fitnessBasis.parentRole || null,
+				};
+			}
+			innate.dataVersion = 2;
+		}
+		if (innate.dataVersion !== 2) return;
+		const speciesKey = inferSpecies(child, record.species);
+		const speciesModifiers = getSpeciesModifiers(speciesKey);
+		innate.base = applySpeciesModifiers(innate.base, speciesModifiers, innate.namedParentAppearanceFloor ? 60 : 1);
+		const adjusted = applySpeciesModifiers(innate, speciesModifiers, innate.namedParentAppearanceFloor ? 60 : 1);
+		for (const field of innateFields) innate[field] = adjusted[field];
+		innate.personality = innate.temperament <= 50 ? "quiet" : "active";
+		innate.speciesAtGeneration = speciesKey;
+		innate.speciesModifiersApplied = { ...speciesModifiers };
+		innate.dataVersion = dataVersion;
+	}
+
+	function isValidInnate(innate) {
+		return innate?.dataVersion === dataVersion && hasCompleteInnateValues(innate);
 	}
 
 	function syncRecord(record, child, childId, variables = getVariables(), shared = null) {
 		if (!record || !child || !childId) return null;
+		migrateInnate(record, child, childId, variables, shared);
 		if (!isValidInnate(record.innate)) {
 			const parentRecord = record.geneticParentId ? variables.eden?.children?.[record.geneticParentId] : null;
 			record.innate = parentRecord
@@ -220,6 +336,9 @@
 
 	function syncAll(eden, children, variables = getVariables()) {
 		if (!eden?.children || !children) return;
+		Object.entries(eden.children).forEach(([childId, record]) => {
+			migrateInnate(record, children[childId], childId, variables);
+		});
 		const sharedGroups = new Map();
 		Object.values(eden.children).forEach(record => {
 			const innate = record?.innate;
@@ -245,14 +364,20 @@
 		dataVersion,
 		gradeRanges,
 		fitnessCategories,
+		speciesInnateModifiers,
 		grade,
 		getGroupKey,
+		inferSpecies,
+		getSpeciesModifiers,
 		isNamedParent,
 		hasNamedParent,
+		getNonPcParent,
+		findParentRecord,
 		categorizeDescription,
 		getFitnessBasis,
 		generateInnate,
 		generateInheritedInnate,
+		migrateInnate,
 		syncRecord,
 		syncAll,
 		personalityLabel,

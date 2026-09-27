@@ -1,6 +1,6 @@
 :: Eden Interaction Widgets [widget]
 /*
-	原作婴儿互动完成时的伊甸园接口，以及伊甸园幼儿、少儿、少年互动池。
+	原作婴儿互动完成时的伊甸园接口，以及伊甸园幼儿、少儿、少年、成年互动池。
 	互动状态、按钮和结果正文集中放在本文件，不直接改写发行版源码。
 */
 <<widget "edenRecordChildInteraction">><<silently>>
@@ -57,11 +57,28 @@
 				<<set _edenStatusText to "孩子正折腾一项新爱好，很想让你看看成果。">><<set _edenActionText to "认真听孩子介绍">><<set _edenActionMinutes to 30>>
 			<<case "adolescentSpace">>
 				<<set _edenStatusText to "孩子独自坐在一边，似乎想要一点自己的空间。">><<set _edenActionText to "打个招呼后安静陪伴">><<set _edenActionMinutes to 15>>
+
+			<<case "adultTea">>
+				<<set _edenStatusText to "孩子正给自己倒茶，看见你时顺手多拿出了一只杯子。">><<set _edenActionText to "坐下来喝杯茶">><<set _edenActionMinutes to 30>>
+			<<case "adultMeal">>
+				<<set _edenStatusText to "孩子在厨房里准备一顿简单的饭菜，灶台上正冒着热气。">><<set _edenActionText to "一起准备晚餐">><<set _edenActionMinutes to 40>>
+			<<case "adultWalk">>
+				<<set _edenStatusText to "孩子打算出去走走，临出门前回头看向了你。">><<set _edenActionText to "陪孩子散步">><<set _edenActionMinutes to 30>>
+			<<case "adultTroubles">>
+				<<set _edenStatusText to "孩子坐在一旁揉着眉心，似乎被最近的生活难题困扰着。">><<set _edenActionText to "听孩子说说烦恼">><<set _edenActionMinutes to 30>>
+			<<case "adultHobby">>
+				<<set _edenStatusText to "孩子正在摆弄自己最近迷上的东西，并不介意让你在旁边看看。">><<set _edenActionText to "聊聊孩子的爱好">><<set _edenActionMinutes to 30>>
+			<<case "adultQuietCompany">>
+				<<set _edenStatusText to "孩子安静地待在房间里，各自做事似乎也是一种难得的放松。">><<set _edenActionText to "安静地陪一会儿">><<set _edenActionMinutes to 20>>
 		<</switch>>
 		<<set _edenStageActivityId to _edenStageActivity.id>>
 		<<= Util.escapeMarkup(_edenStatusText)>>
 		<<if _edenStageActivity.completed>>
-			<br><span class="grey">你的陪伴让<<childname _edenStageChildId>>很开心，看起来可以持续一段时间。</span>
+			<<if _edenStageActivity.stage is "adult">>
+				<br><span class="grey">你们已经相处过一段时间，之后再来看看吧。</span>
+			<<else>>
+				<br><span class="grey">你的陪伴让<<childname _edenStageChildId>>很开心，看起来可以持续一段时间。</span>
+			<</if>>
 		<<else>>
 			<<capture _edenStageChildId _edenStageActivityId _edenActionText _edenActionMinutes>>
 				<br><<link `_edenActionText + "（" + _edenActionMinutes + "分钟）"` "Eden Child Interaction Event">>
@@ -110,6 +127,13 @@
 			<<case "adolescentCook">><p>你和<<childname>>在厨房里忙活了好一阵。成品并不完美，但孩子还是把它们认真地端上了桌。</p>
 			<<case "adolescentHobby">><p><<childname>>兴致勃勃地向你介绍自己的新爱好。你认真听着，还问了几个问题，让孩子说得更加起劲。</p>
 			<<case "adolescentSpace">><p>你和<<childname>>打了个招呼，没有追问孩子为什么沉默。你只是安静地留在附近，给孩子需要的空间。</p>
+
+			<<case "adultTea">><p>你和<<childname>>面对面坐下，喝着热茶聊起近来的琐事。话题并不重要，能够这样坐在一起已经足够惬意。</p>
+			<<case "adultMeal">><p>你和<<childname>>在厨房里分工忙碌，随后一起吃完了刚做好的饭菜。餐桌上的气氛熟悉而放松。</p>
+			<<case "adultWalk">><p>你陪<<childname>>在附近慢慢走了一圈。你们聊了一些近况，也享受了一阵不需要填满的沉默。</p>
+			<<case "adultTroubles">><p>你听<<childname>>说起最近遇到的难题，没有急着替孩子作决定。说到最后，孩子心里似乎已经有了自己的答案。</p>
+			<<case "adultHobby">><p><<childname>>向你展示了最近投入时间的爱好。你认真听着孩子的介绍，也渐渐明白了其中让人着迷的地方。</p>
+			<<case "adultQuietCompany">><p>你和<<childname>>各自做着自己的事，偶尔说上一两句话。无需刻意交谈的陪伴让这段时间显得格外安稳。</p>
 			<<default>><p>你和<<childname>>一起度过了一段时间。</p>
 		<</switch>>
 		<<if _edenInteractionResult.ok and _edenInteractionResult.gain gt 0>>

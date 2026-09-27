@@ -7,12 +7,15 @@
 <<widget "edenSetup">><<silently>>
 	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
 		<<set $eden to {
-			schemaVersion: 10,
+			schemaVersion: 13,
 			children: {},
 			settings: {
 				maturityDays: 90,
 				neverAutoAdult: false,
-				resetAgeOnTransfer: false
+				resetAgeOnTransfer: false,
+				lifeStoryPrompt: "",
+				immediateLifeStory: false,
+				allowSterilePregnancy: false
 			},
 			facility: {
 				owned: false,
@@ -106,6 +109,24 @@
 			<<if typeof $eden.settings.resetAgeOnTransfer isnot "boolean">><<set $eden.settings.resetAgeOnTransfer to false>><</if>>
 			<<set $eden.schemaVersion to 10>>
 		<</if>>
+		/* Schema 10 -> 11: add the save-bound, editable life-story creative prompt. */
+		<<if $eden.schemaVersion lt 11>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
+			<<if typeof $eden.settings.lifeStoryPrompt isnot "string">><<set $eden.settings.lifeStoryPrompt to "">><</if>>
+			<<set $eden.schemaVersion to 11>>
+		<</if>>
+		/* Schema 11 -> 12: add immediate-versus-random life-story timing. */
+		<<if $eden.schemaVersion lt 12>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
+			<<if typeof $eden.settings.immediateLifeStory isnot "boolean">><<set $eden.settings.immediateLifeStory to false>><</if>>
+			<<set $eden.schemaVersion to 12>>
+		<</if>>
+		/* Schema 12 -> 13: add the named-NPC pregnancy unlock. */
+		<<if $eden.schemaVersion lt 13>>
+			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
+			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
+			<<set $eden.schemaVersion to 13>>
+		<</if>>
 		<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
 			<<set $eden.settings to {}>>
 		<</if>>
@@ -113,6 +134,9 @@
 			<<if typeof $eden.settings.maturityDays isnot "number" or $eden.settings.maturityDays lt 30>><<set $eden.settings.maturityDays to 90>><</if>>
 			<<if typeof $eden.settings.neverAutoAdult isnot "boolean">><<set $eden.settings.neverAutoAdult to false>><</if>>
 			<<if typeof $eden.settings.resetAgeOnTransfer isnot "boolean">><<set $eden.settings.resetAgeOnTransfer to false>><</if>>
+			<<if typeof $eden.settings.lifeStoryPrompt isnot "string">><<set $eden.settings.lifeStoryPrompt to "">><</if>>
+			<<if typeof $eden.settings.immediateLifeStory isnot "boolean">><<set $eden.settings.immediateLifeStory to false>><</if>>
+			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
 		<</if>>
 		<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
 			<<set $eden.facility to {}>>
@@ -140,12 +164,14 @@
 	<</if>>
 	<<if typeof window.EdenAge is "object">><<run window.EdenAge.normalizeSettings($options.eden)>><</if>>
 	<<set $eden.settings to clone($options.eden)>>
+	<<if typeof window.EdenPregnancySettings is "object">><<run window.EdenPregnancySettings.apply()>><</if>>
 	<<edenSyncChildren>>
 	<<if typeof window.EdenAge is "object">><<run window.EdenAge.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenTraits is "object">><<run window.EdenTraits.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenTraining is "object">><<run window.EdenTraining.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenAdult is "object">><<run window.EdenAdult.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenLifeStory is "object">><<run window.EdenLifeStory.syncAll($eden)>><</if>>
 <</silently>><</widget>>
 
 <<widget "edenSyncChildren">><<silently>>

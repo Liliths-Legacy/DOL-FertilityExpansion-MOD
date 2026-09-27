@@ -13,7 +13,7 @@
 	<<if $farm_stage isnot undefined>>
 		<div class="eden-world-entry">
 			<<if $eden.facility.owned>>
-				<<edenLocationIcon>><<link [[前往伊甸园 (0:05)|Eden Home]]>><<pass 5>><</link>>
+				<<edenLocationIcon>><<link [[前往伊甸园 (0:05)|Eden Home]]>><<set $eden.lifeStoryVisitHandled to false>><<pass 5>><</link>>
 			<<else>>
 				<<link [[查看待售房产|Eden Property]]>><</link>>
 			<</if>>
@@ -28,7 +28,7 @@
 		<p>你还不知道这处房产位于哪里。</p>
 	<<elseif $eden.facility.owned>>
 		<p>这座小屋已经属于你。你给它取名为“伊甸园”。</p>
-		<<edenLocationIcon>><<link [[前往伊甸园|Eden Home]]>><</link>>
+		<<edenLocationIcon>><<link [[前往伊甸园|Eden Home]]>><<set $eden.lifeStoryVisitHandled to false>><</link>>
 	<<else>>
 		<p>Alex的农场附近有一座带围地的小屋正在出售。小屋带有卧室、浴室、玩具房、图书室和小花园，初始可以照看三名孩子。</p>
 		<p>购房价格：<<printmoney 35000000>></p>
@@ -38,6 +38,7 @@
 				<<set $eden.facility.owned to true>>
 				<<set $eden.facility.expanded to false>>
 				<<set $eden.facility.capacity to 3>>
+				<<set $eden.lifeStoryVisitHandled to false>>
 			<</link>>
 		<<else>>
 			<span class="red">你的钱不够。</span>
@@ -50,7 +51,17 @@
 :: Eden Home
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">>
 <<set _edenDueParentId to typeof window.EdenBreeding is "object" ? window.EdenBreeding.nextDue($eden) : null>>
-<<if _edenDueParentId>><<set $eden.breeding.activeBirthParentId to _edenDueParentId>><<goto "Eden Adult Birth">><</if>>
+<<if _edenDueParentId>>
+	<<set $eden.breeding.activeBirthParentId to _edenDueParentId>><<goto "Eden Adult Birth">>
+<<elseif !$eden.lifeStoryVisitHandled>>
+	<<set _edenDueLetterChildId to typeof window.EdenLifeStory is "object" ? window.EdenLifeStory.nextDue($eden) : null>>
+	<<if _edenDueLetterChildId>>
+		<<set $eden.lifeStoryVisitHandled to true>>
+		<<set $eden.selectedChildId to _edenDueLetterChildId>>
+		<<run window.EdenLifeStory.markDiscovered($eden.children[_edenDueLetterChildId])>>
+		<<goto "Eden Life Story Arrival">>
+	<</if>>
+<</if>>
 <<effects>>
 <div class="eden-panel">
 	<<if !$eden.facility.owned>>

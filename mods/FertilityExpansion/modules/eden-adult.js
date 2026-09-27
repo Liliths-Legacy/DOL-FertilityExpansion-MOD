@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const dataVersion = 2;
+	const dataVersion = 3;
 	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow"]);
 	const config = Object.freeze({
 		affection: Object.freeze({
@@ -13,6 +13,57 @@
 			minimumAwareness: 60,
 			minimumScore: 65,
 			weights: Object.freeze({ knowledge: 0.6, awareness: 0.25, social: 0.15 }),
+		}),
+		universityCareers: Object.freeze({
+			legislator: Object.freeze({
+				label: "议员",
+				minimumScore: 76,
+				minimums: Object.freeze({ social: 70, awareness: 70 }),
+				weights: Object.freeze({ social: 0.35, awareness: 0.25, appearance: 0.15, activeAffinity: 0.1, knowledge: 0.1, intelligence: 0.05 }),
+				monthlyRemittance: 3200,
+			}),
+			athlete: Object.freeze({
+				label: "运动员",
+				minimumScore: 74,
+				minimums: Object.freeze({ fitness: 75, innateFitness: 60 }),
+				weights: Object.freeze({ fitness: 0.45, innateFitness: 0.25, awareness: 0.1, social: 0.1, activeAffinity: 0.1 }),
+				monthlyRemittance: 2800,
+			}),
+			professor: Object.freeze({
+				label: "大学教授",
+				minimumScore: 78,
+				minimums: Object.freeze({ knowledge: 80, intelligence: 70 }),
+				weights: Object.freeze({ knowledge: 0.4, intelligence: 0.25, awareness: 0.15, quietAffinity: 0.1, social: 0.1 }),
+				monthlyRemittance: 2600,
+			}),
+			actor: Object.freeze({
+				label: "演员",
+				minimumScore: 74,
+				minimums: Object.freeze({ appearance: 65, social: 65 }),
+				weights: Object.freeze({ appearance: 0.3, social: 0.3, activeAffinity: 0.15, awareness: 0.1, intelligence: 0.1, knowledge: 0.05 }),
+				monthlyRemittance: 3100,
+			}),
+			merchant: Object.freeze({
+				label: "商人",
+				minimumScore: 72,
+				minimums: Object.freeze({ social: 65, awareness: 65 }),
+				weights: Object.freeze({ social: 0.25, awareness: 0.2, knowledge: 0.2, intelligence: 0.15, appearance: 0.1, activeAffinity: 0.1 }),
+				monthlyRemittance: 3500,
+			}),
+			doctor: Object.freeze({
+				label: "医生",
+				minimumScore: 80,
+				minimums: Object.freeze({ knowledge: 82, awareness: 75, intelligence: 70 }),
+				weights: Object.freeze({ knowledge: 0.35, awareness: 0.25, intelligence: 0.2, quietAffinity: 0.1, social: 0.1 }),
+				monthlyRemittance: 3000,
+			}),
+			corporateEmployee: Object.freeze({
+				label: "公司职员",
+				minimumScore: 0,
+				minimums: Object.freeze({}),
+				weights: Object.freeze({}),
+				monthlyRemittance: 1600,
+			}),
 		}),
 		careers: Object.freeze({
 			teacher: Object.freeze({
@@ -59,6 +110,7 @@
 			}),
 		}),
 		careerOrder: Object.freeze({ normal: Object.freeze(["teacher", "clerk", "worker"]), risky: Object.freeze(["criminal", "sexWorker"]) }),
+		universityCareerOrder: Object.freeze(["doctor", "professor", "legislator", "athlete", "actor", "merchant"]),
 		remittance: Object.freeze({ affectionFloor: 30, fullAffection: 80 }),
 		intimacy: Object.freeze({ minimumAffection: 40, difficultyBase: 5000, awarenessDifficulty: 50, affectionCenter: 50, affectionScale: 40 }),
 	});
@@ -70,6 +122,7 @@
 		Object.freeze({ min: 2000, value: 2, label: "D" }),
 		Object.freeze({ min: -Infinity, value: 1, label: "F" }),
 	]);
+	const contactPageSize = 6;
 
 	function clamp(value, min = 0, max = 100) {
 		return Math.min(max, Math.max(min, Number(value) || 0));
@@ -101,6 +154,7 @@
 			outcome: null,
 			destination: null,
 			contactStatus: null,
+			education: null,
 			career: null,
 			scores: null,
 			settledDay: null,
@@ -135,6 +189,14 @@
 	function normalizeAdultState(record) {
 		if (!record.adult || typeof record.adult !== "object" || Array.isArray(record.adult)) record.adult = createAdultState();
 		const adult = record.adult;
+		if (adult.settled && ["university", "awayWork"].includes(adult.outcome)) {
+			adult.outcome = "awayWork";
+			adult.destination = "away";
+			adult.contactStatus = adult.contactStatus || "active";
+			adult.education = "university";
+			if (!config.universityCareers[adult.career]) adult.career = determineUniversityCareer(record);
+			adult.scores = { ...(adult.scores || {}), ...getUniversityCareerScores(record) };
+		}
 		adult.dataVersion = dataVersion;
 		adult.pending = adult.pending === true;
 		adult.settled = adult.settled === true;
@@ -184,9 +246,15 @@
 	}
 
 	function careerValues(record) {
+		const innate = record?.innate || {};
+		const temperament = Number.isFinite(innate.temperament) ? clamp(innate.temperament, 1, 100) : 50;
 		return {
 			...skillsOf(record),
-			appearance: clamp(record?.innate?.appearance),
+			appearance: clamp(innate.appearance),
+			innateFitness: clamp(innate.fitness),
+			intelligence: clamp(innate.intelligence),
+			activeAffinity: temperament,
+			quietAffinity: 101 - temperament,
 		};
 	}
 
@@ -215,6 +283,38 @@
 		return bestCareer(record, config.careerOrder.normal) || bestCareer(record, config.careerOrder.risky) || "survival";
 	}
 
+	function getUniversityCareerScore(record, careerId) {
+		const career = config.universityCareers[careerId];
+		if (!career) return 0;
+		return weightedScore(careerValues(record), career.weights);
+	}
+
+	function passesUniversityCareer(record, careerId) {
+		const career = config.universityCareers[careerId];
+		if (!career || careerId === "corporateEmployee") return false;
+		const values = careerValues(record);
+		if (Object.entries(career.minimums).some(([key, minimum]) => clamp(values[key]) < minimum)) return false;
+		return getUniversityCareerScore(record, careerId) >= career.minimumScore;
+	}
+
+	function determineUniversityCareer(record) {
+		return config.universityCareerOrder
+			.filter(careerId => passesUniversityCareer(record, careerId))
+			.map((careerId, priority) => {
+				const score = getUniversityCareerScore(record, careerId);
+				return { careerId, priority, margin: score - config.universityCareers[careerId].minimumScore };
+			})
+			.sort((left, right) => right.margin - left.margin || left.priority - right.priority)[0]?.careerId || "corporateEmployee";
+	}
+
+	function getUniversityCareerScores(record) {
+		return Object.fromEntries(
+			Object.keys(config.universityCareers)
+				.filter(careerId => careerId !== "corporateEmployee")
+				.map(careerId => [careerId, getUniversityCareerScore(record, careerId)])
+		);
+	}
+
 	function getAllScores(record) {
 		return {
 			university: getUniversityScore(record),
@@ -223,13 +323,14 @@
 			clerk: getCareerScore(record, "clerk"),
 			criminal: getCareerScore(record, "criminal"),
 			sexWorker: getCareerScore(record, "sexWorker"),
+			...getUniversityCareerScores(record),
 		};
 	}
 
 	function previewOutcome(record) {
 		if (losesContact(record)) return { outcome: "lost", destination: "away", contactStatus: "lost", career: null };
-		if (canAttendUniversity(record)) return { outcome: "university", destination: "away", contactStatus: "active", career: null };
-		return { outcome: "work", destination: "town", contactStatus: "active", career: determineCareer(record) };
+		if (canAttendUniversity(record)) return { outcome: "awayWork", destination: "away", contactStatus: "active", education: "university", career: determineUniversityCareer(record) };
+		return { outcome: "work", destination: "town", contactStatus: "active", education: null, career: determineCareer(record) };
 	}
 
 	function settle(record, child, choice = "resolve") {
@@ -241,13 +342,14 @@
 		ensureAffection(record, child, config.affection.existingResident);
 
 		const result = choice === "release"
-			? { outcome: "released", destination: "away", contactStatus: "none", career: null }
+			? { outcome: "released", destination: "away", contactStatus: "none", education: null, career: null }
 			: previewOutcome(record);
 		adult.pending = false;
 		adult.settled = true;
 		adult.outcome = result.outcome;
 		adult.destination = result.destination;
 		adult.contactStatus = result.contactStatus;
+		adult.education = result.education || null;
 		adult.career = result.career;
 		adult.scores = getAllScores(record);
 		adult.settledDay = Number(window.Time?.days) || 0;
@@ -289,13 +391,72 @@
 		return Boolean(record?.adult?.settled && record.adult.outcome !== "released");
 	}
 
+	function ensureContactView(eden) {
+		if (!eden) return null;
+		if (!eden.contactsView || typeof eden.contactsView !== "object" || Array.isArray(eden.contactsView)) {
+			eden.contactsView = { page: 1, timeOrder: "newest", locationOrder: "none", remittanceFirst: false };
+		}
+		const view = eden.contactsView;
+		view.page = Math.max(1, Math.floor(Number(view.page) || 1));
+		if (!['newest', 'oldest'].includes(view.timeOrder)) view.timeOrder = "newest";
+		if (!['none', 'townFirst', 'awayFirst'].includes(view.locationOrder)) view.locationOrder = "none";
+		view.remittanceFirst = view.remittanceFirst === true;
+		return view;
+	}
+
+	function getSortedContactIds(eden) {
+		const view = ensureContactView(eden);
+		if (!view || !eden.children) return [];
+		return Object.keys(eden.children)
+			.filter(id => isContact(eden.children[id]))
+			.sort((leftId, rightId) => {
+				const left = eden.children[leftId];
+				const right = eden.children[rightId];
+				if (view.remittanceFirst) {
+					const pendingDifference = Number(getUnclaimedMonths(right) > 0) - Number(getUnclaimedMonths(left) > 0);
+					if (pendingDifference) return pendingDifference;
+				}
+				if (view.locationOrder !== "none") {
+					const preferred = view.locationOrder === "townFirst" ? "town" : "away";
+					const locationDifference = Number(right.adult?.destination === preferred) - Number(left.adult?.destination === preferred);
+					if (locationDifference) return locationDifference;
+				}
+				const leftDay = Number(left.adult?.settledDay) || 0;
+				const rightDay = Number(right.adult?.settledDay) || 0;
+				const timeDifference = view.timeOrder === "oldest" ? leftDay - rightDay : rightDay - leftDay;
+				return timeDifference || String(leftId).localeCompare(String(rightId));
+			});
+	}
+
 	function outcomeLabel(record) {
 		const adult = record?.adult;
 		if (!adult?.settled) return "待结算";
 		if (adult.outcome === "lost") return "失联";
 		if (adult.outcome === "university") return "离开小镇·上大学";
+		if (adult.outcome === "awayWork") return `离开小镇·${config.universityCareers[adult.career]?.label || "公司职员"}（大学）`;
 		if (adult.outcome === "released") return "放生";
 		return `留在小镇·${config.careers[adult.career]?.label || "勉强求生"}`;
+	}
+
+	function destinationLabel(record) {
+		return record?.adult?.destination === "town" ? "留在小镇" : "离开小镇";
+	}
+
+	function adultRoleLabel(record) {
+		const adult = record?.adult;
+		if (!adult?.settled) return "待结算";
+		if (adult.outcome === "lost") return "失联";
+		if (adult.outcome === "awayWork" || adult.outcome === "university") {
+			return config.universityCareers[adult.career]?.label || "公司职员";
+		}
+		return config.careers[adult.career]?.label || "勉强求生";
+	}
+
+	function adulthoodDays(record) {
+		const currentDay = Number(window.Time?.days);
+		const settledDay = Number(record?.adult?.settledDay);
+		if (!Number.isFinite(currentDay) || !Number.isFinite(settledDay)) return 0;
+		return Math.max(0, Math.floor(currentDay - settledDay));
 	}
 
 	function getAffectionFactor(record) {
@@ -305,13 +466,23 @@
 	}
 
 	function getMonthlyRemittance(record) {
-		const career = config.careers[record?.adult?.career];
+		const careerId = record?.adult?.career;
+		const career = config.careers[careerId] || config.universityCareers[careerId];
 		if (!career) return 0;
 		return Math.round((career.monthlyRemittance * getAffectionFactor(record)) / 10) * 10;
 	}
 
+	function canReceiveRemittance(record) {
+		return Boolean(
+			record?.adult?.settled &&
+			record.adult.contactStatus === "active" &&
+			["work", "awayWork"].includes(record.adult.outcome) &&
+			getMonthlyRemittance(record) >= 0
+		);
+	}
+
 	function getUnclaimedMonths(record) {
-		if (record?.adult?.outcome !== "work") return 0;
+		if (!canReceiveRemittance(record)) return 0;
 		const lastMonth = Number(record.adult.lastRemittanceMonth);
 		if (!Number.isFinite(lastMonth)) {
 			record.adult.lastRemittanceMonth = getMonthKey();
@@ -402,6 +573,7 @@
 
 	window.EdenAdult = Object.freeze({
 		dataVersion,
+		contactPageSize,
 		eligibleSpecies,
 		config,
 		ensureAffection,
@@ -412,6 +584,9 @@
 		getCareerScore,
 		passesCareer,
 		determineCareer,
+		getUniversityCareerScore,
+		passesUniversityCareer,
+		determineUniversityCareer,
 		getAllScores,
 		previewOutcome,
 		settle,
@@ -419,9 +594,15 @@
 		syncAll,
 		needsSettlement,
 		isContact,
+		ensureContactView,
+		getSortedContactIds,
 		outcomeLabel,
+		destinationLabel,
+		adultRoleLabel,
+		adulthoodDays,
 		getAffectionFactor,
 		getMonthlyRemittance,
+		canReceiveRemittance,
 		getUnclaimedMonths,
 		claimRemittance,
 		canInviteIntimacy,

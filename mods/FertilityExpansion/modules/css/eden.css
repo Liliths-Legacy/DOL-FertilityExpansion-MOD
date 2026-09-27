@@ -31,6 +31,28 @@
 	margin: 0.35rem 0;
 }
 
+.eden-contact-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.65rem 1rem;
+	margin: 0.75rem 0;
+}
+
+.eden-contact-controls label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.eden-contact-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin: 0.9rem 0;
+}
+
 .eden-child-row {
 	padding: 0.55rem 0.7rem;
 	border: 1px solid var(--700);
@@ -122,6 +144,35 @@ button.eden-child-profile-button:focus-visible {
 
 .eden-world-entry {
 	margin-top: 0.5rem;
+}
+
+.eden-life-story-section {
+	margin-bottom: 1.6em;
+}
+
+.eden-life-story-section p {
+	margin-top: 0.4em;
+	margin-bottom: 0.4em;
+}
+
+.eden-life-story-text {
+	white-space: pre-wrap;
+}
+
+.eden-letter-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 6.25rem;
+	margin: 0.75rem 0 1rem;
+}
+
+.eden-letter-loading img {
+	display: block;
+	width: 4.6875rem;
+	height: 6.25rem;
+	image-rendering: crisp-edges;
+	image-rendering: pixelated;
 }
 
 .eden-training-slots {

@@ -1,16 +1,14 @@
 :: Eden Age Widgets [widget]
 <<widget "edenNormalizeAgeSettings">><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
-		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false }>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false }>>
 	<</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
 	<<set $eden.settings to clone($options.eden)>>
 	<<run window.EdenAge.syncAll($eden, $children)>>
 <</silently>><</widget>>
 
-<<widget "edenSettings">>
-	<<edenSetup>><<edenNormalizeAgeSettings>>
-	<div id="eden-age-settings" class="solidBorderContainer settings-container">
+<<widget "edenAgeSettingsPanel">>
 		<div class="settingsHeader">生育拓展·成长设置</div>
 		<div class="settingsToggleItemWide">
 			<label>
@@ -19,7 +17,7 @@
 			</label>
 			<<button "应用">>
 				<<edenNormalizeAgeSettings>>
-				<<replace "#eden-age-settings">><<edenSettings>><</replace>>
+				<<replace "#eden-age-settings">><<edenAgeSettingsPanel>><</replace>>
 			<</button>>
 			<br>
 			<small>默认90天，最低30天，不设上限。修改后所有孩子会按出生日期重新计算阶段。</small>
@@ -42,5 +40,25 @@
 			<span class="gold">阶段占比：</span>
 			婴儿期 10%｜幼儿期 20%｜少儿期 30%｜少年期 40%
 		</div>
+		<</widget>>
+
+<<widget "edenPregnancySettingsPanel">>
+	<div class="settingsHeader">生育拓展·怀孕设置</div>
+	<div class="settingsToggleItemWide">
+		<label><<checkbox "$options.eden.allowSterilePregnancy" false true autocheck>> 不准绝育</label>
+		<br>
+		<small>开启后，Bailey、Leighton 与 Gwylan 可按原版生理与怀孕规则参与受孕或授孕；Gwylan 也支持童话怀孕。这些角色没有完整的专属怀孕剧情，剧情可能不会回应怀孕状态。若关闭时角色已怀孕，模组会暂时保留该孕程的支持，防止存档数据被原版清除。</small>
 	</div>
+<</widget>>
+
+	<<widget "edenSettings">>
+		<<edenSetup>><<edenNormalizeAgeSettings>>
+		<div id="eden-age-settings" class="solidBorderContainer settings-container">
+			<<edenAgeSettingsPanel>>
+		</div>
+		<div id="eden-pregnancy-settings" class="solidBorderContainer settings-container">
+			<<edenPregnancySettingsPanel>>
+		</div>
+	<div id="eden-llm-settings" class="solidBorderContainer settings-container"></div>
+	<<run setTimeout(() => window.EdenLLM?.renderSettings?.(document.getElementById("eden-llm-settings")), 0)>>
 <</widget>>

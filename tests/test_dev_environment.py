@@ -33,7 +33,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIsNone(archive.testzip())
             boot = json.loads(archive.read("boot.json"))
             self.assertEqual("FertilityExpansion", boot["name"])
-            self.assertEqual("0.8.12", boot["version"])
+            self.assertEqual("1.2.0", boot["version"])
             self.assertIn("game/eden.twee", boot["tweeFileList"])
             self.assertIn("game/eden-age.twee", boot["tweeFileList"])
             self.assertIn("game/eden-facility.twee", boot["tweeFileList"])
@@ -42,6 +42,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("game/eden-encounter.twee", boot["tweeFileList"])
             self.assertIn("game/eden-encounter-dialogue.twee", boot["tweeFileList"])
             self.assertIn("game/eden-interactions.twee", boot["tweeFileList"])
+            self.assertIn("game/eden-life-story.twee", boot["tweeFileList"])
             self.assertIn("modules/eden-age.js", boot["scriptFileList"])
             self.assertIn("modules/eden-options.js", boot["scriptFileList"])
             self.assertIn("modules/eden-profile.js", boot["scriptFileList"])
@@ -51,8 +52,14 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("modules/eden-breeding.js", boot["scriptFileList"])
             self.assertIn("modules/eden-interactions.js", boot["scriptFileList"])
             self.assertIn("modules/eden-location.js", boot["scriptFileList"])
+            self.assertIn("modules/eden-llm.js", boot["scriptFileList"])
+            self.assertIn("modules/eden-life-story-prompt.js", boot["scriptFileList"])
+            self.assertIn("modules/eden-life-story.js", boot["scriptFileList"])
+            self.assertIn("modules/eden-pregnancy-settings.js", boot["scriptFileList"])
             self.assertIn("modules/css/eden.css", boot["styleFileList"])
             self.assertIn("img/misc/icon/eden.png", boot["imgFileList"])
+            self.assertIn("img/ui/eden-letter-opening.gif", boot["imgFileList"])
+            self.assertNotIn("img/ui/eden-letter-opening.png", boot["imgFileList"])
 
             eden_icon = archive.read("img/misc/icon/eden.png")
             self.assertTrue(eden_icon.startswith(b"\x89PNG\r\n\x1a\n"))
@@ -63,6 +70,8 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("min-width: 0;", css)
             self.assertIn('button[data-eden-options-tab]::before', css)
             self.assertIn('content: "生育拓展";', css)
+            self.assertIn('.eden-life-story-section', css)
+            self.assertIn('white-space: pre-wrap;', css)
             self.assertNotIn("max-width: 48rem;", css)
             self.assertNotIn("background: var(--850);", css)
 
@@ -74,10 +83,13 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("<<link [[返回|$eden.returnPassage]]>>", twee)
             self.assertNotIn('<<link "返回">>', twee)
             self.assertNotIn('<<widget "edenMenu">>', twee)
-            self.assertIn("schemaVersion: 10", twee)
+            self.assertIn("schemaVersion: 13", twee)
             self.assertIn("maturityDays: 90", twee)
             self.assertIn("neverAutoAdult: false", twee)
             self.assertIn("resetAgeOnTransfer: false", twee)
+            self.assertIn('lifeStoryPrompt: ""', twee)
+            self.assertIn("immediateLifeStory: false", twee)
+            self.assertIn("allowSterilePregnancy: false", twee)
             self.assertNotIn("<h2>", twee)
 
             age_widgets = archive.read("game/eden-age.twee").decode("utf-8")
@@ -88,6 +100,12 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('$options.eden.maturityDays', age_widgets)
             self.assertIn('$options.eden.neverAutoAdult', age_widgets)
             self.assertIn('$options.eden.resetAgeOnTransfer', age_widgets)
+            self.assertIn('<<widget "edenAgeSettingsPanel">>', age_widgets)
+            self.assertIn('id="eden-llm-settings"', age_widgets)
+            self.assertIn('window.EdenLLM?.renderSettings', age_widgets)
+            self.assertIn("生育拓展·怀孕设置", age_widgets)
+            self.assertIn("不准绝育", age_widgets)
+            self.assertIn('$options.eden.allowSterilePregnancy', age_widgets)
 
             age = archive.read("modules/eden-age.js").decode("utf-8")
             for species_key, factor in (
@@ -106,6 +124,9 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("function resetGrowthAge(record)", age)
             self.assertIn("record.growthStartSerialDay = current", age)
             self.assertIn("return Number.isFinite(current) ? current : null", age)
+            self.assertIn('settings.lifeStoryPrompt = typeof settings.lifeStoryPrompt === "string"', age)
+            self.assertIn("settings.immediateLifeStory = settings.immediateLifeStory === true", age)
+            self.assertIn("settings.allowSterilePregnancy = settings.allowSterilePregnancy === true", age)
 
             traits = archive.read("modules/eden-traits.js").decode("utf-8")
             self.assertIn('Object.freeze({ min: 95, grade: "S" })', traits)
@@ -122,6 +143,33 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("function generateInheritedInnate", traits)
             self.assertIn('stableInteger(`${seedPrefix}|appearance`, -10, 10)', traits)
             self.assertIn('stableInteger(`${seedPrefix}|temperament`, -15, 15)', traits)
+            self.assertIn("function getNonPcParent(child)", traits)
+            self.assertIn("const dataVersion = 3", traits)
+            self.assertIn("function migrateInnate", traits)
+            self.assertIn("migrateInnate(record, child, childId, variables, shared)", traits)
+            self.assertIn("if (!innate.inheritedFrom)", traits)
+            self.assertIn('bird: Object.freeze({ appearance: 4, fitness: -3, intelligence: 2, temperament: 5 })', traits)
+            self.assertIn('fox: Object.freeze({ appearance: 3, fitness: -2, intelligence: 2, temperament: 2 })', traits)
+            self.assertIn("function speciesModifierDelta", traits)
+            self.assertIn("innate.speciesAtGeneration = speciesKey", traits)
+            self.assertIn('["mother", "mothers"]', traits)
+            self.assertIn('["father", "fathers"]', traits)
+            self.assertIn("variables.parentList?.[parent.side]", traits)
+            self.assertNotIn("function findFatherRecord", traits)
+            for description in (
+                "wide-eyed",
+                "curvy",
+                "plump",
+                "plush",
+                "voluptuous",
+                "lush",
+                "vulgar",
+                "chubby",
+                "heavyset",
+                "minor demon",
+                "demon",
+            ):
+                self.assertIn(f'"{description}"', traits)
 
             facility = archive.read("game/eden-facility.twee").decode("utf-8")
             for passage in (
@@ -150,6 +198,11 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('src="data:image/png;base64,', facility)
             self.assertEqual(2, facility.count('<<edenLocationIcon>>'))
             self.assertNotIn('<<icon "eden.png">>', facility)
+            self.assertIn("window.EdenLifeStory.nextDue($eden)", facility)
+            self.assertIn('<<goto "Eden Life Story Arrival">>', facility)
+            self.assertIn('$eden.lifeStoryVisitHandled to false', facility)
+            self.assertIn('<<elseif !$eden.lifeStoryVisitHandled>>', facility)
+            self.assertIn('$eden.lifeStoryVisitHandled to true', facility)
 
             location = archive.read("modules/eden-location.js").decode("utf-8")
             self.assertIn("const state = sugarCube?.State;", location)
@@ -167,6 +220,72 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("安排活动", profile)
             self.assertIn("和孩子谈谈未来", profile)
             self.assertIn("window.EdenAdult?.syncRecord", profile)
+
+            llm = archive.read("modules/eden-llm.js").decode("utf-8")
+            self.assertIn('const databaseName = "fertility-expansion"', llm)
+            self.assertIn('const storeName = "settings"', llm)
+            self.assertIn('indexedDB.open(databaseName, 1)', llm)
+            self.assertIn('`${base}/chat/completions`', llm)
+            self.assertIn('Authorization: `Bearer ${settings.apiKey}`', llm)
+            self.assertIn('function testConnection', llm)
+            self.assertIn('function renderSettings', llm)
+            self.assertIn('不会写入或导出到游戏存档', llm)
+            self.assertIn('人生来信叙事提示词（可编辑）', llm)
+            self.assertIn('header.textContent = "生育拓展·人生来信"', llm)
+            self.assertIn('document.createTextNode(" 启用人生来信")', llm)
+            self.assertIn('恢复默认提示词', llm)
+            self.assertIn('function updateCreativePrompt(value)', llm)
+            self.assertIn('function updateImmediateLifeStory(value)', llm)
+            self.assertIn('成年时立刻收到人生来信', llm)
+            self.assertIn('随机10至30天来信', llm)
+            self.assertIn('variables.options.eden.lifeStoryPrompt = stored', llm)
+
+            life_story = archive.read("modules/eden-life-story.js").decode("utf-8")
+            self.assertIn("const minimumDelayDays = 10", life_story)
+            self.assertIn("const maximumDelayDays = 30", life_story)
+            self.assertIn("function delayFor(record)", life_story)
+            self.assertIn("const immediate = eden.settings?.immediateLifeStory === true", life_story)
+            self.assertIn('status: "waiting"', life_story)
+            self.assertIn('record.adult.lifeStory = createState(record)', life_story)
+            self.assertIn("function nextDue", life_story)
+            self.assertIn("function buildSnapshot", life_story)
+            self.assertIn("function parseContent", life_story)
+            self.assertIn("function startGeneration", life_story)
+            self.assertIn('state.status = "generating"', life_story)
+            self.assertIn('target.status = "ready"', life_story)
+            self.assertIn('target.status = "error"', life_story)
+            self.assertIn('buildMessages(state.inputSnapshot, customPrompt)', life_story)
+
+            life_story_page = archive.read("game/eden-life-story.twee").decode("utf-8")
+            self.assertGreaterEqual(life_story_page.count('class="eden-life-story-section"'), 6)
+            self.assertIn('class="eden-life-story-text"', life_story_page)
+            for removed_heading in ("大学经历", "经济情况", "婚姻情况", "日常生活", "对你的态度"):
+                self.assertNotIn(f'<span class="gold">{removed_heading}</span>', life_story_page)
+            self.assertIn('<span class="gold">随信照片</span>', life_story_page)
+
+            life_story_prompt = archive.read("modules/eden-life-story-prompt.js").decode("utf-8")
+            self.assertIn("const defaultCreativePrompt", life_story_prompt)
+            self.assertIn("const lockedFormatPrompt", life_story_prompt)
+            self.assertIn("function promptSnapshot(snapshot)", life_story_prompt)
+            self.assertIn("function buildMessages(snapshot, customCreativePrompt)", life_story_prompt)
+            self.assertIn("你正在为文字游戏《Degrees of Lewdity》中一名已经成年", life_story_prompt)
+            self.assertIn("生成的正文中不得使用“PC”“玩家”“主角”等称呼", life_story_prompt)
+            self.assertIn("不要凭空创造你与孩子共同经历过的具体事件", life_story_prompt)
+            self.assertIn("每个主要文字字段建议控制在250至500个中文字符", life_story_prompt)
+            self.assertIn('"## 人物档案"', life_story_prompt)
+            self.assertIn("affectionToYou", life_story_prompt)
+            self.assertIn("delete normalized.affectionToPc", life_story_prompt)
+            self.assertIn("JSON.stringify(promptSnapshot(snapshot), null, 2)", life_story_prompt)
+            self.assertNotIn("const lockedSystemPrompt", life_story_prompt)
+            for field in (
+                "universityExperience",
+                "economicSituation",
+                "marriageSituation",
+                "dailyLife",
+                "attitudeToPc",
+                "photoDescriptions",
+            ):
+                self.assertIn(field, life_story_prompt)
 
             training = archive.read("modules/eden-training.js").decode("utf-8")
             self.assertIn("referenceMaturityDays: 90", training)
@@ -216,6 +335,9 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('"toddlerCuddle"', interactions)
             self.assertIn('"childHomework"', interactions)
             self.assertIn('"adolescentFuture"', interactions)
+            self.assertIn('adult: Object.freeze([', interactions)
+            self.assertIn('"adultTea"', interactions)
+            self.assertIn('if (record.lifeStage !== "adult")', interactions)
 
             interaction_widgets = archive.read("game/eden-interactions.twee").decode("utf-8")
             self.assertIn('<<widget "edenRecordChildInteraction">>', interaction_widgets)
@@ -226,6 +348,9 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('<<case "toddlerCuddle">>', interaction_widgets)
             self.assertIn('<<case "childHomework">>', interaction_widgets)
             self.assertIn('<<case "adolescentFuture">>', interaction_widgets)
+            self.assertIn('<<case "adultTea">>', interaction_widgets)
+            self.assertIn('<<case "adultTroubles">>', interaction_widgets)
+            self.assertIn('_edenStageActivity.stage is "adult"', interaction_widgets)
 
             training_page = archive.read("game/eden-training.twee").decode("utf-8")
             self.assertIn(":: Eden Training", training_page)
@@ -247,14 +372,47 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('label: "犯罪者"', adult)
             self.assertIn('label: "卖淫"', adult)
             self.assertIn('label: "勉强求生"', adult)
+            self.assertIn('label: "议员"', adult)
+            self.assertIn('label: "运动员"', adult)
+            self.assertIn('label: "大学教授"', adult)
+            self.assertIn('label: "演员"', adult)
+            self.assertIn('label: "商人"', adult)
+            self.assertIn('label: "医生"', adult)
+            self.assertIn('label: "公司职员"', adult)
+            self.assertIn("monthlyRemittance: 1600", adult)
+            self.assertIn("monthlyRemittance: 2600", adult)
+            self.assertIn("monthlyRemittance: 2800", adult)
+            self.assertIn("monthlyRemittance: 3000", adult)
+            self.assertIn("monthlyRemittance: 3100", adult)
+            self.assertIn("monthlyRemittance: 3200", adult)
+            self.assertIn("monthlyRemittance: 3500", adult)
             self.assertIn('normal: Object.freeze(["teacher", "clerk", "worker"])', adult)
             self.assertIn('risky: Object.freeze(["criminal", "sexWorker"])', adult)
+            self.assertIn('universityCareerOrder: Object.freeze(["doctor", "professor", "legislator", "athlete", "actor", "merchant"])', adult)
+            self.assertIn('adult.outcome = "awayWork"', adult)
+            self.assertIn('adult.education = "university"', adult)
+            self.assertIn('return { outcome: "awayWork", destination: "away", contactStatus: "active", education: "university", career: determineUniversityCareer(record) }', adult)
+            self.assertIn("function determineUniversityCareer", adult)
+            self.assertIn("margin: score - config.universityCareers[careerId].minimumScore", adult)
             self.assertIn("awarenessDifficulty: 50", adult)
             self.assertIn("affectionScale: 40", adult)
             self.assertIn("function claimRemittance", adult)
+            self.assertIn("function canReceiveRemittance", adult)
+            self.assertIn('["work", "awayWork"].includes(record.adult.outcome)', adult)
+            self.assertIn("config.careers[careerId] || config.universityCareers[careerId]", adult)
             self.assertIn("function checkIntimacy", adult)
             self.assertIn("function prepareEncounterNpc", adult)
             self.assertIn("function completeEncounter", adult)
+            self.assertIn("const contactPageSize = 6", adult)
+            self.assertIn("function ensureContactView(eden)", adult)
+            self.assertIn("function getSortedContactIds(eden)", adult)
+            self.assertIn("function destinationLabel(record)", adult)
+            self.assertIn("function adultRoleLabel(record)", adult)
+            self.assertIn("function adulthoodDays(record)", adult)
+            self.assertIn("Math.max(0, Math.floor(currentDay - settledDay))", adult)
+            self.assertIn('view.timeOrder === "oldest"', adult)
+            self.assertIn('view.locationOrder === "townFirst"', adult)
+            self.assertIn('Number(getUnclaimedMonths(right) > 0)', adult)
 
             breeding = archive.read("modules/eden-breeding.js").decode("utf-8")
             self.assertIn("function parentDisplayName", breeding)
@@ -273,6 +431,9 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
                 self.assertIn(passage, adult_page)
             self.assertIn("window.EdenAdult.claimRemittance", adult_page)
             self.assertIn("window.EdenAdult.checkIntimacy", adult_page)
+            self.assertIn('_edenRecord.adult.outcome is "awayWork"', adult_page)
+            self.assertIn('window.EdenAdult.config.universityCareers[_edenRecord.adult.career]', adult_page)
+            self.assertNotIn('_edenContactRecord.adult.outcome is "work" and window.EdenAdult.getUnclaimedMonths', adult_page)
             self.assertIn('class="eden-contact-row"', adult_page)
             self.assertIn('@id="_edenResponseId"', adult_page)
             self.assertIn('<<link "聊天">>', adult_page)
@@ -283,8 +444,66 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('<span class="gold">简介：</span>', adult_page)
             self.assertIn(":: Eden Adult Birth", adult_page)
             self.assertIn("window.EdenBreeding.pregnancyStatus", adult_page)
+            self.assertIn('<span class="gold">人生来信：</span>', adult_page)
+            self.assertIn('<<link "再看一遍孩子的来信" "Eden Life Story Reread">>', adult_page)
+            self.assertIn('<span class="gold">天性：</span>', adult_page)
+            self.assertIn('<span class="gold">特质：</span>', adult_page)
+            self.assertIn('window.EdenTraits.grade(_edenContactRecord.innate.appearance)', adult_page)
+            self.assertIn('window.EdenTraits.grade(_edenContactRecord.training.skills.knowledge)', adult_page)
+            self.assertIn('window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>（<<= window.EdenTraits.grade', adult_page)
+            self.assertIn('Math.round(_edenContactRecord.innate.appearance)>>（<<= window.EdenTraits.grade', adult_page)
+            self.assertIn('<span class="gold">成年去向：</span>', adult_page)
+            self.assertIn('window.EdenAdult.destinationLabel(_edenContactRecord)', adult_page)
+            self.assertIn('window.EdenAdult.adultRoleLabel(_edenContactRecord)', adult_page)
+            self.assertIn('好感 <<= Math.round(_edenContactRecord.affection)>>', adult_page)
+            self.assertIn('成年时间：已成年 <<= window.EdenAdult.adulthoodDays(_edenRecord)>> 天', adult_page)
+            self.assertNotIn('已成年 <<= window.EdenAdult.adulthoodDays(_edenContactRecord)>> 天', adult_page)
+            self.assertNotIn('window.EdenAdult.outcomeLabel(_edenContactRecord)', adult_page)
+            self.assertIn('$eden.settings.immediateLifeStory and !$eden.lifeStoryVisitHandled', adult_page)
+            self.assertIn('<<goto "Eden Life Story Arrival">>', adult_page)
+            self.assertIn('window.EdenAdult.getSortedContactIds($eden)', adult_page)
+            self.assertIn('window.EdenAdult.contactPageSize', adult_page)
+            self.assertIn('<<option "从新到旧" "newest">>', adult_page)
+            self.assertIn('<<option "留在小镇优先" "townFirst">>', adult_page)
+            self.assertIn('<<option "离开小镇优先" "awayFirst">>', adult_page)
+            self.assertIn('有未完成汇款的优先', adult_page)
+            self.assertIn('<<link "上一页" "Eden Contacts">>', adult_page)
+            self.assertIn('<<link "下一页" "Eden Contacts">>', adult_page)
             self.assertNotIn('`Util.escapeMarkup(_edenContactChild?.name || "未命名的孩子")` "Eden Contact Detail"', adult_page)
             self.assertNotIn("<h2>", adult_page)
+
+            life_story_page = archive.read("game/eden-life-story.twee").decode("utf-8")
+            for passage in (
+                ":: Eden Life Story Arrival",
+                ":: Eden Life Story Generate",
+                ":: Eden Life Story Read",
+                ":: Eden Life Story Ending",
+                ":: Eden Life Story Reread",
+                ":: Eden Life Story Reread Ending",
+            ):
+                self.assertIn(passage, life_story_page)
+            self.assertIn("里面是长长的一封信", life_story_page)
+            self.assertIn("window.EdenLifeStory.startGeneration", life_story_page)
+            self.assertIn("[[暂且收好信件|Eden Contacts]]", life_story_page)
+            self.assertIn("你拆开信封，小心翼翼地打开信纸……", life_story_page)
+            self.assertIn('class="eden-letter-loading"', life_story_page)
+            self.assertIn("data:image/gif;base64,", life_story_page)
+            self.assertNotIn("正在整理", life_story_page)
+            self.assertNotIn("请稍候", life_story_page)
+
+            letter_animation = archive.read("img/ui/eden-letter-opening.gif")
+            self.assertTrue(letter_animation.startswith(b"GIF89a"))
+
+            llm_module = archive.read("modules/eden-llm.js").decode("utf-8")
+            life_story_module = archive.read("modules/eden-life-story.js").decode("utf-8")
+            self.assertIn('payload.response_format = { type: "json_object" }', llm_module)
+            self.assertIn('payload.thinking = { type: "disabled" }', llm_module)
+            self.assertIn("jsonObject: true", life_story_module)
+            self.assertIn("disableThinking: true", life_story_module)
+            self.assertIn("重试生成", life_story_page)
+            self.assertIn("你拿起信，深吸一口气，翻开了信件。", life_story_page)
+            self.assertIn("你放下了信。哪怕再读一遍，你仍然感到触动。", life_story_page)
+            self.assertIn('$eden.lifeStoryReadMode is "reread"', life_story_page)
 
             encounter_page = archive.read("game/eden-encounter.twee").decode("utf-8")
             self.assertIn(":: Eden Adult Encounter Start", encounter_page)
@@ -317,7 +536,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("new MutationObserver(ensureOptionsTab)", options)
 
             replacements = boot["addonPlugin"][0]["params"]
-            self.assertEqual({"StoryCaption", "Widgets Orgasm", "Children Activity Events", "Widgets children"}, {replacement["passage"] for replacement in replacements})
+            self.assertEqual({"StoryCaption", "Widgets Orgasm", "Widgets Combat", "Children Activity Events", "Widgets children"}, {replacement["passage"] for replacement in replacements})
             story_caption = next(item for item in replacements if item["passage"] == "StoryCaption")
             self.assertIn("<<edenSetup>>", story_caption["replace"])
             self.assertNotIn("<<edenMenu>>", story_caption["replace"])
@@ -328,6 +547,15 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             stage_pool_replacement = next(item for item in replacements if item["passage"] == "Widgets children")
             self.assertIn("window.EdenInteractions.usesStagePool", stage_pool_replacement["replace"])
             self.assertIn("<<edenStageChildActivity", stage_pool_replacement["replace"])
+            combat_replacements = [item for item in replacements if item["passage"] == "Widgets Combat"]
+            self.assertEqual(2, len(combat_replacements))
+            self.assertTrue(any('recordGwylanFairyContact(_args[0], $_type, "hand")' in item["replace"] for item in combat_replacements))
+            self.assertTrue(any('recordGwylanFairyContact(_args[0], $_type, "kiss")' in item["replace"] for item in combat_replacements))
+
+            pregnancy_settings = archive.read("modules/eden-pregnancy-settings.js").decode("utf-8")
+            self.assertIn('["Bailey", "Leighton", "Gwylan"]', pregnancy_settings)
+            self.assertIn('originallyInfertile = Object.freeze(["Bailey", "Leighton"])', pregnancy_settings)
+            self.assertIn('fetishPregnancy({ genital, target: "Gwylan"', pregnancy_settings)
 
             breeding = archive.read("modules/eden-breeding.js").decode("utf-8")
             self.assertIn("function captureStoredPregnancy", breeding)
@@ -336,7 +564,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("function deliver", breeding)
             self.assertIn('destination = eden.facility?.owned && free >= pregnancy.fetus.length ? "eden_home" : "home"', breeding)
 
-            self.assertEqual({"StoryCaption", "Widgets Orgasm", "Children Activity Events", "Widgets children"}, {replacement["passage"] for replacement in replacements})
+            self.assertEqual({"StoryCaption", "Widgets Orgasm", "Widgets Combat", "Children Activity Events", "Widgets children"}, {replacement["passage"] for replacement in replacements})
             orgasm_replacements = [item for item in replacements if item["passage"] == "Widgets Orgasm"]
             self.assertEqual(2, len(orgasm_replacements))
             self.assertTrue(any("edenChildId" in item["replace"] for item in orgasm_replacements))

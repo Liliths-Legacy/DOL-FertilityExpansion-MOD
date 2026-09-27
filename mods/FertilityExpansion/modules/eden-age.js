@@ -38,6 +38,9 @@
 		settings.maturityDays = Number.isFinite(maturityDays) ? Math.max(30, Math.floor(maturityDays)) : 90;
 		settings.neverAutoAdult = settings.neverAutoAdult === true;
 		settings.resetAgeOnTransfer = settings.resetAgeOnTransfer === true;
+		settings.lifeStoryPrompt = typeof settings.lifeStoryPrompt === "string" ? settings.lifeStoryPrompt : "";
+		settings.immediateLifeStory = settings.immediateLifeStory === true;
+		settings.allowSterilePregnancy = settings.allowSterilePregnancy === true;
 	}
 
 	function inferSpecies(child, storedSpecies) {

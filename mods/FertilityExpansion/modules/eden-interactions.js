@@ -17,11 +17,11 @@
 			companionship: Object.freeze([
 				"transfixed", "stroke", "yawn", "murmur", "cotNap", "shiverInCot",
 				"sleepingStroke", "cuddleAndNap", "sleepingStrokeHawk", "cuddleAndNapHawk", "Robin", "Wraith",
-				"toddlerGarden", "childQuietCompany", "adolescentWalk", "adolescentSpace",
+				"toddlerGarden", "childQuietCompany", "adolescentWalk", "adolescentSpace", "adultTea", "adultWalk", "adultQuietCompany",
 			]),
 			care: Object.freeze([
 				"nappyChange", "batheGentle", "batheShampoo", "BatheCalm", "batheTantrum",
-				"preen", "bathe", "batheHelp", "preeningToy", "toddlerMess", "childChores", "adolescentCook",
+				"preen", "bathe", "batheHelp", "preeningToy", "toddlerMess", "childChores", "adolescentCook", "adultMeal",
 			]),
 			play: Object.freeze([
 				"waveTongue", "handsClap", "peekaboo", "blowRaspberriesHappy", "blowRaspberriesUpset", "faceStudy",
@@ -30,12 +30,12 @@
 				"fieldTrip", "grumpyWolf", "gnawing", "squeakyToy", "squeakyToy2", "chewBone", "chewBone2",
 				"chewRope", "chewRope2", "rollBall", "rollBall2", "pickUpHawk", "pretendFly", "perch", "swingToy",
 				"toddlerPictureBook", "toddlerBlocks", "childHomework", "childReading", "childOutdoorGame", "childQuestions",
-				"adolescentHobby", "adolescentFuture",
+				"adolescentHobby", "adolescentFuture", "adultHobby",
 			]),
 			comfort: Object.freeze([
 				"restlessSleep", "rockToSleep", "holdToShoulder", "melodicLullaby", "foreheadKiss", "objectShow",
 				"carryRevolt", "nurseryRhymes", "FeetCup", "shareThoughts", "speakCry", "dummy", "cryingWolf",
-				"hungryWolf", "cryingHawk", "toddlerCuddle", "toddlerTantrum", "childWorry", "adolescentSchoolTrouble",
+				"hungryWolf", "cryingHawk", "toddlerCuddle", "toddlerTantrum", "childWorry", "adolescentSchoolTrouble", "adultTroubles",
 			]),
 		}),
 		stagePools: Object.freeze({
@@ -47,6 +47,9 @@
 			]),
 			adolescent: Object.freeze([
 				"adolescentFuture", "adolescentSchoolTrouble", "adolescentWalk", "adolescentCook", "adolescentHobby", "adolescentSpace",
+			]),
+			adult: Object.freeze([
+				"adultTea", "adultMeal", "adultWalk", "adultTroubles", "adultHobby", "adultQuietCompany",
 			]),
 		}),
 	});
@@ -131,13 +134,15 @@
 		const record = eden?.children?.[id];
 		const child = children?.[id];
 		if (!record || !child || !eligibleSpecies.includes(record.species)) return { ok: false, gain: 0 };
-		if (typeof window.EdenAdult?.applyAffection !== "function") return { ok: false, gain: 0 };
-		window.EdenAdult.ensureAffection(record, child, window.EdenAdult.config.affection.newResident);
-
 		const category = categoryFor(eventId);
 		const baseGain = config.gains[category] || config.gains[config.defaultCategory];
 		const scale = timeScale(record, eden.settings);
-		const gain = window.EdenAdult.applyAffection(record, baseGain * scale);
+		let gain = 0;
+		if (record.lifeStage !== "adult") {
+			if (typeof window.EdenAdult?.applyAffection !== "function") return { ok: false, gain: 0 };
+			window.EdenAdult.ensureAffection(record, child, window.EdenAdult.config.affection.newResident);
+			gain = window.EdenAdult.applyAffection(record, baseGain * scale);
+		}
 		const bonding = ensureBonding(record);
 		bonding.totalInteractions = (Number(bonding.totalInteractions) || 0) + 1;
 		bonding.totalAffectionGained = Math.round(((Number(bonding.totalAffectionGained) || 0) + gain) * 100) / 100;
