@@ -256,7 +256,7 @@
 		timingLabel.append(immediateLifeStory, document.createTextNode(" 成年时立刻收到人生来信"));
 		timingItem.appendChild(timingLabel);
 		const timingNote = document.createElement("small");
-		timingNote.textContent = "关闭时，大学路线孩子会在成年结算后随机10至30天来信；逾期不会错过。开启后，已有的符合条件孩子也会在下一次进入伊甸园时立即进入来信队列。";
+		timingNote.textContent = "关闭时，大学路线孩子会在成年结算后随机10至30天来信；逾期不会错过。开启后，完成成年结算的大学路线孩子会在下一次从外部进入伊甸园时来信，不会跳过结算结果；已有的符合条件孩子也会进入来信队列。";
 		timingItem.append(document.createElement("br"), timingNote);
 		container.appendChild(timingItem);
 		immediateLifeStory.addEventListener("change", () => updateImmediateLifeStory(immediateLifeStory.checked));
@@ -271,6 +271,12 @@
 		toggleLabel.append(enabled, document.createTextNode(" 启用人生来信"));
 		toggleItem.appendChild(toggleLabel);
 		container.appendChild(toggleItem);
+		const updateTimingAvailability = () => {
+			immediateLifeStory.disabled = !enabled.checked;
+			timingItem.classList.toggle("eden-setting-disabled", !enabled.checked);
+		};
+		updateTimingAvailability();
+		enabled.addEventListener("change", updateTimingAvailability);
 
 		const apiUrl = document.createElement("input");
 		apiUrl.type = "text";

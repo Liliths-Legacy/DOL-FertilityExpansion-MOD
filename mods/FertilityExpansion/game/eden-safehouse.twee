@@ -1,0 +1,133 @@
+:: Eden Safehouse Widgets [widget]
+<<widget "edenSafehouse">>
+	<<edenSetup>>
+	<<if !$eden.facility.owned>><<goto "Eden Home">><<exitAll>><</if>>
+	<<set $outside to 0>><<set $location to "eden_home">>
+	<<set $bus to _args[0] is "bathroom" ? "eden_bathroom" : "eden_bedroom">>
+<</widget>>
+
+<<widget "edenSleepOutfits">>
+	<<set $wardrobe_location to "wardrobe">><<unset $forceWardrobeLocation>><<set $storeLocation to "bed">><<wardrobeSelection true>>
+	<<if !$earSlime.alwaysSleepNaked or $hypnosis_traits.silence>>
+		<<for _index, _edenSleepOutfit range $outfit>>
+			<<if _edenSleepOutfit.type.includes("sleep")>>
+				<<capture _index _edenSleepOutfit>>
+					<<bedicon>><<link [["穿上" + _edenSleepOutfit.name + (_edenSleepOutfit.colors is false ? "" : " [C]") + "并爬到床上"|Eden Safehouse Bed]]>><<set $wear_outfit to _index>><<saveTempHairStyle>><</link>><br>
+				<</capture>>
+			<</if>>
+		<</for>>
+	<<elseif $outfit.find(outfitSet => outfitSet.type.includes("sleep"))>>
+		<span class="purple">耳中的史莱姆不让你穿着衣服入睡。</span><br>
+	<</if>>
+<</widget>>
+
+<<widget "edenSafehouseWakeOptions">>
+	<<set $wardrobe_location to "wardrobe">><<unset $forceWardrobeLocation>><<wardrobeSelection true>>
+	<<radiooutfits>>
+	<br><br>
+	<<bedicon>><<link [[起床|Eden Safehouse Bedroom]]>><<bedclotheson "bed">><</link>><br>
+	<<bedicon>><<link [[继续休息|Eden Safehouse Bed]]>><</link>>
+<</widget>>
+
+:: Eden Safehouse Bedroom
+<<edenSafehouse "bedroom">><<effects>>
+你走进自己的卧室。床铺整洁，窗外是安静的田野。
+<br><br>
+<<if window.EdenSafehouseCompat.canUnbind()>>
+	<<undobindingsicon>><<link [[解开束缚 (0:10)|Eden Safehouse Bedroom]]>><<pass 10>><<unbind>><</link>><br><br>
+<</if>>
+<<if !($earSlime.event and $earSlime.noSleep)>>
+	<<bedicon>><<link [[脱下衣服上床|Eden Safehouse Bed]]>><<set $wardrobe_location to "wardrobe">><<unset $forceWardrobeLocation>><<set $storeLocation to "bed">><<undressSleep "bed">><</link>><br>
+	<<edenSleepOutfits>>
+<<else>>
+	<span class="red">耳中的史莱姆不让你入睡。</span><br>
+<</if>>
+<<roomoptions>>
+<<safehouseEvents>>
+<<wardrobeicon>><<link [[衣柜|Eden Safehouse Wardrobe]]>><<unset $forceWardrobeLocation>><</link>><br>
+<<mirroricon>><<link [[镜子|Eden Safehouse Mirror]]>><<preMirror>><</link>><br>
+<<bathroomicon>><<link [[前往浴室|Eden Safehouse Bathroom]]>><</link>><br><br>
+<<link [[游戏设置|Eden Safehouse Settings]]>><</link>><br>
+<<attitudesControlCheck>>
+<<link [[态度|Attitudes]]>><<set $attitudesExitPassage to "Eden Safehouse Bedroom">><</link>><br><br>
+<<main_hall_icon>><<link [[返回伊甸园大厅|Eden Home]]>><</link>>
+
+:: Eden Safehouse Bed
+<<edenSafehouse "bedroom">><<set $wardrobe_location to "wardrobe">><<set $storeLocation to "bed">><<wardrobeSelection true>><<effects>><<wearoutfit>>
+<<unset $bedGuest>>
+你钻进被窝，听见屋外风吹过田野的声音。
+<br><br>
+<<if !($earSlime.event and $earSlime.noSleep)>>
+	<<nightmareCheck "Eden Safehouse Sleep">>
+	<<generateSleepLinks "Eden Safehouse Sleep">>
+<<else>>
+	<span class="red">耳中的史莱姆不让你入睡。</span><br>
+<</if>>
+<<bedicon>><<link [[起身穿衣|Eden Safehouse Bedroom]]>><<set $wear_outfit to "clotheson">><<bedclotheson "bed">><</link>>
+
+:: Eden Safehouse Sleep
+<<edenSafehouse "bedroom">><<set _autosavehere to true>>
+<<sleep>>
+<<if $eden.bedVisit?.interruptedSleep>>
+	<<set $eden.bedVisit.interruptedSleep to false>>
+	<<goto "Eden Bed Visit">><<exitAll>>
+<</if>>
+<<if !_dreaming>>
+	/* Time has advanced: finish daily training before any adult decisions. */
+	<<edenSetup>><<effects>>
+	<<wakingEffects $sleepHoursTotal>>
+	<<if $nightmares gte 1 and $controlled is 0>>
+		<<nightmareWake>>
+	<<elseif ($specialClothesEffects.bimbo.total gte random(100,1000) or $specialClothesEffects.pimp.total gte random(100,1000)) or $arousal gte ($arousalmax / 10) * 9>>
+		<<wetDream>>
+	<<elseif !_wakingEffect>>
+		你睡得很安稳。醒来时，窗外的田野依旧宁静。
+		<br><br>
+	<</if>>
+	<<sleepeffects>>
+	<<edenSafehouseWakeOptions>>
+<</if>>
+
+:: Eden Safehouse Wake
+<<edenSafehouse "bedroom">><<effects>>
+<<edenSafehouseWakeOptions>>
+
+:: Eden Safehouse Wardrobe [exitCheckBypass]
+<<edenSafehouse "bedroom">><<effects>>
+<<set $wardrobe_location to "wardrobe">><<wardrobeSelection>>
+你打开衣柜，整理自己的衣物。
+<br><br>
+<div id="wardrobewear"><<wardrobewear>></div>
+<div id="wardrobeExits"><<wardrobeExits>></div>
+<<bedroomicon>><<link [[关闭衣柜|Eden Safehouse Bedroom]]>><<cleanupOnWardrobeExit>><</link>><br><br>
+<<wardrobe>>
+
+:: Eden Safehouse Mirror
+<<edenSafehouse "bedroom">><<effects>>
+<<bedroomicon>><<link [[离开镜子|Eden Safehouse Bedroom]]>><<unset $mirrorMenu>><<unset $bodywritingSet>><<postMirror>><</link>>
+<br>
+<<mirror>>
+
+:: Eden Safehouse Settings [exitCheckBypass]
+<<edenSafehouse "bedroom">><<set $settingsExitPassage to "Eden Safehouse Bedroom">>
+<<settings>>
+
+:: Eden Safehouse Bathroom
+<<edenSafehouse "bathroom">><<effects>>
+浴室干净而安静，浴缸旁放着洗漱用品。
+<br><br>
+<<bathroomicon "bath">><<link [[洗澡 (0:30)|Eden Safehouse Bath]]>>
+	<<if !pcAreArmsBound("both")>><<strip>><</if>>
+	<<water>><<wash>><<pass 30>><<stress -6>><<set $hygiene to 0>>
+<</link>><<lstress>><br>
+<<personalUpkeep>>
+<<pregnancyTest "Eden Safehouse Bathroom">>
+<br>
+<<bedroomicon>><<link [[前往卧室|Eden Safehouse Bedroom]]>><</link>><br>
+<<main_hall_icon>><<link [[返回伊甸园大厅|Eden Home]]>><</link>>
+
+:: Eden Safehouse Bath
+<<edenSafehouse "bathroom">><<effects>>
+你洗去身上的污垢，在温热的水中放松下来。
+<br><br>
+<<dressasyouwereicon>><<link [[擦干身体，穿回衣服|Eden Safehouse Bathroom]]>><<clotheson>><</link>>

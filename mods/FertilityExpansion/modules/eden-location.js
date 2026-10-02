@@ -35,9 +35,31 @@
 		});
 	}
 
-	window.EdenLocationUi = Object.freeze({ injectFarmlandEntry, fixNurseryActivityReturn });
+	function injectFurnitureShopEntry() {
+		const sugarCube = window.SugarCube;
+		if (sugarCube?.State?.passage !== "Furniture Shop") return;
+		const passage = document.querySelector("#passages .passage");
+		if (!passage || passage.querySelector("[data-eden-furniture-entry]")) return;
+		/* Passage IDs survive translation; only show when normal shopping is available. */
+		if (!passage.querySelector('a.link-internal[data-passage="Furniture Shop Catalogue"]')) return;
+		const leave = passage.querySelector('a.link-internal[data-passage="Shopping Centre"]');
+		if (!leave) return;
+		let anchor = leave;
+		while (anchor.parentElement && anchor.parentElement !== passage) anchor = anchor.parentElement;
+		/* Keep the exit icon beside its link when they are separate siblings. */
+		const previous = anchor.previousElementSibling;
+		if (previous?.matches("img, .icon")) anchor = previous;
+		const entry = document.createElement("div");
+		entry.dataset.edenFurnitureEntry = "true";
+		new sugarCube.Wikifier(entry, "<<edenFurnitureShopEntry>>");
+		anchor.before(entry);
+		window.Links?.generate?.();
+	}
+
+	window.EdenLocationUi = Object.freeze({ injectFarmlandEntry, fixNurseryActivityReturn, injectFurnitureShopEntry });
 	$(document).on(":passagedisplay.edenLocation", () => {
 		injectFarmlandEntry();
 		fixNurseryActivityReturn();
+		injectFurnitureShopEntry();
 	});
 })();

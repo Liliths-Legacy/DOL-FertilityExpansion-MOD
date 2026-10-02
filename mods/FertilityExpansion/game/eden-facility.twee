@@ -81,20 +81,29 @@
 <div class="eden-panel">
 	<<if !$eden.facility.owned>>
 		<p class="red">你还没有买下这里。</p>
-		<<link [[返回农场道路|Farmland]]>><</link>>
+		<<farmicon>><<link [[返回农场道路|Farmland]]>><</link>>
 	<<else>>
 		<<edenResidentIds>>
 		<p>这座小屋位于小镇外，紧邻Alex的农场。远离镇上的喧嚣后，周围显得格外安静。</p>
 		<p>当前入住：<<= _edenResidentCount>> / <<= $eden.facility.capacity>></p>
-		<<link [[前往育儿室|Eden Nursery]]>><</link>>
-		<br>
-		<<link [[查看通讯录|Eden Contacts]]>><</link>>
+		<<furnitureicon "catalogue">><<link [[室内陈设|Eden Decorations]]>><</link>>
 		<br>
 		<<if !$eden.facility.expanded>>
-			<<link [[扩建小屋|Eden Expansion]]>><</link>>
+			<<icon "hammer-nails.png">><<link [[扩建小屋|Eden Expansion]]>><</link>>
 			<br>
 		<</if>>
-		<<link [[返回农场道路 (0:05)|Farmland]]>><<pass 5>><</link>>
+		<br>
+		<<bedroomicon>><<link [[前往卧室|Eden Safehouse Bedroom]]>><</link>>
+		<br>
+		<<bathroomicon>><<link [[前往浴室|Eden Safehouse Bathroom]]>><</link>>
+		<br><br>
+		<<icon "child-toys/crib.png">><<link [[前往育儿室|Eden Nursery]]>><</link>>
+		<br>
+		<<icon "email.png">><<link [[查看通讯录|Eden Contacts]]>><</link>>
+		<br>
+		<<schoolicon "library">><<link [[查看育儿手册|Eden Handbook]]>><</link>>
+		<br><br>
+		<<farmicon>><<link [[返回农场道路 (0:05)|Farmland]]>><<pass 5>><</link>>
 	<</if>>
 </div>
 

@@ -1,0 +1,111 @@
+:: Eden Bed Visit
+<<edenSafehouse "bedroom">><<effects>><<wakingEffects $sleepHoursTotal>><<sleepeffects>>
+<<set _edenBedVisit to window.EdenBedVisit.current($eden, $children)>>
+<<if !_edenBedVisit>>
+	<<goto "Eden Safehouse Wake">><<exitAll>>
+<<else>>
+	<<set _edenBedChildId to _edenBedVisit.childId>>
+	<<set _edenBedChild to _edenBedVisit.child>>
+	<<set _edenBedRecord to _edenBedVisit.record>>
+	<<set _edenBedCombatKind to window.EdenBedVisit.resolveCombatStart($eden.encounterContext, $player, $NPCList[0])>>
+	<<set _edenBedName to Util.escapeMarkup(_edenBedChild.name || "孩子")>>
+	<<set _edenBedPronoun to _edenBedChild.gender is "m" ? "他" : "她">>
+	<<set _parentTitle to _edenBedChild?.mother is "pc" ? "妈妈" : "爸爸">>
+
+	<p>朦朦胧胧之中，你觉得自己的小腹感到一阵灼热，好像有什么在你的身体里涌动着。
+	<p>随着这种感觉愈发强烈，你猛地睁开眼睛。</p>
+	<br><br>
+	<p>
+		<<= _edenBedName>>
+		<span class="red"><<= _edenBedVisit.variant is "A" ? "正跨在你身上" : "正趴在你双腿之间">></span>
+	</p>
+	<<if _edenBedVisit.variant is "A">>
+		<p><<= _edenBedPronoun>>柔软的舌头正
+		<<if $player.penisExist and $player.vaginaExist>>
+			<<= random(0, 1) is 1 ? "包裹着你的柱头。" : "搅动着你的穴口。">>
+		<<elseif $player.penisExist>>
+			包裹着你的柱头。
+		<<else>>
+			搅动着你的穴口。
+		<</if>>
+		</p>
+		<br><br>
+		<p>你感到一阵触电般的酥麻。水沾满了那里。看来<<= _edenBedPronoun>>已经这么做了很久了。</p><<garousal>><<arousal 600>>
+		<p>你推了推<<= _edenBedName>>。你看到<<= _edenBedName>>浑身一震，随后僵硬地抬起头，眼睛在黑暗里湿漉漉的。</p>
+		“<<= _parentTitle>>……我不是故意的。我忍不住。”
+	<<else>>
+		<<if window.EdenBedVisit.hasPenis(_edenBedChild)>>
+		<p><<= _edenBedPronoun>>的阴茎完全埋在你的体内，克制但又急切地来回抽插着。</p>
+		<<elseif $player.penisExist>>
+		<p><<= _edenBedPronoun>>的肉穴已经吞没你的阴茎，用湿漉漉的软肉套弄着你的柱体。</p>
+		<<else>>
+		<p><<= _edenBedPronoun>>的小穴紧紧贴着你的阴唇，缓慢地来回摩擦着。</p>
+		<</if>>
+		<p>身下的快感几乎将你吞没。</p><<garousal>><<arousal 1200>>
+		<p>你咬着牙推了推<<= _edenBedName>>。你看到<<= _edenBedPronoun>>浑身一震，僵硬地停止了动作。<<= _edenBedPronoun>>没有抬头。你们相连的地方还滚烫黏腻，但身边的空气却冷却在一片黑暗里。你看出，<<= _edenBedPronoun>>已经陷入莫大的恐惧。</p>
+	<</if>>
+	<<link `"让" + _edenBedPronoun + "离开"` "Eden Bed Visit Leave">><<set $eden.selectedChildId to _edenBedChildId>><</link>><br>
+	<<link `"让" + _edenBedPronoun + "以后别这么做"` "Eden Bed Visit Forbid">><<set $eden.selectedChildId to _edenBedChildId>><</link>><br>
+	<<link `"搂住" + _edenBedPronoun` "Eden Bed Visit Accept">><<set $eden.selectedChildId to _edenBedChildId>><</link>>
+<</if>>
+
+:: Eden Bed Visit Leave
+<<edenSafehouse "bedroom">><<effects>>
+<<set _edenBedChild to $children[$eden.selectedChildId]>>
+<<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
+<<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
+<p>你让<<= _edenBedName>>从你身上离开。</p>
+<p><<= _edenBedName>>点点头，一言不发地下了床，离开时为你带上了门。</p>
+<p>在<<= _edenBedName>>离开前，你看到<<= _edenBedPronoun>>的嘴角在颤抖。</p>
+<<run window.EdenBedVisit.clear($eden)>>
+<<link [[继续|Eden Safehouse Wake]]>><</link>>
+
+:: Eden Bed Visit Forbid
+<<edenSafehouse "bedroom">><<effects>>
+<<set _edenBedChild to $children[$eden.selectedChildId]>>
+<<set _edenBedRecord to $eden.children[$eden.selectedChildId]>>
+<<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
+<<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
+<p>你生气地斥责<<= _edenBedPronoun>>不应该这么做。</p>
+<p><<= _edenBedName>>手忙脚乱地向你道歉，在你不再说话之后，逃跑似的离开了房间。</p>
+<<run window.EdenBedVisit.forbid(_edenBedRecord)>><<run window.EdenBedVisit.clear($eden)>>
+<<link [[继续|Eden Safehouse Wake]]>><</link>>
+
+:: Eden Bed Visit Accept
+<<edenSafehouse "bedroom">><<effects>>
+<<set _edenBedChildId to $eden.selectedChildId>>
+<<set _edenBedChild to $children[_edenBedChildId]>>
+<<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
+<<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
+<p>你没有多说什么，只是温柔地搂住<<= _edenBedName>>，将<<= _edenBedPronoun>>拉向你的身前。</p>
+<<set _edenBedVariant to $eden.bedVisit.variant>>
+<<set _edenBedOralRoll to (_edenBedVariant is "A" and $player.penisExist and $player.vaginaExist) ? random(0, 1) : 0>>
+<<run window.EdenBedVisit.prepareEncounter($eden, _edenBedVariant, $player, _edenBedOralRoll)>>
+<<set $eden.activeEncounterChildId to _edenBedChildId>><<set $eden.encounterReturnPassage to "Eden Safehouse Bedroom">><<run window.EdenBedVisit.clear($eden)>>
+<<link [[继续|Eden Adult Encounter]]>><<set $sexstart to 1>><</link>>
+
+:: Eden Bed Visit Combat Widgets [widget]
+<<widget "edenBedVisitCombatStart">><<silently>>
+	<<set _edenBedCombatKind to window.EdenBedVisit.resolveCombatStart($eden.encounterContext, $player, $NPCList[0])>>
+	<<if _edenBedCombatKind isnot "none">>
+		<<overlowerstrip>><<lowerstrip>><<underlowerstrip>>
+		<<run npcMakeNaked($NPCList[0], "lower")>>
+		<<if _edenBedCombatKind is "childOralPlayerPenis">>
+			<<set $NPCList[0].location.head to "genitals">><<set $NPCList[0].mouth to "penis">><<set $penisuse to "othermouth">><<set $penisstate to "othermouth">><<set $penistarget to 0>><<set $penisactiondefault to "othermouthcooperate">>
+		<<elseif _edenBedCombatKind is "childOralPlayerVagina">>
+			<<set $NPCList[0].location.head to "genitals">><<set $NPCList[0].mouth to "vagina">><<set $vaginause to "othermouth">><<set $vaginastate to "othermouth">><<set $vaginatarget to 0>><<set $vaginaactiondefault to "othermouthcooperate">>
+		<<elseif _edenBedCombatKind is "childPenisPlayerVagina">>
+			<<set $NPCList[0].location.genitals to "genitals">><<set $NPCList[0].penis to "vagina">><<set $vaginause to "penis">><<set $vaginastate to "penetrated">><<set $vaginatarget to 0>>
+		<<elseif _edenBedCombatKind is "childPenisPlayerAnus">>
+			<<set $NPCList[0].location.genitals to "genitals">><<set $NPCList[0].penis to "anus">><<set $anususe to "penis">><<set $anusstate to "penetrated">><<set $anustarget to 0>>
+		<<elseif _edenBedCombatKind is "playerPenisChildVagina">>
+			<<set $NPCList[0].location.genitals to "genitals">><<set $NPCList[0].vagina to "penis">><<set $penisuse to "othervagina">><<set $penisstate to "penetrated">><<set $penistarget to 0>><<set $penisactiondefault to "cooperate">>
+		<<elseif _edenBedCombatKind is "playerPenisChildAnus">>
+			<<set $NPCList[0].location.genitals to "genitals">>
+			<<if $NPCList[0].vagina isnot "none">><<set $NPCList[0].vagina to "otheranus">><<else>><<set $NPCList[0].penis to "otheranus">><</if>>
+			<<set $penisuse to "otheranus">><<set $penisstate to "otheranus">><<set $penistarget to 0>><<set $penisactiondefault to "otheranuscooperate">>
+		<<elseif _edenBedCombatKind is "trib">>
+			<<set $NPCList[0].location.genitals to "genitals">><<set $NPCList[0].vagina to "vagina">><<set $vaginause to "othervagina">><<set $vaginastate to "othervagina">><<set $vaginatarget to 0>><<set $vaginaactiondefault to "tribcooperate">>
+		<</if>>
+	<</if>>
+<</silently>><</widget>>

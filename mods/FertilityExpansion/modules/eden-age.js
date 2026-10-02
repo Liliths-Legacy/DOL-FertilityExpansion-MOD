@@ -22,6 +22,7 @@
 		fox: Object.freeze({ label: "狐狸", factor: 1 }),
 		wolf: Object.freeze({ label: "狼", factor: 1.1 }),
 		cow: Object.freeze({ label: "牛", factor: 1.25 }),
+		other: Object.freeze({ label: "其他", factor: 1 }),
 		human: Object.freeze({ label: "人类", factor: 1 }),
 	});
 	const stageLabels = Object.freeze({
@@ -49,11 +50,12 @@
 	}
 
 	function inferSpecies(child, storedSpecies) {
-		if (species[storedSpecies]) return storedSpecies;
 		const transformation = child?.features?.beastTransform;
 		if (["bird", "cat", "fox", "wolf", "cow"].includes(transformation)) return transformation;
+		if (typeof transformation === "string" && transformation.trim()) return "other";
 		if (child?.type === "hawk") return "bird";
 		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
+		if (species[storedSpecies]) return storedSpecies;
 		return "human";
 	}
 
@@ -78,7 +80,7 @@
 
 	function isCultivableSpecies(record, settings) {
 		if (!record) return false;
-		if (["bird", "cat", "fox", "wolf", "cow"].includes(record.species)) return true;
+		if (["bird", "cat", "fox", "wolf", "cow", "other"].includes(record.species)) return true;
 		return record.species === "human" && allowsHumanDescendants(settings);
 	}
 

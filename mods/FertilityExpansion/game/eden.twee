@@ -7,7 +7,7 @@
 <<widget "edenSetup">><<silently>>
 	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
 		<<set $eden to {
-			schemaVersion: 15,
+			schemaVersion: 17,
 			children: {},
 			settings: {
 				maturityDays: 90,
@@ -37,6 +37,9 @@
 			},
 			selectedChildId: null,
 			activeEncounterChildId: null,
+			encounterReturnPassage: "Eden Contacts",
+			encounterContext: { source: null, variant: null, oralTarget: null },
+			bedVisit: { dataVersion: 2, lastTriggeredDay: null, activeChildId: null, variant: null, interruptedSleep: false },
 			returnPassage: "Bedroom"
 		}>>
 	<<else>>
@@ -149,6 +152,17 @@
 			<<if typeof $eden.settings.allowHumanDescendants isnot "boolean">><<set $eden.settings.allowHumanDescendants to false>><</if>>
 			<<set $eden.schemaVersion to 15>>
 		<</if>>
+		/* Schema 15 -> 16: add adult bed-visit state and encounter return routing. */
+		<<if $eden.schemaVersion lt 16>>
+			<<if $eden.encounterReturnPassage is undefined>><<set $eden.encounterReturnPassage to "Eden Contacts">><</if>>
+			<<if $eden.bedVisit is undefined or typeof $eden.bedVisit isnot "object" or Array.isArray($eden.bedVisit)>><<set $eden.bedVisit to { dataVersion: 2, lastTriggeredDay: null, activeChildId: null, variant: null, interruptedSleep: false }>><</if>>
+			<<set $eden.schemaVersion to 16>>
+		<</if>>
+		/* Schema 16 -> 17: remember the source and initial position of an adult encounter. */
+		<<if $eden.schemaVersion lt 17>>
+			<<if $eden.encounterContext is undefined or typeof $eden.encounterContext isnot "object" or Array.isArray($eden.encounterContext)>><<set $eden.encounterContext to { source: null, variant: null, oralTarget: null }>><</if>>
+			<<set $eden.schemaVersion to 17>>
+		<</if>>
 		<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>>
 			<<set $eden.settings to {}>>
 		<</if>>
@@ -181,6 +195,8 @@
 		<<if $eden.activeEncounterChildId is undefined>>
 			<<set $eden.activeEncounterChildId to null>>
 		<</if>>
+		<<if !$eden.encounterReturnPassage>><<set $eden.encounterReturnPassage to "Eden Contacts">><</if>>
+		<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.normalizeState($eden)>><<run window.EdenBedVisit.normalizeEncounterContext($eden)>><</if>>
 		<<if !$eden.returnPassage>>
 			<<set $eden.returnPassage to "Bedroom">>
 		<</if>>
@@ -198,6 +214,7 @@
 	<<if typeof window.EdenTraits is "object">><<run window.EdenTraits.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenTraining is "object">><<run window.EdenTraining.syncAll($eden, $children)>><</if>>
 	<<if typeof window.EdenAdult is "object">><<run window.EdenAdult.syncAll($eden, $children)>><</if>>
+	<<if typeof window.EdenHandbook is "object">><<run window.EdenHandbook.syncAll($eden)>><</if>>
 	<<if typeof window.EdenLifeStory is "object">><<run window.EdenLifeStory.syncAll($eden)>><</if>>
 <</silently>><</widget>>
 

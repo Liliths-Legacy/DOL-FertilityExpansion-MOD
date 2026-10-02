@@ -2,7 +2,7 @@
 	"use strict";
 
 	const dataVersion = 3;
-	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow"]);
+	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow", "other"]);
 	const eligibleStages = Object.freeze(["toddler", "child", "adolescent"]);
 	const skillLabels = Object.freeze({
 		knowledge: "学识",
@@ -45,6 +45,18 @@
 				minimumStage: "adolescent",
 				cost: 10000,
 				effects: Object.freeze({ knowledge: 1.6, awareness: 0.25 }),
+			}),
+			clubActivity: Object.freeze({
+				label: "社团活动",
+				minimumStage: "adolescent",
+				cost: 0,
+				effects: Object.freeze({ social: 1.6 }),
+			}),
+			outdoorSports: Object.freeze({
+				label: "户外运动",
+				minimumStage: "adolescent",
+				cost: 0,
+				effects: Object.freeze({ fitness: 1.5 }),
 			}),
 			socialWork: Object.freeze({
 				label: "社会工作",
@@ -244,6 +256,7 @@
 			} else {
 				delta =
 					baseValue *
+					(window.EdenUpgrades?.bookMultiplier(selectedId, result.day) || 1) *
 					timeScale *
 					aptitudeFor(skill, record.innate) *
 					personalityMultiplier(skill, record.innate) *
@@ -255,19 +268,24 @@
 		return selectedId;
 	}
 
-	function stageForDay(record, day) {
+	function stageForDay(record, day, settings) {
 		const currentDay = getCurrentDay();
 		const daysAgo = Number.isFinite(currentDay) ? Math.max(0, currentDay - day) : 0;
 		const ageOnDay = Math.max(0, (Number(record.ageDays) || 0) - daysAgo);
 		if (!record.stageThresholds || !window.EdenAge) return record.lifeStage;
-		return window.EdenAge.getStage(ageOnDay, record.stageThresholds, getVariables().eden?.settings?.neverAutoAdult === true);
+		/* The maturity-day settlement completes the plan saved on the last juvenile day. */
+		const finalJuvenileDay = settings?.neverAutoAdult !== true && ageOnDay === record.stageThresholds.adult;
+		return window.EdenAge.getStage(finalJuvenileDay ? Math.max(0, ageOnDay - 1) : ageOnDay, record.stageThresholds, settings?.neverAutoAdult === true);
 	}
 
 	function applyDay(training, record, day, schedule, settings) {
-		const stage = stageForDay(record, day);
+		const stage = stageForDay(record, day, settings);
 		const changes = emptySkills();
 		const result = { day, stage, schedule: defaultSchedule(), changes, spent: 0, failedActivities: [] };
-		if (!eligibleStages.includes(stage)) return result;
+		if (!eligibleStages.includes(stage)) {
+			if (stage !== "adult") applyPainting(training, record, day, settings, changes);
+			return result;
+		}
 
 		const timeScale = getTimeScale(record, settings);
 		const passiveAwareness = (config.passiveAwareness[stage] || 0) * timeScale;
@@ -278,20 +296,37 @@
 		const executedSchedule = normalizeSchedule(schedule).map(activityId =>
 			applyActivity(training, record, activityId, stage, settings, changes, result)
 		);
+		applyPainting(training, record, day, settings, changes);
 		Object.keys(changes).forEach(skill => (changes[skill] = Math.round(changes[skill] * 100) / 100));
 		result.schedule = executedSchedule;
 		return result;
 	}
 
+	function applyPainting(training, record, day, settings, changes) {
+		const delta = window.EdenUpgrades?.awarenessChange(day) || 0;
+		if (!delta) return;
+		const before = training.skills.awareness;
+		training.skills.awareness = roundSkill(before + delta * getTimeScale(record, settings));
+		changes.awareness += training.skills.awareness - before;
+	}
+
 	function processTraining(record, child, settings) {
 		const training = normalizeTraining(record.training);
 		record.training = training;
-		const settlementDay = getSettlementDay();
+		let settlementDay = getSettlementDay();
 		if (!Number.isFinite(settlementDay)) return training;
 
 		if (!isSupportedResident(record, child)) {
 			training.lastProcessedDay = settlementDay;
 			return training;
+		}
+
+		/* Complete the final plan before adult outcome checks, even before 08:00.
+		 * Do not train or charge for any later adult days during catch-up. */
+		const maturityAge = Number(record.stageThresholds?.adult);
+		if (settings?.neverAutoAdult !== true && record.lifeStage === "adult" && Number.isFinite(maturityAge)) {
+			const maturityDay = getCurrentDay() - (Number(record.ageDays) || 0) + maturityAge;
+			if (Number.isFinite(maturityDay)) settlementDay = maturityDay;
 		}
 
 		for (let day = training.lastProcessedDay + 1; day <= settlementDay; day++) {

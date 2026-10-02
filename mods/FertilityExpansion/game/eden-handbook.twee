@@ -1,0 +1,32 @@
+:: Eden Handbook
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<<if $eden.facility.owned>>
+	<p>你将孩子们成年后的去向记在这里，整理出他们选择这些道路所需的条件。</p>
+	<<set _edenTownEndings to window.EdenHandbook.entries($eden, "town")>>
+	<<set _edenAwayEndings to window.EdenHandbook.entries($eden, "away")>>
+	<p><span class="gold">镇内</span></p>
+	<<if _edenTownEndings.length>>
+		<p class="eden-child-meta">按以下顺序判定优先级。</p>
+		<ol>
+			<<for _edenEnding range _edenTownEndings>>
+				<li><span class="gold"><<= _edenEnding.label>>：</span><<= _edenEnding.requirement>></li>
+			<</for>>
+		</ol>
+	<<else>>
+		<p class="grey">尚未记录镇内去向。</p>
+	<</if>>
+	<p><span class="gold">镇外</span></p>
+	<<if _edenAwayEndings.length>>
+		<p>大学判定：<<= window.EdenHandbook.universityRequirement()>></p>
+		<ol>
+			<<for _edenEnding range _edenAwayEndings>>
+				<li><span class="gold"><<= _edenEnding.label>>：</span><<= _edenEnding.requirement>></li>
+			<</for>>
+		</ol>
+	<<else>>
+		<p class="grey">尚未记录镇外去向。</p>
+	<</if>>
+<<else>>
+	<p>你还没有买下伊甸园。</p>
+<</if>>
+<<link [[返回伊甸园|Eden Home]]>><</link>>

@@ -2,7 +2,7 @@
 	"use strict";
 
 	const dataVersion = 3;
-	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow"]);
+	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow", "other"]);
 	function isSupportedSpecies(record) {
 		return Boolean(record && window.EdenAge?.isCultivableSpecies(record));
 	}

@@ -11,7 +11,7 @@
 		<<link [[继续|Eden Adult Encounter]]>><<set $sexstart to 1>><</link>>
 	<</if>>
 	<br><br>
-	<<link [[返回通讯录|Eden Contacts]]>><<set $eden.activeEncounterChildId to null>><</link>>
+<<link [[返回|$eden.encounterReturnPassage]]>><<set $eden.activeEncounterChildId to null>><<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>><</link>>
 </div>
 
 :: Eden Adult Encounter
@@ -23,7 +23,7 @@
 	<p class="red">无法找到这次遭遇对应的成年孩子。</p>
 	<<if $combat is 1>><<clotheson>><<endcombat>><</if>>
 	<br><br>
-	<<link [[返回通讯录|Eden Contacts]]>><</link>>
+	<<link [[返回|$eden.encounterReturnPassage]]>><<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>><</link>>
 <<else>>
 	<<if $sexstart is 1>>
 		<<set $sexstart to 0>>
@@ -46,7 +46,7 @@
 		<<set $edenEncounterTurn to 0>>
 		<<consensual true>><<set $consensual to 1>>
 		<<set $speechdisable to 1>>
-		<<neutral 1>><<maninit>><<set $enemytrust += 100>><<promiscuity5>>
+		<<neutral 1>><<maninit>><<set $enemytrust += 100>><<promiscuity5>><<edenBedVisitCombatStart>>
 	<</if>>
 	<<set $speechdisable to 1>>
 	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
@@ -85,5 +85,6 @@
 <<if _edenRecord and typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
 <<clotheson>><<endcombat>>
 <<set $eden.activeEncounterChildId to null>>
+<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>>
 <br><br>
-<<link [[返回通讯录|Eden Contacts]]>><</link>>
+<<link [[返回|$eden.encounterReturnPassage]]>><</link>>

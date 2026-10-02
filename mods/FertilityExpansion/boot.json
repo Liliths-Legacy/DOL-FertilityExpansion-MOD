@@ -4,7 +4,10 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.4.0",
+  "version": "1.5.10",
+  "scriptFileList_inject_early": [
+    "modules/eden-birth-bridge.js"
+  ],
   "styleFileList": [],
   "scriptFileList": [],
   "tweeFileList": [],
@@ -39,6 +42,13 @@
           "passage": "Widgets children",
           "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $children[_args[0]].type>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
           "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, $children, _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
+          "debug": false,
+          "all": false
+        },
+        {
+          "passage": "Widgets Sleep",
+          "findString": "\t\t<<switch $location>>\n\t\t\t<<case \"home\">>",
+          "replace": "\t\t<<switch $location>>\n\t\t\t<<case \"eden_home\">>\n\t\t\t\t<<if typeof window.EdenBedVisit is \"object\">>\n\t\t\t\t\t<<set _edenBedVisitInterrupt to window.EdenBedVisit.trySleepInterrupt($eden, $children, $sleepHoursTotal)>>\n\t\t\t\t\t<<if _edenBedVisitInterrupt>><<set _sleepinterrupt to 1>><</if>>\n\t\t\t\t<</if>>\n\t\t\t<<case \"home\">>",
           "debug": false,
           "all": false
         },

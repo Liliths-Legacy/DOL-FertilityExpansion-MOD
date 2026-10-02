@@ -18,6 +18,7 @@
 	});
 	const speciesInnateModifiers = Object.freeze({
 		human: Object.freeze({ appearance: 0, fitness: 0, intelligence: 0, temperament: 0 }),
+		other: Object.freeze({ appearance: 0, fitness: 0, intelligence: 0, temperament: 0 }),
 		bird: Object.freeze({ appearance: 4, fitness: -3, intelligence: 2, temperament: 5 }),
 		cat: Object.freeze({ appearance: 0, fitness: 1, intelligence: 2, temperament: -5 }),
 		fox: Object.freeze({ appearance: 3, fitness: -2, intelligence: 2, temperament: 2 }),
@@ -82,11 +83,12 @@
 	}
 
 	function inferSpecies(child, storedSpecies) {
-		if (speciesInnateModifiers[storedSpecies]) return storedSpecies;
 		const transformation = child?.features?.beastTransform;
 		if (["bird", "cat", "fox", "wolf", "cow"].includes(transformation)) return transformation;
+		if (typeof transformation === "string" && transformation.trim()) return "other";
 		if (child?.type === "hawk") return "bird";
 		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
+		if (speciesInnateModifiers[storedSpecies]) return storedSpecies;
 		return "human";
 	}
 

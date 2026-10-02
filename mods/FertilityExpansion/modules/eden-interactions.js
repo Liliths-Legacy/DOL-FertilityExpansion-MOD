@@ -2,7 +2,7 @@
 	"use strict";
 
 	const dataVersion = 2;
-	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow"]);
+	const eligibleSpecies = Object.freeze(["bird", "cat", "fox", "wolf", "cow", "other"]);
 	const config = Object.freeze({
 		referenceMaturityDays: 90,
 		refreshHours: 4,
@@ -150,7 +150,8 @@
 		if (record.lifeStage !== "adult") {
 			if (typeof window.EdenAdult?.applyAffection !== "function") return { ok: false, gain: 0 };
 			window.EdenAdult.ensureAffection(record, child, window.EdenAdult.config.affection.newResident);
-			gain = window.EdenAdult.applyAffection(record, baseGain * scale);
+			const roomMultiplier = window.EdenUpgrades?.affectionMultiplier(eden, child) || 1;
+			gain = window.EdenAdult.applyAffection(record, baseGain * scale * roomMultiplier);
 		}
 		const bonding = ensureBonding(record);
 		bonding.totalInteractions = (Number(bonding.totalInteractions) || 0) + 1;

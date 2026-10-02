@@ -162,7 +162,10 @@
 
 	function nextDue(eden) {
 		if (!eden?.children) return null;
-		return Object.keys(eden.children).find(childId => eden.children[childId]?.adult?.pregnancy?.due) || null;
+		return Object.keys(eden.children).find(childId => {
+			const pregnancy = eden.children[childId]?.adult?.pregnancy;
+			return pregnancy?.due && pregnancy.deliveryBlocked !== true;
+		}) || null;
 	}
 
 	function pregnancyStatus(record) {
@@ -188,6 +191,23 @@
 		return "hospital";
 	}
 
+	function resolveOriginalGiveBirth() {
+		if (typeof window.giveBirthToChildren === "function") return window.giveBirthToChildren;
+		/* DoL 0.5.11.9 declares this as a global function but, unlike most
+		 * pregnancy helpers, does not explicitly export it on window. */
+		if (typeof giveBirthToChildren === "function") return giveBirthToChildren;
+		return null;
+	}
+
+	function retryDelivery(record) {
+		const pregnancy = record?.adult?.pregnancy;
+		if (!pregnancy?.fetus?.length) return false;
+		delete pregnancy.deliveryBlocked;
+		delete pregnancy.lastDeliveryError;
+		pregnancy.due = true;
+		return true;
+	}
+
 	function deliver(eden, children, parentId, vars = variables()) {
 		const record = eden?.children?.[parentId];
 		const parent = children?.[parentId];
@@ -203,9 +223,18 @@
 		const free = Math.max(0, (Number(eden.facility?.capacity) || 0) - residentCount(children));
 		const destination = eden.facility?.owned && free >= pregnancy.fetus.length ? "eden_home" : "home";
 		const description = descriptionFor(parentId);
-		const giveBirth = window.giveBirthToChildren;
-		if (typeof giveBirth !== "function" || !giveBirth(description, birthLocation(pregnancy.type, destination), destination, pregnancy)) {
-			return { ok: false, message: "原版生产流程没有成功创建孩子。" };
+		const giveBirth = resolveOriginalGiveBirth();
+		let delivered = false;
+		let deliveryError = null;
+		try {
+			delivered = typeof giveBirth === "function" && giveBirth(description, birthLocation(pregnancy.type, destination), destination, pregnancy) === true;
+		} catch (error) {
+			deliveryError = error;
+		}
+		if (!delivered || childIds.some(childId => !children[childId])) {
+			pregnancy.deliveryBlocked = true;
+			pregnancy.lastDeliveryError = String(deliveryError?.message || (giveBirth ? "child creation failed" : "birth function unavailable"));
+			return { ok: false, parentId: String(parentId), message: "原版生产流程未能完成。你可以返回通讯录，稍后再次尝试。" };
 		}
 
 		childIds.forEach(childId => {
@@ -234,6 +263,7 @@
 		syncAll,
 		nextDue,
 		pregnancyStatus,
+		retryDelivery,
 		deliver,
 	});
 })();

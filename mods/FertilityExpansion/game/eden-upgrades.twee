@@ -1,0 +1,79 @@
+:: Eden Upgrade Widgets [widget]
+<<widget "edenFurnitureShopEntry">>
+	<<edenSetup>>
+	<<if $eden.facility.owned and $exposed lte 0 and Time.dayState isnot "night" and Time.hour isnot 21 and $stress lt $stressmax>>
+		你看向其他大尺寸的商品，各色家装用品琳琅满目。你开始思考是否要给伊甸园添置一些。
+		<br><br>
+		<<link [[翻修|Eden Renovation Catalogue]]>><</link>>
+		<br>
+		<<link [[装饰|Eden Decoration Catalogue]]>><</link>>
+		<br>
+	<</if>>
+<</widget>>
+
+<<widget "edenUpgradeCatalogue">>
+	<<set _edenUpgrades to window.EdenUpgrades.ensure($eden)>>
+	<<set _edenUpgradeCategory to _args[0]>>
+	<<if !$eden.facility.owned>>
+		<p>你还没有买下伊甸园。</p>
+	<<else>>
+		<<for _edenItemId, _edenItem range window.EdenUpgrades.config.items>>
+			<<if _edenItem.category is _edenUpgradeCategory>>
+				<<capture _edenItemId _edenItem _edenUpgradeCategory>>
+					<p>
+						<<if _edenUpgrades.owned[_edenItemId]>>
+							<<= _edenItem.label>> <span class="grey">（已购置）</span>
+						<<elseif $money gte _edenItem.price>>
+							<<link _edenItem.label>>
+								<<set _edenPurchaseResult to window.EdenUpgrades.buy($eden, $children, _edenItemId)>>
+								<<replace "#eden-upgrade-feedback">><<= _edenPurchaseResult.message>><</replace>>
+								<<replace "#eden-upgrade-catalogue">><<edenUpgradeCatalogue _edenUpgradeCategory>><</replace>>
+							<</link>>
+						<<else>>
+							<<= _edenItem.label>> <span class="grey">（你的钱不够）</span>
+						<</if>>
+						 · <<printmoney _edenItem.price>> <span class="eden-child-meta">—— <<= _edenItem.description>></span>
+					</p>
+				<</capture>>
+			<</if>>
+		<</for>>
+	<</if>>
+<</widget>>
+
+:: Eden Renovation Catalogue
+<<edenSetup>><<set $outside to 0>><<set $location to "shopping_centre">><<effects>>
+你翻开翻修目录，考虑着伊甸园里的房间。
+<div id="eden-upgrade-feedback"></div>
+<div id="eden-upgrade-catalogue"><<edenUpgradeCatalogue "renovation">></div>
+<<link [[返回家具店|Furniture Shop]]>><</link>>
+
+:: Eden Decoration Catalogue
+<<edenSetup>><<set $outside to 0>><<set $location to "shopping_centre">><<effects>>
+你浏览着装饰目录，想象这些画挂在伊甸园里的样子。
+<div id="eden-upgrade-feedback"></div>
+<div id="eden-upgrade-catalogue"><<edenUpgradeCatalogue "decoration">></div>
+<<link [[返回家具店|Furniture Shop]]>><</link>>
+
+:: Eden Decorations
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<<if $eden.facility.owned>>
+	<<set _edenUpgrades to window.EdenUpgrades.ensure($eden)>>
+	<<set _edenHanging to window.EdenUpgrades.hanging($eden)>>
+	<p>墙上目前<<= _edenHanging is "landscape" ? "挂着一幅风景画。" : _edenHanging is "abstract" ? "挂着一幅抽象画。" : "没有挂画。">></p>
+	<<for _edenPainting range ["landscape", "abstract"]>>
+		<<capture _edenPainting>>
+			<<if _edenUpgrades.owned[_edenPainting] and _edenHanging isnot _edenPainting>>
+				<<link `_edenPainting === "landscape" ? "挂上风景画" : "挂上抽象画"` "Eden Decorations">>
+					<<run window.EdenUpgrades.hang($eden, $children, _edenPainting)>>
+				<</link>><br>
+			<</if>>
+		<</capture>>
+	<</for>>
+	<<if _edenHanging>>
+		<<link "取下画作" "Eden Decorations">><<run window.EdenUpgrades.hang($eden, $children, null)>><</link>><br>
+	<</if>>
+	<p class="eden-child-meta">同一时间只能悬挂一幅画。挂画按每日养成结算生效；成年孩子不受影响。</p>
+<<else>>
+	<p>你还没有买下伊甸园。</p>
+<</if>>
+<<link [[返回伊甸园|Eden Home]]>><</link>>

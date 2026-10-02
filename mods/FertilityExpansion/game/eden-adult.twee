@@ -65,7 +65,7 @@
 						<<if _edenPregnancyStatus>>
 							<div><span class="gold">孕期：</span><<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</div>
 						<</if>>
-						<div><span class="gold">简介：</span><<if _edenContactRecord.profile>><<= Util.escapeMarkup(_edenContactRecord.profile)>><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></div>
+						<div><span class="gold">简介：</span><<if _edenContactRecord.profile>><span class="eden-child-profile-content"><<= Util.escapeMarkup(_edenContactRecord.profile)>></span><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></div>
 						<<if typeof window.EdenLifeStory is "object" and window.EdenLifeStory.canRead(_edenContactRecord)>>
 							<div><span class="gold">人生来信：</span><<link "再看一遍孩子的来信" "Eden Life Story Reread">><<set $eden.selectedChildId to _edenContactId>><</link>></div>
 						<<elseif typeof window.EdenLifeStory is "object" and window.EdenLifeStory.hasLetter(_edenContactRecord)>>
@@ -89,8 +89,11 @@
 							<</if>>
 							<<if window.EdenAdult.canInviteIntimacy(_edenContactRecord)>>
 								｜<<link "发出亲密邀请">>
+									<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.restore($eden.children[_edenContactId])>><</if>>
+									<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>>
 									<<set _edenInviteResult to window.EdenAdult.checkIntimacy($eden.children[_edenContactId], $attractiveness, currentSkillValue("seductionskill"))>>
 									<<set $eden.activeEncounterChildId to _edenInviteResult.success ? _edenContactId : null>>
+									<<set $eden.encounterReturnPassage to "Eden Contacts">>
 									<<replace `"#" + _edenResponseId`>>
 										<<if _edenInviteResult.success>>
 											<span class="green">邀请检定通过（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。</span><br>
@@ -167,10 +170,9 @@
 <div class="eden-panel">
 	<<set _edenRecord to $eden.children[$eden.selectedChildId]>>
 	<<set _edenChild to $children[$eden.selectedChildId]>>
-	<<if _edenRecord and $eden.settings.immediateLifeStory and !$eden.lifeStoryVisitHandled and _edenRecord.adult?.outcome is "awayWork" and window.EdenLifeStory.ensureState(_edenRecord)?.status is "waiting">>
+	/* Finish settlement this visit; the external entrance resets the letter queue for the next visit. */
+	<<if _edenRecord and _edenRecord.adult?.settled>>
 		<<set $eden.lifeStoryVisitHandled to true>>
-		<<run window.EdenLifeStory.markDiscovered(_edenRecord)>>
-		<<goto "Eden Life Story Arrival">>
 	<</if>>
 	<<if !_edenRecord or !_edenChild or !_edenRecord.adult.settled>>
 		<p class="red">没有可以显示的成年结算。</p>
@@ -307,6 +309,9 @@
 		<</if>>
 	<<else>>
 		<p class="red"><<= _edenBirthResult.message>></p>
+		<<if _edenParentId and $eden.children[_edenParentId]?.adult?.pregnancy>>
+			<<link "再次尝试" "Eden Adult Birth">><<run window.EdenBreeding.retryDelivery($eden.children[_edenParentId])>><</link>><br>
+		<</if>>
 	<</if>>
 	<br>
 	<<link [[返回通讯录|Eden Contacts]]>><<set $eden.breeding.activeBirthParentId to null>><</link>>
@@ -339,7 +344,10 @@
 			<</if>>
 			<<if window.EdenAdult.canInviteIntimacy(_edenRecord)>>
 				<<button "发出亲密邀请">>
+					<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.restore($eden.children[$eden.selectedChildId])>><</if>>
+					<<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>>
 					<<set _edenInviteResult to window.EdenAdult.checkIntimacy($eden.children[$eden.selectedChildId], $attractiveness, currentSkillValue("seductionskill"))>>
+					<<set $eden.encounterReturnPassage to "Eden Contacts">>
 					<<replace "#eden-contact-response">>
 						<<if _edenInviteResult.success>>
 							<span class="green">邀请检定通过（你的评级 <<= _edenInviteResult.rating>>，需要 <<= _edenInviteResult.required>>）。具体遭遇内容将在后续接入。</span>
