@@ -53,14 +53,15 @@
 		const transformation = child?.features?.beastTransform;
 		if (["bird", "cat", "fox", "wolf", "cow"].includes(transformation)) return transformation;
 		if (typeof transformation === "string" && transformation.trim()) return "other";
-		if (child?.type === "hawk") return "bird";
-		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
+		const type = window.EdenChildData?.typeOf(child) ?? child?.type;
+		if (["hawk", "harpy"].includes(type)) return "bird";
+		if (["wolf", "wolfboy", "wolfgirl"].includes(type)) return "wolf";
 		if (species[storedSpecies]) return storedSpecies;
 		return "human";
 	}
 
 	function inferBodyForm(child) {
-		const type = String(child?.type || "human");
+		const type = String(window.EdenChildData?.typeOf(child) ?? child?.type ?? "human");
 		if (type === "human" || type.includes("human")) return "humanoid";
 		if (["wolfboy", "wolfgirl", "harpy"].includes(type)) return "humanoid";
 		if (["wolf", "hawk"].includes(type)) return child?.features?.monster === "monster" ? "humanoid" : "beast";
@@ -94,6 +95,7 @@
 	}
 
 	function currentSerialDay() {
+		if (window.EdenChildData) return window.EdenChildData.currentSerialDay();
 		const time = window.Time;
 		if (!time) return null;
 		const current = Math.floor(Date.UTC(time.year, time.month - 1, time.monthDay) / millisecondsPerDay);
@@ -101,6 +103,7 @@
 	}
 
 	function getAgeDays(child, record) {
+		if (window.EdenChildData) return window.EdenChildData.ageDays(child, record);
 		const born = serialDay(child?.born);
 		const current = currentSerialDay();
 		if (current === null) return 0;

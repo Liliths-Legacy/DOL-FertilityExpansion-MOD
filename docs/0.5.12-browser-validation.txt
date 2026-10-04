@@ -1,0 +1,25 @@
+PASS: native early hooks and all seven final passage injections coexist with Lyra/i18n
+PASS: fresh game initializes the native record schema and Eden
+PASS: degrees-of-lewdity-20260923-230057.save migration: 48 newly registered from vanilla save
+PASS: migrated save serialization and reload do not repeat conversion
+PASS: degrees-of-lewdity-20260927-165105.save migration: 54 mapped, 52 Eden records retained, profiles/traits/training/letters/remittances preserved
+PASS: migrated save serialization and reload do not repeat conversion
+PASS: degrees-of-lewdity-20261001-154531.save migration: 54 mapped, 53 Eden records retained, profiles/traits/training/letters/remittances preserved
+PASS: migrated save serialization and reload do not repeat conversion
+PASS: Eden Home renders with translated native widgets
+PASS: Eden Nursery renders with translated native widgets
+PASS: Eden Contacts renders with translated native widgets
+PASS: Eden Child Info renders with translated native widgets
+PASS: Eden Journal Index renders with translated native widgets
+PASS: Eden Child Journal renders with translated native widgets
+PASS: Eden Training renders with translated native widgets
+PASS: Eden Renovation Catalogue renders with translated native widgets
+PASS: Eden Decoration Catalogue renders with translated native widgets
+PASS: Eden Safehouse Bedroom renders with translated native widgets
+PASS: Eden Safehouse Bed renders with translated native widgets
+PASS: Eden Safehouse Wardrobe renders with translated native widgets
+PASS: Eden Safehouse Mirror renders with translated native widgets
+PASS: Eden Safehouse Bathroom renders with translated native widgets
+PASS: Eden Safehouse Settings renders with translated native widgets
+PASS: Childrens Home renders with translated native widgets
+PASS: no uncaught JavaScript exceptions

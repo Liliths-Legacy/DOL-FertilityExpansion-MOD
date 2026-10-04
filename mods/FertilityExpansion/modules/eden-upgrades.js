@@ -62,7 +62,7 @@
 		return purchase && day >= purchase.day && bookActivities.has(activity) ? config.libraryMultiplier : 1;
 	}
 	function affectionMultiplier(eden, child) {
-		return child?.location === "eden_home" && ensure(eden)?.owned.nursery ? config.nurseryMultiplier : 1;
+		return (window.EdenChildData?.locationOf(child) ?? child?.location) === "eden_home" && ensure(eden)?.owned.nursery ? config.nurseryMultiplier : 1;
 	}
 	function awarenessChange(day, eden = variables().eden) {
 		const painting = hanging(eden, day);

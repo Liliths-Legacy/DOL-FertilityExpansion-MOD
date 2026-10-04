@@ -5,8 +5,8 @@
 */
 <<widget "edenAdultCombatSpeech">>
 	<<set _edenDialogueId to $eden.activeEncounterChildId>>
-	<<set _edenDialogueChild to _edenDialogueId ? $children[_edenDialogueId] : undefined>>
-	<<set _edenDialogueRecord to _edenDialogueId ? $eden.children[_edenDialogueId] : undefined>>
+	<<set _edenDialogueChild to window.EdenChildData.get(_edenDialogueId)>>
+	<<set _edenDialogueRecord to window.EdenChildData.hasId(_edenDialogueId) ? $eden.children[_edenDialogueId] : undefined>>
 	/* 称呼只按原版亲缘关系决定，不读取 PC 当前的生理性别。 */
 	<<set _edenDialogueParentTitle to _edenDialogueChild?.mother is "pc" ? "妈妈" : "爸爸">>
 	<<if _edenDialogueChild and _edenDialogueRecord and ($NPCList[0].mouth is 0 or $NPCList[0].mouth is "speech_only")>>

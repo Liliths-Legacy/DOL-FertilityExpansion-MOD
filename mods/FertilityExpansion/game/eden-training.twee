@@ -2,8 +2,8 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 	<<if !_edenRecord or !_edenChild>>
 		<p class="red">无法找到这个孩子的记录。</p>
 	<<elseif typeof window.EdenTraining isnot "object" or !window.EdenTraining.isEligible(_edenRecord, _edenChild)>>
@@ -31,7 +31,7 @@
 		</div>
 		<div class="eden-profile-actions">
 			<<button "保存安排">>
-				<<set _edenPlanResult to window.EdenTraining.setPlan($eden.children[$eden.selectedChildId], $children[$eden.selectedChildId], [_edenSlot1, _edenSlot2, _edenSlot3])>>
+				<<set _edenPlanResult to window.EdenTraining.setPlan($eden.children[$eden.selectedChildId], window.EdenChildData.get($eden.selectedChildId), [_edenSlot1, _edenSlot2, _edenSlot3])>>
 				<<replace "#eden-training-save-status">><<if _edenPlanResult.ok>><span class="green"><<= _edenPlanResult.message>></span><<else>><span class="red"><<= _edenPlanResult.message>></span><</if>><</replace>>
 			<</button>>
 			<span id="eden-training-save-status"></span>

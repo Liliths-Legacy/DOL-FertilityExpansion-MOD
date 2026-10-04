@@ -1,26 +1,13 @@
 :: Eden Facility Widgets [widget]
 <<widget "edenLocationIcon">><img class="icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAFKUlEQVR4nO2Wa0yTZxTHf2/lJlTEoiC3KmLpnBE+oLuQKXPdIkRQo9Nlmc5NIirb8DIwYDaXLWZB2HBozQRHNVl1Bu/BDNA4h2YYombqUhGxIlgYFK32oiKXPvvQra4izjk/LZ7k/fDmOc//9/6f85yTF57F/z2kpy0YrFAJ4ewFwHKraUB92ZMIBytUYqD1XXGwPswbTfgdHpXn9W+gW8fFisQYiTaHk6sdsSK3w6V7w9IoASiCokVYzruEAYrqSmLqO8g/8h/BL0QpSZkeRcbeC5TOeZ7wiybygcQYiffPKYXxtq8EsOVMDQDdddfY2+g3oN5j19iQqhY5BhvpadGUVTSxcpSccLmMWqMgxs8HY1c3MX4+hKx7i4bqSgAy9J3u03gwHqvGpmyNqDUKCrSZABRoMyk12+BPx6ERPSTGuPSlb/Wop6Vwqr7jkZr/CDakqoX1oolTgXcJHyUH4PMcLSXlueQYbAx9LhKANocTgI5Wb05mf4/F1s2uuCcEG1LVotYoKO68Q37ZKuIKNzLi5k0AhgxXo92eRcbeCwAMsvoSGtFD39B7jA4VLB/hz9UOCUVQ9ENv9oDgI6+qRJvDyWHJSm5BJsvqNhEYDEtHdHFykj9bf8slSh2PdnsWtUZBrCaUWqMgXC4jXC5jx+VuAPZEBzye42CFSpiyNQJg910XZIquFP10LbYbrpym9ZvRVtoJW5xJlDoexRvDsV40kTI9ilqjoNYoiJa83fU3pKr7uX7ojQtWqMRrI218VvghrZFH0J02kaSUcyijk8gQVwfmFmSSerAUc6NgX9Bg9JccmMyuiZUdFAxAaEQPbQ4nx9p72dLuOcm8HgTesDRKPfH3pMN+fmK93Iv0omt0WQROYwf6ilzmpxWgr1hNW7ODCeMljja6zGw+WAKA/XqDW29+WsF9hzK5hzk3OFihYuexMOauuCcClYOomrcIgC6LoKdXsPOnbXy64CPixvpTsFLL+ct3CBjsJCTZn87eYQB8MHMJN+3dxETch+grVpOcsqFfP/+9xkJ32kT+miC6LILkch1TdKXsWKfE28u1Z9K4UPcDYEj2Z8PCKLeAItAHgLVFM1hbNIP0tGgAhnv19JvbbvANi7eUpJSjrbTz89J07GYnVfMW8c4nLXyRFehxTNV11wBorXfy3dsNPBgnnGc44TzjHiKppSPoib/nkeMGH18gxKGMTsyNAv0329GpIkj8ait+Com1G23Yrze4haa96HLZVLiCqcWhLGlqA8Bic7XQZFkCk2UJGFsdbpD3Od+HgzuHDSNgsJN9QYPdi9smRPLyqTtMNd4lNq+4n7PYvGLeG6lBM0tG2OJMdvlLlJTn0iUpUa7ZT0l5Lq/oNpJXZOX1wj6PYeJxq5vtvsy+dZfZtj4A5Ole3K6QERnixZizTjL0S9y5rXUldDucTNx2AHOjoEb4MjQhkmV1mwDQzJJxdkEZhzVjeCnkClV7+rDeau7fTsutv3PpxzmccJ7hWHYrp+o7UJoDWH5Axd6MJnRbFvdz7COXYfq1jwsJKj4e18Qvx69QfdGHxL4uDOPHMn7kZTDY2d8+hLnNnjV2f0HkwmjRZRH4KSTKVkVhNN9CW2l3T6vzOVkAHCvd7d68qLGV5DcHkaSU86Xejq2lj6/b/cge7Qnx9pK4XnHVo508XoamjPK48hHjZByamUFRzVEAViVpAKjq/oGaFgeLJkaiO20CIEkpp6bFwV+dMWG8RJJSTl6RFWtl81P/t3sWz2LA+AOakBOQerbd7wAAAABJRU5ErkJggg=="> <</widget>>
 <<widget "edenResidentIds">><<silently>>
-	<<set _edenResidentIds to []>>
-	<<if $children and typeof $children is "object">>
-		<<set _edenResidentIds to Object.keys($children).filter(id => $children[id].location === "eden_home")>>
-	<</if>>
+	<<set _edenResidentIds to window.EdenFacility.residentIds()>>
 	<<set _edenResidentCount to _edenResidentIds.length>>
 <</silently>><</widget>>
 
 <<widget "edenMoveSelectedChildHome">><<silently>>
 	<<set _edenTransferChildId to $eden.selectedChildId>>
-	<<if $children?.[_edenTransferChildId] and $eden.children?.[_edenTransferChildId] and window.EdenAge.isHumanoid($eden.children[_edenTransferChildId], $children[_edenTransferChildId])>>
-		<<set $children[_edenTransferChildId].location to "eden_home">>
-		<<set $eden.children[_edenTransferChildId].status to "resident">>
-		<<set $eden.children[_edenTransferChildId].transferSource to $eden.transferSource>>
-		<<if typeof $options.eden is "object" and $options.eden.resetAgeOnTransfer and typeof window.EdenAge is "object">>
-			<<run window.EdenAge.resetGrowthAge($eden.children[_edenTransferChildId])>>
-		<</if>>
-		<<if !Number.isFinite($eden.children[_edenTransferChildId].affection)>><<set $eden.children[_edenTransferChildId].affection to 40>><</if>>
-		<<run delete $eden.childListReturn>>
-		<<run delete $eden.transferSource>>
-	<</if>>
+	<<set _edenTransferResult to window.EdenFacility.move($eden, _edenTransferChildId, _args[0] or $eden.transferSource)>>
 <</silently>><</widget>>
 
 <<widget "edenFarmlandLink">>
@@ -155,23 +142,13 @@
 <<edenSetup>><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
 	<<set _edenTransferSource to $eden.transferSource>>
-	<<set _edenIsPcChild to _edenChild and (_edenChild.mother is "pc" or _edenChild.father is "pc")>>
-	<<set _edenIsAdoptedHawk to _edenChild and _edenTransferSource is "tower" and _edenChild.type is "hawk" and _edenChild.adopted>>
-	<<set _edenIsHumanoid to _edenRecord and _edenChild and window.EdenAge.isHumanoid(_edenRecord, _edenChild)>>
+	<<set _edenTransferCheck to window.EdenFacility.inspectTransfer($eden, _edenChildId, _edenTransferSource)>>
 	<<edenResidentIds>>
-	<<if !$eden.facility.owned>>
-		<p class="red">你还没有能安置孩子的地方。</p>
-	<<elseif !_edenChild or (!_edenIsPcChild and !_edenIsAdoptedHawk)>>
-		<p class="red">你无法确认要带走的孩子。</p>
-	<<elseif !_edenIsHumanoid>>
-		<p>这个孩子保持着动物形态，暂时不适合带到伊甸园抚养。</p>
-	<<elseif _edenChild.location isnot _edenTransferSource>>
-		<p>这个孩子已经不在这里了。</p>
-	<<elseif _edenTransferSource is "tower" and _edenChild.eggTimer isnot undefined>>
-		<p>这枚蛋还没有孵化，现在还不能带去伊甸园。</p>
+	<<if !_edenTransferCheck.eligible>>
+		<p class="red"><<= _edenTransferCheck.message>></p>
 	<<elseif ["wolf_cave", "tower", "alex_cottage"].includes(_edenTransferSource)>>
 		<<set _edenTransferIntroduced to $eden.facility.transferIntroduced[_edenTransferSource]>>
 		<<if !_edenTransferIntroduced>>
@@ -202,13 +179,17 @@
 		<</if>>
 	<</if>>
 
-	<<if ["wolf_cave", "tower", "alex_cottage"].includes(_edenTransferSource) and _edenChild and _edenChild.location is _edenTransferSource and _edenIsHumanoid and (_edenIsPcChild or _edenIsAdoptedHawk) and !(_edenTransferSource is "tower" and _edenChild.eggTimer isnot undefined)>>
-		<<if _edenResidentCount gte $eden.facility.capacity>>
-			<p class="red">伊甸园已经没有空位。</p>
+	<<if ["wolf_cave", "tower", "alex_cottage"].includes(_edenTransferSource) and _edenTransferCheck.eligible>>
+		<<if !_edenTransferCheck.ok>>
+			<p class="red"><<= _edenTransferCheck.message>></p>
 		<<else>>
-			<<link [[将孩子带至伊甸园|Eden Nursery]]>><<edenMoveSelectedChildHome>><</link>>
+			<<link "将孩子带至伊甸园">>
+				<<edenMoveSelectedChildHome>>
+				<<if _edenTransferResult.ok>><<goto "Eden Nursery">><<else>><<replace "#eden-transfer-feedback">><span class="red"><<= _edenTransferResult.message>></span><</replace>><</if>>
+			<</link>>
 		<</if>>
 	<</if>>
+	<div id="eden-transfer-feedback"></div>
 	<br><br>
 	<<link [[返回|$eden.returnPassage]]>><<run delete $eden.transferSource>><</link>>
 </div>
@@ -217,30 +198,26 @@
 <<edenSetup>><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenParents to window.EdenChildData.parentsOf(_edenChild)>>
+	<<set _edenTransferCheck to window.EdenFacility.inspectTransfer($eden, _edenChildId, "home")>>
 	<<edenResidentIds>>
-	<<if !$eden.facility.owned>>
-		<p class="red">你还没有能安置孩子的地方。</p>
-	<<elseif !_edenChild or (_edenChild.mother isnot "pc" and _edenChild.father isnot "pc")>>
-		<p class="red">贝利不知道你在说哪个孩子。</p>
-	<<elseif !_edenRecord or !window.EdenAge.isHumanoid(_edenRecord, _edenChild)>>
-		<p>这个孩子保持着动物形态，暂时不适合带到伊甸园抚养。</p>
-	<<elseif _edenChild.location isnot "home">>
-		<p>这个孩子已经不在孤儿院了。</p>
+	<<if !_edenTransferCheck.eligible>>
+		<p class="red"><<= _edenTransferCheck.message>></p>
 	<<else>>
 		<<if !$eden.facility.baileyIntroduced>>
 			<<set _edenOtherParentRole to "的另一位家长">>
 			<<set _edenOtherParentName to "">>
 			<<set _edenOtherParentGender to "">>
-			<<if _edenChild.mother is "pc" and _edenChild.father isnot "pc">>
+			<<if _edenParents.mother is "pc" and _edenParents.father isnot "pc">>
 				<<set _edenOtherParentRole to "父亲">>
-				<<set _edenOtherParentName to _edenChild.father>>
-				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $parentList?.fathers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
-			<<elseif _edenChild.father is "pc" and _edenChild.mother isnot "pc">>
+				<<set _edenOtherParentName to _edenParents.father>>
+				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $storedNPCs?.[_edenOtherParentName]?.npc?.pronoun or $parentList?.fathers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
+			<<elseif _edenParents.father is "pc" and _edenParents.mother isnot "pc">>
 				<<set _edenOtherParentRole to "母亲">>
-				<<set _edenOtherParentName to _edenChild.mother>>
-				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $parentList?.mothers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
+				<<set _edenOtherParentName to _edenParents.mother>>
+				<<set _edenOtherParentGender to C.npc[_edenOtherParentName]?.pronoun or $storedNPCs?.[_edenOtherParentName]?.npc?.pronoun or $parentList?.mothers?.find(parent => parent.name === _edenOtherParentName)?.npc?.pronoun>>
 			<</if>>
 			<<set _edenOtherParentPronoun to _edenOtherParentGender is "m" ? "他" : _edenOtherParentGender is "f" ? "她" : _edenOtherParentRole is "父亲" ? "他" : _edenOtherParentRole is "母亲" ? "她" : "对方">>
 			<<set _edenBaileyPronoun to C.npc.Bailey.pronoun is "m" ? "他" : "她">>
@@ -261,24 +238,16 @@
 			<p>贝利瞥了<<= Util.escapeMarkup(_edenChild.name || "孩子")>>一眼。</p>
 			<p>“你知道规矩。”</p>
 		<</if>>
-		<<if _edenResidentCount gte $eden.facility.capacity>>
-			<p class="red">伊甸园已经没有空位。</p>
-		<<elseif $money lt 10000000>>
-			<p class="red">你拿不出贝利要求的<<printmoney 10000000>>。</p>
+		<<if !_edenTransferCheck.ok>>
+			<p class="red"><<= _edenTransferCheck.message>></p>
 		<<else>>
-			<<link [[向贝利支付 £100,000|Eden Nursery]]>>
-				<<money -10000000 "edenChildTransfer">>
-					<<set $children[$eden.selectedChildId].location to "eden_home">>
-					<<set $eden.children[$eden.selectedChildId].status to "resident">>
-					<<set $eden.children[$eden.selectedChildId].transferPaid to true>>
-					<<run delete $eden.childListReturn>>
-				<<if typeof $options.eden is "object" and $options.eden.resetAgeOnTransfer and typeof window.EdenAge is "object">>
-					<<run window.EdenAge.resetGrowthAge($eden.children[$eden.selectedChildId])>>
-				<</if>>
-					<<if !Number.isFinite($eden.children[$eden.selectedChildId].affection)>><<set $eden.children[$eden.selectedChildId].affection to 40>><</if>>
+			<<link "向贝利支付 £100,000">>
+				<<edenMoveSelectedChildHome "home">>
+				<<if _edenTransferResult.ok>><<goto "Eden Nursery">><<else>><<replace "#eden-transfer-feedback">><span class="red"><<= _edenTransferResult.message>></span><</replace>><</if>>
 			<</link>>
 		<</if>>
 	<</if>>
+	<div id="eden-transfer-feedback"></div>
 	<br><br>
 	<<link [[离开|$eden.returnPassage]]>><</link>>
 </div>

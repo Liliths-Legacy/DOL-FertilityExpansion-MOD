@@ -4,12 +4,15 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.5.10",
+  "version": "1.5.12",
   "scriptFileList_inject_early": [
-    "modules/eden-birth-bridge.js"
+    "modules/eden-birth-bridge.js",
+    "modules/eden-save-migration.js"
   ],
   "styleFileList": [],
-  "scriptFileList": [],
+  "scriptFileList": [
+    "modules/eden-child-data.js"
+  ],
   "tweeFileList": [],
   "imgFileList": [],
   "additionFile": [
@@ -41,14 +44,18 @@
         {
           "passage": "Widgets children",
           "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $children[_args[0]].type>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
-          "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, $children, _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
+          "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": {
+            "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $childRecords[_args[0]].species>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
+            "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $childRecords[_args[0]].species>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>"
+          }
         },
         {
           "passage": "Widgets Sleep",
           "findString": "\t\t<<switch $location>>\n\t\t\t<<case \"home\">>",
-          "replace": "\t\t<<switch $location>>\n\t\t\t<<case \"eden_home\">>\n\t\t\t\t<<if typeof window.EdenBedVisit is \"object\">>\n\t\t\t\t\t<<set _edenBedVisitInterrupt to window.EdenBedVisit.trySleepInterrupt($eden, $children, $sleepHoursTotal)>>\n\t\t\t\t\t<<if _edenBedVisitInterrupt>><<set _sleepinterrupt to 1>><</if>>\n\t\t\t\t<</if>>\n\t\t\t<<case \"home\">>",
+          "replace": "\t\t<<switch $location>>\n\t\t\t<<case \"eden_home\">>\n\t\t\t\t<<if typeof window.EdenBedVisit is \"object\">>\n\t\t\t\t\t<<set _edenBedVisitInterrupt to window.EdenBedVisit.trySleepInterrupt($eden, window.EdenChildData.collection(), $sleepHoursTotal)>>\n\t\t\t\t\t<<if _edenBedVisitInterrupt>><<set _sleepinterrupt to 1>><</if>>\n\t\t\t\t<</if>>\n\t\t\t<<case \"home\">>",
           "debug": false,
           "all": false
         },
@@ -57,35 +64,49 @@
           "findString": "\t<<if Object.values($children).find(child => (child.type is \"hawk\" and child.location is \"tower\" and child.eggTimer is undefined))>>\n\t\t<<set _childrenTotal to Object.values($children).filter(child => child.location is \"tower\" and child.eggTimer is undefined).length>>",
           "replace": "\t<<if Object.values($children).find(child => child.location is \"tower\" and child.eggTimer is undefined)>>\n\t\t<<set _childrenTotal to Object.values($children).filter(child => child.location is \"tower\" and child.eggTimer is undefined).length>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": {
+            "findString": "\t<<if getChildrenAt(\"tower\").find(child => child.species is \"hawk\" and childIsBorn(child))>>\n\t\t<<set _childrenTotal to getChildrenAt(\"tower\").filter(child => childIsBorn(child)).length>>",
+            "replace": "\t<<if window.EdenChildData.entries({ scope: \"born\", location: \"tower\" }).length>>\n\t\t<<set _childrenTotal to window.EdenChildData.entries({ scope: \"born\", location: \"tower\" }).length>>"
+          }
         },
         {
           "passage": "Widgets Orgasm",
           "findString": "<<if $consensual is 1 and ((random(0, 1 + $_count) is 0 and $_count lte 10) or (setup.pregnancy.randomAlwaysKeep.includes($location) and $_count lte 15))>>",
           "replace": "<<if $NPCList[$penistarget].edenChildId or ($consensual is 1 and ((random(0, 1 + $_count) is 0 and $_count lte 10) or (setup.pregnancy.randomAlwaysKeep.includes($location) and $_count lte 15)))>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": null
         },
         {
           "passage": "Widgets Orgasm",
           "findString": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
           "replace": "<<case \"wolfgirl\" \"wolfboy\">><<set $_pregnancy to pregnancyGenerator.wolf(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>\n\t\t\t\t\t\t\t\t<<case \"hawk\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", false)>>\n\t\t\t\t\t\t\t\t<<case \"harpy\">><<set $_pregnancy to pregnancyGenerator.hawk(V.NPCList[$penistarget], \"pc\", true, \"vagina\", true)>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": null
         },
         {
           "passage": "Widgets Combat",
           "findString": "\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"hand\"}`>>\n\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"hand\"}`>>",
           "replace": "\t<<if typeof window.EdenPregnancySettings is \"object\" and window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"hand\")>>\n\t\t/* Gwylan's fairy-pregnancy contact was handled by FertilityExpansion. */\n\t<<else>>\n\t\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"hand\"}`>>\n\t\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"hand\"}`>>\n\t<</if>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": {
+            "findString": "\t<<takeNPCVirginity $_fullDescription \"handholding\" \"pc\">>\n\t<<unset _npcConsensualOverride>>",
+            "replace": "\t<<takeNPCVirginity $_fullDescription \"handholding\" \"pc\">>\n\t<<unset _npcConsensualOverride>>\n\t<<if typeof window.EdenPregnancySettings is \"object\">><<run window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"hand\")>><</if>>"
+          }
         },
         {
           "passage": "Widgets Combat",
           "findString": "\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"kiss\"}`>>\n\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"kiss\"}`>>",
           "replace": "\t<<if typeof window.EdenPregnancySettings is \"object\" and window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"kiss\")>>\n\t\t/* Gwylan's fairy-pregnancy contact was handled by FertilityExpansion. */\n\t<<else>>\n\t\t<<recordSperm `{target: \"pc\", spermOwner: _args[0], spermType: $_type, genital: \"kiss\"}`>>\n\t\t<<recordSperm `{target: _args[0], spermOwner: \"pc\", spermType: \"human\", genital: \"kiss\"}`>>\n\t<</if>>",
           "debug": false,
-          "all": false
+          "all": false,
+          "edenRecords": {
+            "findString": "\t<<takeNPCVirginity $_fullDescription \"kiss\" \"pc\">>\n\t<<unset _npcConsensualOverride>>",
+            "replace": "\t<<takeNPCVirginity $_fullDescription \"kiss\" \"pc\">>\n\t<<unset _npcConsensualOverride>>\n\t<<if typeof window.EdenPregnancySettings is \"object\">><<run window.EdenPregnancySettings.recordGwylanFairyContact(_args[0], $_type, \"kiss\")>><</if>>"
+          }
         }
       ]
     }
@@ -97,7 +118,7 @@
     },
     {
       "modName": "GameVersion",
-      "version": "=0.5.11.9"
+      "version": "=0.5.12.13"
     },
     {
       "modName": "TweeReplacer",

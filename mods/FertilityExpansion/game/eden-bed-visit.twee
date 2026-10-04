@@ -1,6 +1,6 @@
 :: Eden Bed Visit
 <<edenSafehouse "bedroom">><<effects>><<wakingEffects $sleepHoursTotal>><<sleepeffects>>
-<<set _edenBedVisit to window.EdenBedVisit.current($eden, $children)>>
+<<set _edenBedVisit to window.EdenBedVisit.current($eden, window.EdenChildData.collection())>>
 <<if !_edenBedVisit>>
 	<<goto "Eden Safehouse Wake">><<exitAll>>
 <<else>>
@@ -51,7 +51,7 @@
 
 :: Eden Bed Visit Leave
 <<edenSafehouse "bedroom">><<effects>>
-<<set _edenBedChild to $children[$eden.selectedChildId]>>
+<<set _edenBedChild to window.EdenChildData.get($eden.selectedChildId)>>
 <<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
 <<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
 <p>你让<<= _edenBedName>>从你身上离开。</p>
@@ -62,7 +62,7 @@
 
 :: Eden Bed Visit Forbid
 <<edenSafehouse "bedroom">><<effects>>
-<<set _edenBedChild to $children[$eden.selectedChildId]>>
+<<set _edenBedChild to window.EdenChildData.get($eden.selectedChildId)>>
 <<set _edenBedRecord to $eden.children[$eden.selectedChildId]>>
 <<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
 <<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
@@ -74,7 +74,7 @@
 :: Eden Bed Visit Accept
 <<edenSafehouse "bedroom">><<effects>>
 <<set _edenBedChildId to $eden.selectedChildId>>
-<<set _edenBedChild to $children[_edenBedChildId]>>
+<<set _edenBedChild to window.EdenChildData.get(_edenBedChildId)>>
 <<set _edenBedName to Util.escapeMarkup(_edenBedChild?.name || "孩子")>>
 <<set _edenBedPronoun to _edenBedChild?.gender is "m" ? "他" : "她">>
 <p>你没有多说什么，只是温柔地搂住<<= _edenBedName>>，将<<= _edenBedPronoun>>拉向你的身前。</p>

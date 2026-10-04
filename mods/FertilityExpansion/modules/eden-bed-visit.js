@@ -45,6 +45,7 @@
 	function isEligible(record, child) {
 		return Boolean(
 			record && child &&
+			(!window.EdenChildData || window.EdenChildData.phaseOf(child) === "born") &&
 			record.lifeStage === "adult" &&
 			record.bodyForm !== "beast" &&
 			record.adult?.settled &&
@@ -86,7 +87,7 @@
 	function current(eden, children) {
 		const state = normalizeState(eden);
 		const childId = state?.activeChildId;
-		if (!childId || !eden.children?.[childId] || !children?.[childId]) return null;
+		if (childId === null || childId === undefined || childId === "" || !eden.children?.[childId] || !children?.[childId]) return null;
 		return { childId, variant: state.variant || "A", record: eden.children[childId], child: children[childId] };
 	}
 

@@ -4,14 +4,14 @@
 	互动状态、按钮和结果正文集中放在本文件，不直接改写发行版源码。
 */
 <<widget "edenRecordChildInteraction">><<silently>>
-	<<if _args[0] and typeof window.EdenInteractions is "object">>
-		<<run window.EdenInteractions.recordInteraction($eden, $children, _args[0], _args[1])>>
+	<<if window.EdenChildData.hasId(_args[0]) and typeof window.EdenInteractions is "object">>
+		<<run window.EdenInteractions.recordInteraction($eden, window.EdenChildData.collection(), _args[0], _args[1])>>
 	<</if>>
 <</silently>><</widget>>
 
 <<widget "edenStageChildActivity">>
 	<<set _edenStageChildId to _args[0]>>
-	<<set _edenStageActivity to window.EdenInteractions.prepareStageActivity($eden, $children, _edenStageChildId)>>
+	<<set _edenStageActivity to window.EdenInteractions.prepareStageActivity($eden, window.EdenChildData.collection(), _edenStageChildId)>>
 	<<if _edenStageActivity>>
 		<<set _edenStatusText to "">>
 		<<set _edenActionText to "">>
@@ -94,14 +94,14 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenInteractionEvent to $eden.interactionEvent>>
-	<<set _edenInteractionChild to _edenInteractionEvent ? $children[_edenInteractionEvent.childId] : undefined>>
+	<<set _edenInteractionChild to _edenInteractionEvent ? window.EdenChildData.get(_edenInteractionEvent.childId) : undefined>>
 	<<if !_edenInteractionEvent or !_edenInteractionChild>>
 		<p class="red">无法找到这次互动的记录。</p>
 	<<else>>
 		<<childSelect _edenInteractionEvent.childId>>
 		<<if !_edenInteractionEvent.completed>>
-			<<childInteratedWith _edenInteractionEvent.childId>>
-			<<set _edenInteractionResult to window.EdenInteractions.completeStageInteraction($eden, $children, _edenInteractionEvent)>>
+			<<set _edenInteractionResult to window.EdenInteractions.completeStageInteraction($eden, window.EdenChildData.collection(), _edenInteractionEvent)>>
+			<<if _edenInteractionResult.ok>><<childInteratedWith _edenInteractionEvent.childId>><</if>>
 		<<else>>
 			<<set _edenInteractionResult to { ok: false, gain: 0 }>>
 		<</if>>

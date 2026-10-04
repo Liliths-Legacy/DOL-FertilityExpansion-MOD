@@ -1,34 +1,51 @@
 :: Eden Adult Widgets [widget]
+<<widget "edenParentName">>
+	<<= Util.escapeMarkup(window.EdenBreeding?.parentDisplayName(_args[0]) ?? pregnancyNameCorrection(_args[0], true))>>
+<</widget>>
+
+<<widget "edenCalendarDate">>
+	<<if _args[0]>><<= _args[0].day>> <<= _args[0].month>> <<= _args[0].year>><<else>>不详<</if>>
+<</widget>>
+
 <<widget "edenOriginalChildDetails">>
 	<<set _edenOriginalChildId to _args[0]>>
-	<<set _edenOriginalChild to $children[_edenOriginalChildId]>>
+	<<set _edenOriginalChild to window.EdenChildData.get(_edenOriginalChildId)>>
 	<<if _edenOriginalChild>>
+		<<set _edenOriginalParents to window.EdenChildData.parentsOf(_edenOriginalChild)>>
+		<<set _edenOriginalBorn to window.EdenChildData.bornOf(_edenOriginalChild)>>
+		<<set _edenOriginalLaid to window.EdenChildData.laidOf(_edenOriginalChild)>>
+		<<set _edenOriginalAdopted to window.EdenChildData.adoptedOf(_edenOriginalChild)>>
+		<<set _edenOriginalPhase to window.EdenChildData.phaseOf(_edenOriginalChild)>>
+		<<set _edenOriginalSpecies to window.EdenChildData.baseSpecies(_edenOriginalChild)>>
+		<<set _edenOriginalDevelopment to window.EdenChildData.developmentOf(_edenOriginalChild)>>
 		<p>
 			<<if _args[1] isnot "inline">><<childTypeDisplay _edenOriginalChild>><br><</if>>
 			<span class="gold">母亲：</span>
-			<<if _edenOriginalChild.motherKnown>><<= Util.escapeMarkup(pregnancyNameCorrection(_edenOriginalChild.mother, true))>><<else>>????<</if>>
+			<<if _edenOriginalParents.motherKnown and _edenOriginalParents.mother>><<edenParentName _edenOriginalParents.mother>><<else>>????<</if>>
 			｜<span class="gold">父亲：</span>
-			<<if _edenOriginalChild.fatherKnown>><<= Util.escapeMarkup(pregnancyNameCorrection(_edenOriginalChild.father, true))>><<else>>????<</if>><br>
-			<<if _edenOriginalChild.laid>>
-				<span class="gold">产卵：</span><<= _edenOriginalChild.laid.day>> <<= _edenOriginalChild.laid.month>> <<= _edenOriginalChild.laid.year>>｜
-				<span class="gold">孵化：</span><<= _edenOriginalChild.born.day>> <<= _edenOriginalChild.born.month>> <<= _edenOriginalChild.born.year>>
-			<<elseif _edenOriginalChild.born>>
-				<span class="gold">出生：</span><<= _edenOriginalChild.born.day>> <<= _edenOriginalChild.born.month>> <<= _edenOriginalChild.born.year>>
+			<<if _edenOriginalParents.fatherKnown and _edenOriginalParents.father>><<edenParentName _edenOriginalParents.father>><<else>>????<</if>><br>
+			<<if _edenOriginalLaid>>
+				<span class="gold">产卵：</span><<edenCalendarDate _edenOriginalLaid>>｜
+				<span class="gold">孵化：</span><<if _edenOriginalPhase is "egg">>尚未孵化<<else>><<edenCalendarDate _edenOriginalBorn>><</if>>
+			<<elseif _edenOriginalPhase is "born">>
+				<span class="gold">出生：</span><<edenCalendarDate _edenOriginalBorn>>
+			<<elseif _edenOriginalPhase is "unborn">>
+				<span class="gold">出生：</span>尚未出生
 			<</if>>
-			<<if _edenOriginalChild.adopted>>
-				｜<span class="gold">收养：</span><<= _edenOriginalChild.adopted.day>> <<= _edenOriginalChild.adopted.month>> <<= _edenOriginalChild.adopted.year>>
+			<<if _edenOriginalAdopted>>
+				｜<span class="gold">收养：</span><<edenCalendarDate _edenOriginalAdopted>>
 			<</if>><br>
-			<span class="gold">原版年龄：</span><<childAge _edenOriginalChildId "full">><br>
+			<<if _edenOriginalPhase is "born" and _edenOriginalBorn>><span class="gold">原版年龄：</span><<childAge _edenOriginalChildId "full">><br><</if>>
 			<span class="gold">体型：</span><<= Util.escapeMarkup(_edenOriginalChild.features?.size || "unknown")>>
 			<<if _edenOriginalChild.features?.hairColour>>
-				<<if _edenOriginalChild.type.includes("human")>>｜<span class="gold">头发：</span>
-				<<elseif _edenOriginalChild.type.includes("hawk")>>｜<span class="gold">羽毛：</span>
+				<<if _edenOriginalSpecies is "human">>｜<span class="gold">头发：</span>
+				<<elseif _edenOriginalSpecies is "hawk">>｜<span class="gold">羽毛：</span>
 				<<else>>｜<span class="gold">毛皮：</span><</if>>
 				<<hairmapcolourtext _edenOriginalChild.features.hairColour>>
 			<</if>>
 			<<if _edenOriginalChild.features?.skinColour>>｜<span class="gold">肤色：</span><<skinColourName _edenOriginalChild.features.skinColour>><</if>><br>
-			<<if _edenOriginalChild.features?.identical>><span class="gold">同卵：</span><<= Util.escapeMarkup(_edenOriginalChild.features.identical)>><br><</if>>
-			<<if _edenOriginalChild.localVariables?.interactionsTotal>><span class="gold">互动总数：</span><<= _edenOriginalChild.localVariables.interactionsTotal>><br><</if>>
+			<<if window.EdenChildData.isIdentical(_edenOriginalChild)>><span class="gold">同卵：</span>是<br><</if>>
+			<<if Number.isFinite(_edenOriginalDevelopment.interactionsTotal)>><span class="gold">互动总数：</span><<= _edenOriginalDevelopment.interactionsTotal>><br><</if>>
 			<<if $debug is 1>><br><small>ChildId: <<= _edenOriginalChild.childId>>｜saveId: <<= $saveId>><<if $saveName isnot "">>｜name: <<= Util.escapeMarkup($saveName)>><</if>></small><</if>>
 		</p>
 	<</if>>
@@ -37,7 +54,7 @@
 <<widget "edenContactCard">>
 	<<set _edenContactId to _args[0]>>
 	<<set _edenContactIndex to _args[1]>>
-	<<set _edenContactChild to $children[_edenContactId]>>
+	<<set _edenContactChild to window.EdenChildData.get(_edenContactId)>>
 	<<set _edenContactRecord to $eden.children[_edenContactId]>>
 	<<set _edenPregnancyStatus to typeof window.EdenBreeding is "object" ? window.EdenBreeding.pregnancyStatus(_edenContactRecord) : null>>
 	<<set _edenResponseId to "eden-contact-response-" + _edenContactIndex>>
@@ -63,7 +80,7 @@
 							<div class="eden-child-training"><span class="gold">养成：</span>学识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.knowledge)>>｜体能 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.fitness)>>｜社交 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.social)>>｜意识 <<= window.EdenTraining.displayValue(_edenContactRecord.training.skills.awareness)>>｜好感 <<= Math.round(_edenContactRecord.affection)>></div>
 						<</if>>
 						<<if _edenPregnancyStatus>>
-							<div><span class="gold">孕期：</span><<= _edenPregnancyStatus.due ? "即将生产" : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> 个孩子）</div>
+							<div><span class="gold">孕期：</span><<= _edenPregnancyStatus.due ? (_edenPregnancyStatus.isEgg ? "即将产卵" : "即将生产") : _edenPregnancyStatus.percent + "%">>（预计 <<= _edenPregnancyStatus.count>> <<= _edenPregnancyStatus.isEgg ? "枚蛋" : "个孩子">>）</div>
 						<</if>>
 						<div><span class="gold">简介：</span><<if _edenContactRecord.profile>><span class="eden-child-profile-content"><<= Util.escapeMarkup(_edenContactRecord.profile)>></span><<else>><span class="grey">（尚未填写）</span><</if>> ｜ <<link "编辑简介" "Eden Child Journal">><<set $eden.selectedChildId to _edenContactId>><<set $eden.returnPassage to "Eden Contacts">><</link>></div>
 						<<if typeof window.EdenLifeStory is "object" and window.EdenLifeStory.canRead(_edenContactRecord)>>
@@ -117,8 +134,8 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 	<<if !_edenRecord or !_edenChild>>
 		<p class="red">无法找到这个孩子的记录。</p>
 	<<elseif _edenRecord.adult.settled>>
@@ -136,7 +153,7 @@
 		</p>
 		<p>孩子会根据自己的成长、能力和对你的感情做出决定。</p>
 		<<button "听听孩子的决定">>
-			<<set _edenSettlementResult to window.EdenAdult.settle($eden.children[$eden.selectedChildId], $children[$eden.selectedChildId], "resolve")>>
+			<<set _edenSettlementResult to window.EdenAdult.settle($eden.children[$eden.selectedChildId], window.EdenChildData.get($eden.selectedChildId), "resolve")>>
 			<<goto "Eden Adult Result">>
 		<</button>>
 		<br><br>
@@ -150,14 +167,14 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenRecord to $eden.children[$eden.selectedChildId]>>
-	<<set _edenChild to $children[$eden.selectedChildId]>>
+	<<set _edenChild to window.EdenChildData.get($eden.selectedChildId)>>
 	<<if !_edenRecord or !_edenChild or !window.EdenAdult.needsSettlement(_edenRecord, _edenChild)>>
 		<p class="red">无法继续这次结算。</p>
 	<<else>>
 		<p>放生后，<<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>会离开伊甸园，也不会进入通讯录。</p>
 		<p class="red">这是一项永久的结局选择。</p>
 		<<button "确认放生">>
-			<<set _edenSettlementResult to window.EdenAdult.settle($eden.children[$eden.selectedChildId], $children[$eden.selectedChildId], "release")>>
+			<<set _edenSettlementResult to window.EdenAdult.settle($eden.children[$eden.selectedChildId], window.EdenChildData.get($eden.selectedChildId), "release")>>
 			<<goto "Eden Adult Result">>
 		<</button>>
 	<</if>>
@@ -169,7 +186,7 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenRecord to $eden.children[$eden.selectedChildId]>>
-	<<set _edenChild to $children[$eden.selectedChildId]>>
+	<<set _edenChild to window.EdenChildData.get($eden.selectedChildId)>>
 	/* Finish settlement this visit; the external entrance resets the letter queue for the next visit. */
 	<<if _edenRecord and _edenRecord.adult?.settled>>
 		<<set $eden.lifeStoryVisitHandled to true>>
@@ -261,8 +278,8 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.selectedChildId>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 	<<if !_edenRecord or !_edenChild>>
 		<p class="red">无法找到这个孩子的记录。</p>
 	<<else>>
@@ -295,21 +312,18 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenParentId to $eden.breeding.activeBirthParentId>>
-	<<set _edenParent to _edenParentId ? $children[_edenParentId] : undefined>>
-	<<set _edenBirthResult to (_edenParentId and window.EdenBreeding) ? window.EdenBreeding.deliver($eden, $children, _edenParentId) : { ok: false, message: "无法找到生产记录。" }>>
-	<<if !_edenBirthResult.ok and $eden.breeding.lastBirthResult?.parentId is _edenParentId>>
-		<<set _edenBirthResult to $eden.breeding.lastBirthResult>>
-	<</if>>
+	<<set _edenParent to window.EdenChildData.get(_edenParentId)>>
+	<<set _edenBirthResult to (window.EdenChildData.hasId(_edenParentId) and window.EdenBreeding) ? window.EdenBreeding.deliver($eden, window.EdenChildData.collection(), _edenParentId) : { ok: false, message: "无法找到生产记录。" }>>
 	<<if _edenBirthResult.ok>>
-		<p><<= Util.escapeMarkup(_edenParent?.name || "通讯录中的孩子")>>生下了 <<= _edenBirthResult.count>> 个孩子。</p>
+		<p><<= Util.escapeMarkup(_edenParent?.name || "通讯录中的孩子")>><<= _edenBirthResult.isEgg ? "产下了" : "生下了">> <<= _edenBirthResult.count>> <<= _edenBirthResult.isEgg ? "枚蛋，等待孵化" : "个孩子">>。</p>
 		<<if _edenBirthResult.destination is "eden_home">>
-			<p>伊甸园有足够的空位，整胎孩子已经一同住进育儿室。</p>
+			<p>伊甸园有足够的空位，整胎后代已经一同安置在育儿室。</p>
 		<<else>>
-			<p>伊甸园没有足够的空位，整胎孩子都被送到了贝利的孤儿院。</p>
+			<p>伊甸园没有足够的空位，整胎后代都被送到了贝利的孤儿院。</p>
 		<</if>>
 	<<else>>
 		<p class="red"><<= _edenBirthResult.message>></p>
-		<<if _edenParentId and $eden.children[_edenParentId]?.adult?.pregnancy>>
+		<<if window.EdenChildData.hasId(_edenParentId) and $eden.children[_edenParentId]?.adult?.pregnancy>>
 			<<link "再次尝试" "Eden Adult Birth">><<run window.EdenBreeding.retryDelivery($eden.children[_edenParentId])>><</link>><br>
 		<</if>>
 	<</if>>
@@ -321,7 +335,7 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenRecord to $eden.children[$eden.selectedChildId]>>
-	<<set _edenChild to $children[$eden.selectedChildId]>>
+	<<set _edenChild to window.EdenChildData.get($eden.selectedChildId)>>
 	<<if !_edenRecord or !_edenChild or !window.EdenAdult.isContact(_edenRecord)>>
 		<p class="red">通讯录中没有这条记录。</p>
 	<<else>>

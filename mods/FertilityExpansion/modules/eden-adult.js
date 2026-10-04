@@ -143,7 +143,7 @@
 		if (!record) return null;
 		if (!Number.isFinite(record.affection)) {
 			if (Number.isFinite(fallback)) record.affection = roundHundredth(fallback);
-			else if (child?.location === "eden_home") record.affection = config.affection.existingResident;
+			else if ((window.EdenChildData?.locationOf(child) ?? child?.location) === "eden_home") record.affection = config.affection.existingResident;
 		}
 		if (Number.isFinite(record.affection)) record.affection = roundHundredth(record.affection);
 		return record.affection;
@@ -342,6 +342,7 @@
 			!child ||
 			record.lifeStage !== "adult" ||
 			!isSupportedSpecies(record) ||
+			!needsSettlement(record, child) ||
 			window.EdenAge?.isHumanoid(record, child) !== true
 		) {
 			return { ok: false, message: "这个孩子目前不能进行成年结算。" };
@@ -353,6 +354,10 @@
 		const result = choice === "release"
 			? { outcome: "released", destination: "away", contactStatus: "none", education: null, career: null }
 			: previewOutcome(record);
+		const destination = result.outcome === "released" ? "eden_released" : "eden_contacts";
+		if (window.EdenChildData) {
+			if (!window.EdenChildData.setLocation(child, destination)) return { ok: false, message: "无法更新这个孩子的地点。" };
+		} else child.location = destination;
 		adult.pending = false;
 		adult.settled = true;
 		adult.outcome = result.outcome;
@@ -364,7 +369,6 @@
 		adult.settledDay = Number(window.Time?.days) || 0;
 		adult.lastRemittanceMonth = getMonthKey();
 		record.status = result.outcome === "released" ? "released" : "adult";
-		child.location = result.outcome === "released" ? "eden_released" : "eden_contacts";
 		return { ok: true, ...result };
 	}
 
@@ -380,9 +384,12 @@
 			}
 			return adult;
 		}
-		if (!adult.settled && record.lifeStage === "adult" && child.location === "eden_home") {
+		if (!adult.settled && needsSettlement(record, child)) {
 			adult.pending = true;
 			record.status = "adult_pending";
+		} else if (!adult.settled) {
+			adult.pending = false;
+			if (record.status === "adult_pending") record.status = "resident";
 		}
 		return adult;
 	}
@@ -399,7 +406,8 @@
 			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true &&
 			record.lifeStage === "adult" &&
-			child.location === "eden_home" &&
+			(window.EdenChildData ? window.EdenChildData.phaseOf(child) === "born" : child.eggTimer === undefined) &&
+			(window.EdenChildData?.locationOf(child) ?? child.location) === "eden_home" &&
 			!record.adult?.settled
 		);
 	}
@@ -568,7 +576,8 @@
 		npc.pronoun = gender === "m" ? "m" : "f";
 		npc.edenChildId = String(childId);
 		npc.edenSpecies = record.species || "human";
-		npc.type = ["wolf", "wolfboy", "wolfgirl", "hawk", "harpy"].includes(child.type) ? child.type : "human";
+		const type = window.EdenChildData?.typeOf(child) ?? child.type;
+		npc.type = ["wolf", "wolfboy", "wolfgirl", "hawk", "harpy"].includes(type) ? type : "human";
 		npc.per = encounter.persistentKey;
 		return encounter;
 	}

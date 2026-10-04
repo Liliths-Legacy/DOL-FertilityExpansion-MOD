@@ -16,6 +16,7 @@ from .exceptions import *
 from .log import *
 
 from .langs import locale, Langs
+from .runtime_patches import select_runtime_patches
 
 
 class GameSourceCode:
@@ -185,6 +186,9 @@ class GameMod:
                 boot_flag = True
                 with open(DIR_MODS_ROOT / name / "boot.json", "r", encoding="utf-8") as fp:
                     data = json.load(fp)
+                with open(DIR_CONFIGS_ROOT / "dev.json", "r", encoding="utf-8") as config_fp:
+                    target_version = json.load(config_fp)["game_version"]
+                data = select_runtime_patches(data, target_version)
                 # Preserve current and future ModLoader metadata such as nickName and alias.
                 self._boot_json[name].update(data)
                 self._boot_json[name]["name"] = data.get("name", name)

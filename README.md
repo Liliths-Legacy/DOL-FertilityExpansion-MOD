@@ -26,7 +26,7 @@
   - （v1.4.0更新）增加了允许培养人类宝宝的开关。
   - （*未来更新计划*）为成年孩子提供类酒馆LLM聊天功能；
 
-当前更新到1.5.0版本，功能仍在开发中。
+当前更新到1.5.12版本，功能仍在开发中。
 
 ## 未来开发计划：
 - 育种与养成数值优化；
@@ -39,8 +39,9 @@
 
 在本仓库的 [Releases](https://github.com/Liliths-Legacy/DOL-FertilityExpansion-MOD/releases) 下载 `FertilityExpansion.mod.zip`，通过游戏的 Mod 管理器添加，然后重新载入游戏。无需解压模组包。
 
-- 适配游戏版本：DoL `0.5.8` - `0.5.11`。
+- 当前本地适配包：DoL `0.5.12.13`（Lyra `1.0.1a` / goose `1004.1`）。安装包位于 `results/FertilityExpansion.mod.zip`；线上 Releases 是否更新以发布说明为准。
 - 前置：ModLoader `^2.101.0`、TweeReplacer `^1.7.0`；本地测试使用 ModLoader `2.101.1`。
+- 支持在原版迁移 0.5.11 存档时同步转换伊甸园资料。请使用升级前的原始存档；详情与验证范围见 [0.5.12.13 验证记录](docs/0.5.12-release-validation.md)。
 
 ## 工具来源
 

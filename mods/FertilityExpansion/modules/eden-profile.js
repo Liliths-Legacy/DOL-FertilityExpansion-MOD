@@ -37,7 +37,7 @@
 		const state = sugarCube?.State;
 		const variables = state?.variables;
 		const record = variables?.eden?.children?.[childId];
-		const child = variables?.children?.[childId];
+		const child = window.EdenChildData.get(childId, variables);
 		if (!window.EdenTraining?.isEligible(record, child)) return;
 
 		variables.eden.selectedChildId = childId;
@@ -51,7 +51,7 @@
 		const state = sugarCube?.State;
 		const variables = state?.variables;
 		const record = variables?.eden?.children?.[childId];
-		const child = variables?.children?.[childId];
+		const child = window.EdenChildData.get(childId, variables);
 		if (!window.EdenAdult?.needsSettlement(record, child)) return;
 
 		variables.eden.selectedChildId = childId;
@@ -81,9 +81,7 @@
 		const sugarCube = getSugarCube();
 		const state = sugarCube?.State;
 		const variables = state?.variables;
-		const child = variables?.children?.[childId];
-		const record = variables?.eden?.children?.[childId];
-		if (!variables?.eden?.facility?.owned || child?.location !== "home" || window.EdenAge?.isHumanoid(record, child) !== true) return;
+		if (!window.EdenFacility.inspectTransfer(variables?.eden, childId, "home", variables).eligible) return;
 
 		variables.eden.selectedChildId = childId;
 		variables.eden.returnPassage = state.passage || "Childrens Home";
@@ -95,20 +93,10 @@
 		const sugarCube = getSugarCube();
 		const state = sugarCube?.State;
 		const variables = state?.variables;
-		const child = variables?.children?.[childId];
-		const record = variables?.eden?.children?.[childId];
-		const source = child?.location;
+		const child = window.EdenChildData.get(childId, variables);
+		const source = window.EdenChildData.locationOf(child);
 		const supportedSource = ["wolf_cave", "tower", "alex_cottage"].includes(source);
-		const isPcChild = child?.mother === "pc" || child?.father === "pc";
-		const isAdoptedHawk = source === "tower" && child?.type === "hawk" && Boolean(child?.adopted);
-		const isHatched = source !== "tower" || child?.eggTimer === undefined;
-		if (
-			!variables?.eden?.facility?.owned ||
-			!supportedSource ||
-			(!isPcChild && !isAdoptedHawk) ||
-			!isHatched ||
-			window.EdenAge?.isHumanoid(record, child) !== true
-		) return;
+		if (!supportedSource || !window.EdenFacility.inspectTransfer(variables?.eden, childId, source, variables).eligible) return;
 
 		variables.eden.selectedChildId = childId;
 		variables.eden.transferSource = source;
@@ -213,7 +201,9 @@
 			row.append(document.createTextNode(" | "), adultLink);
 		}
 
-		if (variables.eden.facility?.owned && child?.location === "home" && window.EdenAge?.isHumanoid(record, child) === true) {
+		const source = window.EdenChildData.locationOf(child);
+		const transfer = window.EdenFacility.inspectTransfer(variables.eden, childId, source, variables);
+		if (source === "home" && transfer.eligible) {
 			const transferLink = document.createElement("button");
 			transferLink.type = "button";
 			transferLink.className = "link-internal eden-child-profile-button";
@@ -221,11 +211,7 @@
 			transferLink.addEventListener("click", () => openBaileyNegotiation(childId));
 			row.append(document.createTextNode(" | "), transferLink);
 		} else if (
-			variables.eden.facility?.owned &&
-			["wolf_cave", "tower", "alex_cottage"].includes(child?.location) &&
-			window.EdenAge?.isHumanoid(record, child) === true &&
-			(child?.mother === "pc" || child?.father === "pc" || (child?.location === "tower" && child?.type === "hawk" && child?.adopted)) &&
-			(child?.location !== "tower" || child?.eggTimer === undefined)
+			["wolf_cave", "tower", "alex_cottage"].includes(source) && transfer.eligible
 		) {
 			const transferLink = document.createElement("button");
 			transferLink.type = "button";
@@ -285,6 +271,7 @@
 	function inject(root = document) {
 		const variables = getSugarCube()?.State?.variables;
 		if (!variables?.eden?.children) return;
+		if (window.EdenSaveMigration?.ensureReady() === false) return;
 
 		const selector = `[id^="${hiddenElementPrefix}"]`;
 		const elements = [];
@@ -294,8 +281,8 @@
 		elements.forEach(element => {
 			const childId = element.id.slice(hiddenElementPrefix.length);
 			const record = variables.eden.children[childId];
-			const child = variables.children?.[childId];
-			if (!childId || !record) return;
+			const child = window.EdenChildData.get(childId, variables);
+			if (!childId || !record || !child) return;
 			window.EdenAge?.syncRecord(record, child, variables.eden.settings);
 			window.EdenTraits?.syncRecord(record, child, childId, variables);
 			window.EdenTraining?.syncRecord(record, child, variables.eden.settings);

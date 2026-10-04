@@ -1,15 +1,15 @@
 import json
-from pathlib import Path
 
 from flask import Flask, jsonify, send_file, send_from_directory
 
 from ..consts import DIR_MODLOADER_ROOT, DIR_MODLOADER_MODS, FILE_DEV_CONFIG
+from ..runtime_game import runtime_directory
 
 
 with FILE_DEV_CONFIG.open("r", encoding="utf-8") as fp:
     DEV_CONFIG = json.load(fp)
 
-RUNTIME_DIR = Path(DEV_CONFIG["runtime_dir"]).expanduser().resolve()
+RUNTIME_DIR = runtime_directory(DEV_CONFIG)
 GAME_HTML = RUNTIME_DIR / DEV_CONFIG.get("html", "Degrees of Lewdity.html")
 IMAGE_DIR = RUNTIME_DIR / "img"
 

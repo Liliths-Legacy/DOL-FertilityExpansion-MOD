@@ -5,7 +5,7 @@ import webbrowser
 
 import httpx
 
-from src.consts import HOST, PORT
+from src.consts import HOST, PORT, GAME_VERSION
 from src.core import GameSourceCode, GameMod
 from src.exceptions import _BaseHelperException
 from src.langs import locale, Langs
@@ -49,7 +49,7 @@ def check():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="DoL 0.5.11.9 Mod development helper")
+    parser = argparse.ArgumentParser(description=f"DoL {GAME_VERSION} Mod development helper")
     parser.add_argument(
         "command",
         nargs="?",

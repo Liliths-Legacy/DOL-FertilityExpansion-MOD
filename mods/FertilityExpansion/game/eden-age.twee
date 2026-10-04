@@ -5,7 +5,9 @@
 	<</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
 	<<set $eden.settings to clone($options.eden)>>
-	<<run window.EdenAge.syncAll($eden, $children)>>
+	<<if window.EdenSaveMigration?.ensureReady() isnot false>>
+		<<run window.EdenAge.syncAll($eden, window.EdenChildData.collection())>>
+	<</if>>
 <</silently>><</widget>>
 
 <<widget "edenAgeSettingsPanel">>
@@ -52,7 +54,7 @@
 	<div class="settingsToggleItemWide">
 		<label><<checkbox "$options.eden.allowSterilePregnancy" false true autocheck>> 不准绝育</label>
 		<br>
-		<small>开启后，Bailey、Leighton 与 Gwylan 可按原版生理与怀孕规则参与受孕或授孕；Gwylan 也支持童话怀孕。这些角色没有完整的专属怀孕剧情，剧情可能不会回应怀孕状态。若关闭时角色已怀孕，模组会暂时保留该孕程的支持，防止存档数据被原版清除。</small>
+		<small>开启后，Bailey、Leighton 与 Gwylan 可按原版生理与怀孕规则参与受孕或授孕；Gwylan 的裸手牵手和无遮挡接吻在奇幻怀孕模式下也可触发受孕，概率、周期、药物与怀孕开关仍按原版规则判断（旧版为童话模式）。这些角色没有完整的专属怀孕剧情，剧情可能不会回应怀孕状态。若关闭时角色已怀孕，模组会暂时保留该孕程的支持，防止存档数据被原版清除。</small>
 	</div>
 <</widget>>
 

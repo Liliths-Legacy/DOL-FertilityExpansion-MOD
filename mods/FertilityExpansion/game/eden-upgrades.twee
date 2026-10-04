@@ -25,7 +25,7 @@
 							<<= _edenItem.label>> <span class="grey">（已购置）</span>
 						<<elseif $money gte _edenItem.price>>
 							<<link _edenItem.label>>
-								<<set _edenPurchaseResult to window.EdenUpgrades.buy($eden, $children, _edenItemId)>>
+								<<set _edenPurchaseResult to window.EdenUpgrades.buy($eden, window.EdenChildData.collection(), _edenItemId)>>
 								<<replace "#eden-upgrade-feedback">><<= _edenPurchaseResult.message>><</replace>>
 								<<replace "#eden-upgrade-catalogue">><<edenUpgradeCatalogue _edenUpgradeCategory>><</replace>>
 							<</link>>
@@ -64,13 +64,13 @@
 		<<capture _edenPainting>>
 			<<if _edenUpgrades.owned[_edenPainting] and _edenHanging isnot _edenPainting>>
 				<<link `_edenPainting === "landscape" ? "挂上风景画" : "挂上抽象画"` "Eden Decorations">>
-					<<run window.EdenUpgrades.hang($eden, $children, _edenPainting)>>
+					<<run window.EdenUpgrades.hang($eden, window.EdenChildData.collection(), _edenPainting)>>
 				<</link>><br>
 			<</if>>
 		<</capture>>
 	<</for>>
 	<<if _edenHanging>>
-		<<link "取下画作" "Eden Decorations">><<run window.EdenUpgrades.hang($eden, $children, null)>><</link>><br>
+		<<link "取下画作" "Eden Decorations">><<run window.EdenUpgrades.hang($eden, window.EdenChildData.collection(), null)>><</link>><br>
 	<</if>>
 	<p class="eden-child-meta">同一时间只能悬挂一幅画。挂画按每日养成结算生效；成年孩子不受影响。</p>
 <<else>>

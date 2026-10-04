@@ -67,13 +67,14 @@
 	}
 
 	function usesStagePool(eden, children, childId) {
-		const id = String(childId || "");
+		const id = String(childId ?? "");
 		const record = eden?.children?.[id];
 		const child = children?.[id];
 		return Boolean(
 			record &&
 			child &&
-			child.location === "eden_home" &&
+			(window.EdenChildData?.locationOf(child) ?? child.location) === "eden_home" &&
+			(!window.EdenChildData || window.EdenChildData.phaseOf(child) === "born") &&
 			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true &&
 			config.stagePools[record.lifeStage]
@@ -110,20 +111,22 @@
 	}
 
 	function createStageEvent(eden, childId, activityId, minutes) {
-		const id = String(childId || "");
+		const id = String(childId ?? "");
 		const record = eden?.children?.[id];
 		const activity = record ? ensureBonding(record).currentActivity : null;
-		if (!activity || activity.id !== activityId || activity.completed) return null;
+		if (!activity || activity.id !== activityId || activity.completed || activity.stage !== record.lifeStage) return null;
+		if (window.EdenChildData && !usesStagePool(eden, window.EdenChildData.collection(), childId)) return null;
 		return { childId: id, eventId: activityId, minutes: Number(minutes) || 0, completed: false };
 	}
 
 	function completeStageInteraction(eden, children, event) {
 		if (!event || event.completed) return { ok: false, gain: 0 };
-		event.completed = true;
 		const record = eden?.children?.[String(event.childId)];
 		const activity = record ? ensureBonding(record).currentActivity : null;
-		if (activity?.id === event.eventId) activity.completed = true;
-		return recordInteraction(eden, children, event.childId, event.eventId);
+		if (!usesStagePool(eden, children, event.childId) || !activity || activity.id !== event.eventId || activity.stage !== record.lifeStage || activity.completed) return { ok: false, gain: 0 };
+		const result = recordInteraction(eden, children, event.childId, event.eventId);
+		if (result.ok) { event.completed = true; activity.completed = true; }
+		return result;
 	}
 
 	function categoryFor(eventId) {
@@ -139,10 +142,10 @@
 	}
 
 	function recordInteraction(eden, children, childId, eventId) {
-		const id = String(childId || "");
+		const id = String(childId ?? "");
 		const record = eden?.children?.[id];
 		const child = children?.[id];
-		if (!record || !child || !isSupportedSpecies(record)) return { ok: false, gain: 0 };
+		if (!record || !child || !isSupportedSpecies(record) || (window.EdenChildData && window.EdenChildData.phaseOf(child) !== "born")) return { ok: false, gain: 0 };
 		const category = categoryFor(eventId);
 		const baseGain = config.gains[category] || config.gains[config.defaultCategory];
 		const scale = timeScale(record, eden.settings);

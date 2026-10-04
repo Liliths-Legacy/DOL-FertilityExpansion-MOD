@@ -78,16 +78,26 @@
 	}
 
 	function getGroupKey(childId, child) {
-		if (!child?.features?.identical) return `child:${childId}`;
+		if (!isIdentical(child)) return `child:${childId}`;
+		if (window.EdenChildData?.isRecord(child)) return `identical:${child.pregnancyId}:${window.EdenChildData.identicalGroup(child)}`;
 		return ["identical", child.mother, child.father, child.birthId, child.type, dateKey(child.conceived), dateKey(child.born)].join("|");
+	}
+
+	function isIdentical(child) {
+		return window.EdenChildData?.isIdentical(child) ?? Boolean(child?.features?.identical);
+	}
+
+	function parentsOf(child, variables = getVariables()) {
+		return window.EdenChildData?.parentsOf(child, variables) ?? { mother: child?.mother, father: child?.father };
 	}
 
 	function inferSpecies(child, storedSpecies) {
 		const transformation = child?.features?.beastTransform;
 		if (["bird", "cat", "fox", "wolf", "cow"].includes(transformation)) return transformation;
 		if (typeof transformation === "string" && transformation.trim()) return "other";
-		if (child?.type === "hawk") return "bird";
-		if (["wolf", "wolfboy", "wolfgirl"].includes(child?.type)) return "wolf";
+		const type = window.EdenChildData?.typeOf(child) ?? child?.type;
+		if (["hawk", "harpy"].includes(type)) return "bird";
+		if (["wolf", "wolfboy", "wolfgirl"].includes(type)) return "wolf";
 		if (speciesInnateModifiers[storedSpecies]) return storedSpecies;
 		return "human";
 	}
@@ -126,15 +136,17 @@
 	}
 
 	function hasNamedParent(child, variables = getVariables()) {
-		return isNamedParent(child?.mother, variables) || isNamedParent(child?.father, variables);
+		const parents = parentsOf(child, variables);
+		return isNamedParent(parents.mother, variables) || isNamedParent(parents.father, variables);
 	}
 
-	function getNonPcParent(child) {
+	function getNonPcParent(child, variables = getVariables()) {
+		const parents = parentsOf(child, variables);
 		for (const [role, side] of [
 			["mother", "mothers"],
 			["father", "fathers"],
 		]) {
-			const name = child?.[role];
+			const name = parents[role];
 			if (name && String(name).toLowerCase() !== "pc") return { name, role, side };
 		}
 		return null;
@@ -153,7 +165,8 @@
 			const match = list.find(entry => entry?.name === parent.name);
 			if (match) return match;
 		}
-		return null;
+		const stored = variables.storedNPCs?.[parent.name];
+		return stored?.npc ? { name: parent.name, npc: stored.npc } : null;
 	}
 
 	function categorizeDescription(description) {
@@ -165,7 +178,7 @@
 	}
 
 	function getFitnessBasis(child, variables = getVariables()) {
-		const nonPcParent = getNonPcParent(child);
+		const nonPcParent = getNonPcParent(child, variables);
 		const parentRecord = findParentRecord(nonPcParent, variables);
 		const namedNpc = nonPcParent ? window.C?.npc?.[nonPcParent.name] : null;
 		const parentNpc = parentRecord?.npc || namedNpc;
@@ -193,7 +206,7 @@
 	function generateInnate(childId, child, variables = getVariables(), shared = null) {
 		const groupKey = getGroupKey(childId, child);
 		const seedPrefix = `eden-traits|v${dataVersion}|${groupKey}`;
-		const identical = Boolean(child?.features?.identical);
+		const identical = isIdentical(child);
 		const namedParent = hasNamedParent(child, variables);
 		const appearanceMinimum = namedParent ? 60 : 1;
 		const fitnessBasis = getFitnessBasis(child, variables);
@@ -238,8 +251,8 @@
 
 	function generateInheritedInnate(childId, child, parentRecord, variables = getVariables(), shared = null) {
 		const groupKey = getGroupKey(childId, child);
-		const seedPrefix = `eden-traits|inherit|v${dataVersion}|${groupKey}|${parentRecord?.childId || "unknown"}`;
-		const identical = Boolean(child?.features?.identical);
+		const seedPrefix = `eden-traits|inherit|v${dataVersion}|${groupKey}|${parentRecord?.childId ?? "unknown"}`;
+		const identical = isIdentical(child);
 		const parent = parentRecord?.innate;
 		if (!isValidInnate(parent)) return generateInnate(childId, child, variables, shared);
 		const speciesKey = inferSpecies(child);
@@ -290,7 +303,7 @@
 			/* Backcross descendants already inherit fitness from the non-PC Eden parent. */
 			if (!innate.inheritedFrom) {
 				const groupKey = getGroupKey(childId, child);
-				const identical = Boolean(child?.features?.identical);
+				const identical = isIdentical(child);
 				const fitnessBasis = getFitnessBasis(child, variables);
 				const seedPrefix = `eden-traits|v2|${groupKey}`;
 				const baseFitness = shared?.base?.fitness ?? stableInteger(`${seedPrefix}|fitness`, fitnessBasis.min, fitnessBasis.max);
@@ -325,10 +338,10 @@
 	}
 
 	function syncRecord(record, child, childId, variables = getVariables(), shared = null) {
-		if (!record || !child || !childId) return null;
+		if (!record || !child || childId === null || childId === undefined || childId === "") return null;
 		migrateInnate(record, child, childId, variables, shared);
 		if (!isValidInnate(record.innate)) {
-			const parentRecord = record.geneticParentId ? variables.eden?.children?.[record.geneticParentId] : null;
+			const parentRecord = record.geneticParentId !== null && record.geneticParentId !== undefined ? variables.eden?.children?.[record.geneticParentId] : null;
 			record.innate = parentRecord
 				? generateInheritedInnate(childId, child, parentRecord, variables, shared)
 				: generateInnate(childId, child, variables, shared);
@@ -342,10 +355,11 @@
 			migrateInnate(record, children[childId], childId, variables);
 		});
 		const sharedGroups = new Map();
-		Object.values(eden.children).forEach(record => {
+		Object.entries(eden.children).forEach(([childId, record]) => {
 			const innate = record?.innate;
 			if (isValidInnate(innate) && innate.identical) {
-				sharedGroups.set(innate.groupKey, { base: innate.base, fitnessSource: innate.fitnessSource });
+				const groupKey = children[childId] ? getGroupKey(childId, children[childId]) : innate.groupKey;
+				sharedGroups.set(groupKey, { base: innate.base, fitnessSource: innate.fitnessSource });
 			}
 		});
 		Object.entries(eden.children).forEach(([childId, record]) => {

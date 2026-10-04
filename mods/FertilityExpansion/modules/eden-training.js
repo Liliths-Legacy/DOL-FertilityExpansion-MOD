@@ -160,7 +160,8 @@
 	function isSupportedResident(record, child) {
 		return (
 			Boolean(record && child) &&
-			child.location === "eden_home" &&
+			(window.EdenChildData ? window.EdenChildData.phaseOf(child) === "born" : child.eggTimer === undefined) &&
+			(window.EdenChildData?.locationOf(child) ?? child.location) === "eden_home" &&
 			isSupportedSpecies(record) &&
 			window.EdenAge?.isHumanoid(record, child) === true
 		);

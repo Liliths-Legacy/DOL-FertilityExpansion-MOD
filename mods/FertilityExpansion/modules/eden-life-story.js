@@ -12,13 +12,14 @@
 		"attitudeToPc",
 	]);
 	const inFlight = new Map();
+	let generationSerial = 0;
 
 	function currentDay() {
 		return Number(window.Time?.days) || 0;
 	}
 
 	function delayFor(record) {
-		const seed = `${String(record?.childId || "unknown")}|${Number(record?.adult?.settledDay) || 0}|life-story-v2`;
+		const seed = `${String(record?.childId ?? "unknown")}|${Number(record?.adult?.settledDay) || 0}|life-story-v2`;
 		let hash = 2166136261;
 		for (let index = 0; index < seed.length; index += 1) {
 			hash ^= seed.charCodeAt(index);
@@ -62,9 +63,11 @@
 		}
 		const state = record.adult.lifeStory;
 		if ((Number(state.dataVersion) || 1) < 2) {
-			state.delayDays = delayFor(record);
 			const settledDay = Number(record?.adult?.settledDay);
-			state.dueDay = (Number.isFinite(settledDay) ? settledDay : currentDay()) + state.delayDays;
+			// A legacy letter already has an arrival date. Preserve its schedule
+			// when IDs change instead of deriving a different delay from the new ID.
+			const savedDelay = Number.isFinite(state.dueDay) && Number.isFinite(settledDay) ? state.dueDay - settledDay : NaN;
+			state.delayDays = Number.isFinite(savedDelay) && savedDelay >= minimumDelayDays && savedDelay <= maximumDelayDays ? savedDelay : delayFor(record);
 		}
 		state.dataVersion = dataVersion;
 		if (!Number.isFinite(state.delayDays) || state.delayDays < minimumDelayDays || state.delayDays > maximumDelayDays) state.delayDays = delayFor(record);
@@ -73,7 +76,7 @@
 			state.dueDay = (Number.isFinite(settledDay) ? settledDay : currentDay()) + state.delayDays;
 		}
 		if (!["waiting", "discovered", "generating", "ready", "read", "error"].includes(state.status)) state.status = "waiting";
-		if (state.status === "generating" && !inFlight.has(String(record.childId))) {
+		if (state.status === "generating" && (!inFlight.has(String(record.childId)) || inFlight.get(String(record.childId))?.token !== state.generationToken)) {
 			state.status = "error";
 			state.error = "上一次生成在完成前中断，可以重试。";
 		}
@@ -134,11 +137,17 @@
 		const skills = record?.training?.skills || {};
 		const innate = record?.innate || {};
 		const career = window.EdenAdult?.config?.universityCareers?.[record?.adult?.career];
+		const parents = window.EdenChildData?.parentsOf(child) || { mother: child?.mother, father: child?.father };
+		const name = String(child?.name || "这个孩子");
+		const adopted = window.EdenChildData?.isAdopted(child) ?? Boolean(child?.adopted);
+		const pcParentRole = parents.mother === "pc" ? "mother" : parents.father === "pc" ? "father" : adopted ? "adoptive" : "unknown";
+		const relationships = { mother: `你是生下${name}的妈妈`, father: `你是${name}的爸爸`, adoptive: `你是${name}的养父母`, unknown: `你是${name}的家长` };
 		return {
 			name: String(child?.name || "未命名的孩子"),
 			gender: genderLabel(child),
 			species: String(record?.speciesLabel || record?.species || "其他"),
-			pcRelationship: child?.mother === "pc" ? `你是生下${String(child?.name || "这个孩子")}的妈妈` : `你是${String(child?.name || "这个孩子")}的爸爸`,
+			pcParentRole,
+			pcRelationship: relationships[pcParentRole],
 			innate: {
 				appearance: Number(innate.appearance) || 0,
 				fitness: Number(innate.fitness) || 0,
@@ -200,22 +209,37 @@
 	}
 
 	async function startGeneration(eden, children, childId) {
-		const id = String(childId || "");
-		if (!id || inFlight.has(id)) return inFlight.get(id) || null;
+		if (childId === null || childId === undefined || childId === "") return null;
+		const id = String(childId);
 		const record = eden?.children?.[id];
 		const child = children?.[id];
-		const state = markDiscovered(record);
+		const pending = inFlight.get(id);
+		if (pending && record?.adult?.lifeStory?.generationToken === pending.token) return pending.promise;
+		const state = ensureState(record);
 		if (!state || !child) throw new Error("无法找到这封来信对应的孩子。");
 		if (state.content) {
 			state.status = state.status === "read" ? "read" : "ready";
 			return state.content;
 		}
 		if (!window.EdenLLM || !window.EdenLifeStoryPrompt) throw new Error("大模型来信模块未正确加载。");
+		markDiscovered(record);
 		if (!state.inputSnapshot) state.inputSnapshot = buildSnapshot(record, child);
 		state.status = "generating";
 		state.error = null;
+		const token = window.crypto?.randomUUID?.() || `${Date.now()}:${++generationSerial}`;
+		state.generationToken = token;
 
-		const task = (async () => {
+		function targetState() {
+			const live = liveRecord(id);
+			if (live?.adult?.lifeStory?.generationToken !== token) return null;
+			return ensureState(live);
+		}
+		function onGenerationPage() {
+			const selectedId = window.SugarCube?.State?.variables?.eden?.selectedChildId;
+			return currentPassage() === "Eden Life Story Generate" && String(selectedId) === id;
+		}
+
+		const task = Promise.resolve().then(async () => {
 			try {
 				const variables = window.SugarCube?.State?.variables || window.State?.variables;
 				const customPrompt = variables?.options?.eden?.lifeStoryPrompt ?? variables?.eden?.settings?.lifeStoryPrompt ?? "";
@@ -225,27 +249,28 @@
 					disableThinking: true,
 				});
 				const content = parseContent(result.text);
-				const target = ensureState(liveRecord(id) || record);
+				const target = targetState();
+				if (!target) return null; // A load/undo replaced this generation request.
 				target.content = content;
 				target.status = "ready";
 				target.generatedDay = currentDay();
 				target.providerModel = result.model;
 				target.error = null;
-				if (currentPassage() === "Eden Life Story Generate") playPassage("Eden Life Story Read");
+				if (onGenerationPage()) playPassage("Eden Life Story Read");
 				return content;
 			} catch (error) {
-				const target = ensureState(liveRecord(id) || record);
+				const target = targetState();
 				if (target) {
 					target.status = "error";
 					target.error = error?.message || String(error);
 				}
-				if (currentPassage() === "Eden Life Story Generate") playPassage("Eden Life Story Generate");
+				if (target && onGenerationPage()) playPassage("Eden Life Story Generate");
 				return null;
 			} finally {
-				inFlight.delete(id);
+				if (inFlight.get(id)?.token === token) inFlight.delete(id);
 			}
-		})();
-		inFlight.set(id, task);
+		});
+		inFlight.set(id, { token, promise: task });
 		return task;
 	}
 

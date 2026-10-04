@@ -2,8 +2,8 @@
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <div class="eden-panel">
 	<<set _edenChildId to $eden.activeEncounterChildId>>
-	<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-	<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+	<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 	<<if !_edenRecord or !_edenChild or !window.EdenAdult.canInviteIntimacy(_edenRecord)>>
 		<p class="red">这次邀请已经无法继续。</p>
 	<<else>>
@@ -17,8 +17,8 @@
 :: Eden Adult Encounter
 <<edenSetup>><<set $outside to 0>><<set $location to "eden_home">>
 <<set _edenChildId to $eden.activeEncounterChildId>>
-<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 <<if !_edenRecord or !_edenChild or !window.EdenAdult.canInviteIntimacy(_edenRecord)>>
 	<p class="red">无法找到这次遭遇对应的成年孩子。</p>
 	<<if $combat is 1>><<clotheson>><<endcombat>><</if>>
@@ -49,7 +49,7 @@
 		<<neutral 1>><<maninit>><<set $enemytrust += 100>><<promiscuity5>><<edenBedVisitCombatStart>>
 	<</if>>
 	<<set $speechdisable to 1>>
-	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
+	<<if typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, window.EdenChildData.collection({ scope: "all" }), _edenRecord, _edenChildId)>><</if>>
 	<<if typeof $edenEncounterTurn isnot "number">><<set $edenEncounterTurn to 0>><</if>>
 	<<effects>>
 	<<effectsman>>
@@ -69,8 +69,8 @@
 :: Eden Adult Encounter Finish
 <<set $outside to 0>><<set $location to "eden_home">><<effects>>
 <<set _edenChildId to $eden.activeEncounterChildId>>
-<<set _edenRecord to _edenChildId ? $eden.children[_edenChildId] : undefined>>
-<<set _edenChild to ($children and _edenChildId) ? $children[_edenChildId] : undefined>>
+<<set _edenRecord to window.EdenChildData.hasId(_edenChildId) ? $eden.children[_edenChildId] : undefined>>
+<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 <<if $enemyarousal gte $enemyarousalmax>>
 	<<ejaculation>>
 	<p><<= Util.escapeMarkup(_edenChild?.name || "对方")>>平复着呼吸，依偎在你身旁。</p>
@@ -82,7 +82,7 @@
 	<p>你们在彼此都愿意停下的时候结束了这次亲密接触。</p>
 <</if>>
 <<if _edenRecord>><<run window.EdenAdult.completeEncounter(_edenRecord, _edenChildId)>><</if>>
-<<if _edenRecord and typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, $children, _edenRecord, _edenChildId)>><</if>>
+<<if _edenRecord and typeof window.EdenBreeding is "object">><<run window.EdenBreeding.captureEncounterPregnancy($eden, window.EdenChildData.collection({ scope: "all" }), _edenRecord, _edenChildId)>><</if>>
 <<clotheson>><<endcombat>>
 <<set $eden.activeEncounterChildId to null>>
 <<if typeof window.EdenBedVisit is "object">><<run window.EdenBedVisit.clearEncounterContext($eden)>><</if>>

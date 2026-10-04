@@ -203,11 +203,17 @@
 
 	function promptSnapshot(snapshot) {
 		const source = snapshot && typeof snapshot === "object" ? snapshot : {};
+		const name = String(source.name || "这个孩子");
+		const relationships = {
+			mother: `你是生下${name}的妈妈`,
+			father: `你是${name}的爸爸`,
+			adoptive: `你是${name}的养父母`,
+			unknown: `你是${name}的家长`,
+		};
 		const normalized = {
 			...source,
-			pcRelationship: String(source.pcRelationship || "").includes("妈妈")
-				? `你是生下${String(source.name || "这个孩子")}的妈妈`
-				: `你是${String(source.name || "这个孩子")}的爸爸`,
+			pcRelationship: Object.hasOwn(relationships, source.pcParentRole) ? relationships[source.pcParentRole]
+				: String(source.pcRelationship || "").includes("妈妈") ? relationships.mother : relationships.father,
 			affectionToYou: Number(source.affectionToYou ?? source.affectionToPc) || 0,
 		};
 		delete normalized.affectionToPc;
