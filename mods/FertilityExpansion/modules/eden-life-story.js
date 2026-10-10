@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const dataVersion = 2;
@@ -244,6 +244,9 @@
 				const variables = window.SugarCube?.State?.variables || window.State?.variables;
 				const customPrompt = variables?.options?.eden?.lifeStoryPrompt ?? variables?.eden?.settings?.lifeStoryPrompt ?? "";
 				const messages = window.EdenLifeStoryPrompt.buildMessages(state.inputSnapshot, customPrompt);
+				if (record.chat?.background) {
+					messages[0].content += "\n\n【已确立的人生事实】\n以下为既有背景与后续经历。必须与其保持一致，不要重新生成不同的配偶、职业或住所；只转述适合写进信里的事实，不把私人经历自动视为已经告知家长。\n" + JSON.stringify({ background: record.chat.background, experiences: record.chat.experiences, history: record.chat.history });
+				}
 				const result = await window.EdenLLM.chat(messages, {
 					jsonObject: true,
 					disableThinking: true,

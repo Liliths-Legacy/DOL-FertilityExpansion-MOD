@@ -4,15 +4,17 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.5.12",
+  "version": "1.6.0",
   "scriptFileList_inject_early": [
+    "modules/eden-child-data.js",
+    "modules/eden-runtime.js",
     "modules/eden-birth-bridge.js",
-    "modules/eden-save-migration.js"
+    "modules/eden-save-recovery.js",
+    "modules/eden-save-migration.js",
+    "modules/eden-script-loader.js"
   ],
   "styleFileList": [],
-  "scriptFileList": [
-    "modules/eden-child-data.js"
-  ],
+  "scriptFileList": [],
   "tweeFileList": [],
   "imgFileList": [],
   "additionFile": [

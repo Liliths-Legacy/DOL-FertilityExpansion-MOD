@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	function canUnbind(variables = window.SugarCube?.State?.variables) {

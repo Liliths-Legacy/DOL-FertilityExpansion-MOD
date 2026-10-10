@@ -94,8 +94,8 @@
 						<div class="grey">你无法与<<= _edenContactChild.gender is "m" ? "他" : "她">>取得联系。</div>
 					<<else>>
 						<div class="eden-contact-actions">
-							<<link "聊天">>
-								<<replace `"#" + _edenResponseId`>><span><<= Util.escapeMarkup(_edenContactChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
+							<<link "聊天" "Eden Chat">>
+								<<set $eden.selectedChildId to _edenContactId>>
 							<</link>>
 							<<if window.EdenAdult.getUnclaimedMonths(_edenContactRecord) gt 0>>
 								｜<<link "查收汇款">>
@@ -345,9 +345,7 @@
 		<<if _edenRecord.adult.contactStatus is "lost">>
 			<p class="grey">你无法与<<= _edenChild.gender is "m" ? "他" : "她">>取得联系。</p>
 		<<else>>
-			<<button "聊天">>
-				<<replace "#eden-contact-response">><span><<= Util.escapeMarkup(_edenChild.name || "孩子")>>和你聊了聊近况。更多专属对话会在后续版本中加入。</span><</replace>>
-			<</button>>
+			<<link "聊天" "Eden Chat">><</link>>
 			<<set _edenUnclaimedMonths to window.EdenAdult.getUnclaimedMonths(_edenRecord)>>
 			<<if _edenUnclaimedMonths gt 0>>
 				<<button "查收汇款">>

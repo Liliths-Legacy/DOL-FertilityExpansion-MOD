@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const dataVersion = 1;
@@ -43,20 +43,20 @@
 		return databasePromise;
 	}
 
-	async function readStoredSettings() {
+	async function readStoredSettings(key = settingsKey) {
 		const database = await openDatabase();
 		return new Promise((resolve, reject) => {
-			const request = database.transaction(storeName, "readonly").objectStore(storeName).get(settingsKey);
+			const request = database.transaction(storeName, "readonly").objectStore(storeName).get(key);
 			request.onsuccess = () => resolve(request.result);
 			request.onerror = () => reject(request.error || new Error("无法读取大模型设置。"));
 		});
 	}
 
-	async function writeStoredSettings(settings) {
+	async function writeStoredSettings(settings, key = settingsKey) {
 		const database = await openDatabase();
 		return new Promise((resolve, reject) => {
 			const transaction = database.transaction(storeName, "readwrite");
-			transaction.objectStore(storeName).put(settings, settingsKey);
+			transaction.objectStore(storeName).put(settings, key);
 			transaction.oncomplete = () => resolve();
 			transaction.onerror = () => reject(transaction.error || new Error("无法保存大模型设置。"));
 		});
@@ -146,7 +146,7 @@
 	}
 
 	async function chat(messages, options = {}) {
-		const settings = await getSettings();
+		const settings = options.settings ? normalize(options.settings) : await getSettings();
 		if (!isConfigured(settings)) throw new Error("大模型人生故事尚未启用或接口配置不完整。");
 		const payload = {
 			model: settings.modelName,
@@ -377,6 +377,8 @@
 	}
 
 	window.EdenLLM = Object.freeze({
+		getChatSettings: async kind => normalize(await readStoredSettings(`adult-chat:${kind}`)),
+		updateChatSettings: async (kind, value) => writeStoredSettings(normalize(value), `adult-chat:${kind}`),
 		dataVersion,
 		defaults,
 		ready,

@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 	const transferFee = 10000000;
 	const sources = Object.freeze(["home", "wolf_cave", "tower", "alex_cottage"]);

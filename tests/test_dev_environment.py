@@ -1,4 +1,8 @@
 import json
+import os
+from pathlib import Path
+import subprocess
+from tempfile import TemporaryDirectory
 import unittest
 from zipfile import ZipFile
 
@@ -8,6 +12,22 @@ from src.validator import validate_all
 
 
 class DevelopmentEnvironmentTest(unittest.TestCase):
+    def test_packaged_scripts_load_after_unterminated_neighbor(self):
+        with TemporaryDirectory(prefix="eden-script-loading-") as directory:
+            with ZipFile(DIR_RESULTS_ROOT / "FertilityExpansion.mod.zip") as archive:
+                boot = json.loads(archive.read("boot.json"))
+                for name in ["boot.json", *boot["scriptFileList"], *boot["scriptFileList_inject_early"]]:
+                    archive.extract(name, directory)
+            result = subprocess.run(
+                ["node", "--test", str(Path(__file__).with_name("eden-script-loading.test.js")),
+                 str(Path(__file__).with_name("eden-save-migration.test.js")),
+                 str(Path(__file__).with_name("eden-runtime.test.js")),
+                 str(Path(__file__).with_name("eden-modloader-loading.test.js"))],
+                env={**os.environ, "EDEN_MOD_DIR": directory},
+                capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
     def assert_endpoint(self, client, method, path):
         response = client.open(path, method=method)
         try:
@@ -33,7 +53,14 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIsNone(archive.testzip())
             boot = json.loads(archive.read("boot.json"))
             self.assertEqual("FertilityExpansion", boot["name"])
-            self.assertEqual("1.5.12", boot["version"])
+            self.assertEqual("1.6.0", boot["version"])
+            self.assertIn("modules/eden-child-data.js", boot["scriptFileList_inject_early"])
+            self.assertIn("modules/eden-runtime.js", boot["scriptFileList_inject_early"])
+            self.assertIn("modules/eden-script-loader.js", boot["scriptFileList_inject_early"])
+            self.assertNotIn("modules/eden-script-loader.js", boot["scriptFileList"])
+            self.assertNotIn("modules/eden-child-data.js", boot["scriptFileList"])
+            self.assertLess(boot["scriptFileList_inject_early"].index("modules/eden-save-recovery.js"),
+                            boot["scriptFileList_inject_early"].index("modules/eden-save-migration.js"))
             self.assertEqual("=0.5.12.13", next(item["version"] for item in boot["dependenceInfo"] if item["modName"] == "GameVersion"))
             self.assertNotIn("edenRecords", json.dumps(boot))
             self.assertIn("game/eden.twee", boot["tweeFileList"])
@@ -68,7 +95,6 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn("game/eden-interactions.twee", boot["tweeFileList"])
             self.assertIn("game/eden-life-story.twee", boot["tweeFileList"])
             self.assertIn("modules/eden-age.js", boot["scriptFileList"])
-            self.assertIn("modules/eden-child-data.js", boot["scriptFileList"])
             self.assertIn("modules/eden-child-data.js", archive.namelist())
             self.assertIn("modules/eden-facility.js", boot["scriptFileList"])
             self.assertIn("modules/eden-options.js", boot["scriptFileList"])
@@ -254,7 +280,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertNotIn('$children[$eden.selectedChildId].born', facility)
             self.assertIn('<<widget "edenLocationIcon">>', facility)
             self.assertIn('src="data:image/png;base64,', facility)
-            self.assertEqual(2, facility.count('<<edenLocationIcon>>'))
+            self.assertEqual(3, facility.count('<<edenLocationIcon>>'))
             self.assertNotIn('<<icon "eden.png">>', facility)
             self.assertIn("window.EdenLifeStory.nextDue($eden)", facility)
             self.assertIn('<<goto "Eden Life Story Arrival">>', facility)
@@ -267,6 +293,8 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('state.variables?.location !== "eden_home"', location)
             self.assertIn("[[Next|Eden Nursery]]", location)
             self.assertIn('data-passage="Meadow"', location)
+            self.assertIn('data-passage="Moor"', location)
+            self.assertIn('entry.append(document.createElement("br"))', location)
 
             profile = archive.read("modules/eden-profile.js").decode("utf-8")
             self.assertIn("childListReturn", profile)
@@ -510,7 +538,14 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIn('class="childItem m-0 childName"', adult_page)
             self.assertIn('class="childItem m-0 childDetails"', adult_page)
             self.assertIn('@id="_edenResponseId"', adult_page)
-            self.assertIn('<<link "聊天">>', adult_page)
+            self.assertIn('<<link "聊天" "Eden Chat">>', adult_page)
+            for module in ["eden-chat.js", "eden-chat-prompt.js", "eden-chat-ui.js"]:
+                self.assertIn("modules/" + module, boot["scriptFileList"])
+            self.assertIn("game/eden-chat.twee", boot["tweeFileList"])
+            self.assertIn("modules/css/eden-chat.css", boot["styleFileList"])
+            chat_page = archive.read("game/eden-chat.twee").decode("utf-8")
+            self.assertIn("返回通讯录|Eden Contacts", chat_page)
+            self.assertIn("window.EdenChatUI?.mount", chat_page)
             self.assertIn('<<link "查收汇款">>', adult_page)
             self.assertIn('<<link "发出亲密邀请">>', adult_page)
             self.assertIn('<<link "详细信息">>', adult_page)

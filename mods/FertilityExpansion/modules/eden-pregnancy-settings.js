@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const unlockedNames = Object.freeze(["Bailey", "Leighton", "Gwylan"]);

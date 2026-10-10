@@ -4,7 +4,9 @@
 	That makes the mod removable and lets future schema migrations avoid touching
 	the base pregnancy save structure.
 */
-<<widget "edenSetup">><<silently>>
+<<widget "edenSetup">>
+<<if typeof window.EdenRuntime?.isReady is "function" and window.EdenRuntime.isReady()>>
+<<silently>>
 	<<if $eden is undefined or typeof $eden isnot "object" or Array.isArray($eden)>>
 		<<set $eden to {
 			schemaVersion: 17,
@@ -221,15 +223,23 @@
 	<</if>>
 <</silently>>
 <<if $eden.recordsMigration?.status is "needsRecovery">>
-	<div class="eden-panel red">伊甸园旧资料尚未完成转换，已保留原有记录。请载入升级前的存档备份重新转换。</div>
+	<div class="eden-panel red">伊甸园旧资料尚未完成转换，部分孩子的对应关系无法确认，已保留原有记录。请载入升级前的存档备份重新转换。</div>
 <<elseif $eden.recordsMigration?.status is "failed">>
 	<div class="eden-panel red">伊甸园旧存档转换未完成，原有数据已保留。请保留升级前的存档备份，处理转换错误后重试。</div>
 <</if>>
+<<else>>
+	<div class="eden-panel red">生育拓展 1.6.0 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
+	<<if typeof window.EdenRuntime?.missing is "function">><br>未加载的功能：<<= window.EdenRuntime.missing().join("、")>><</if>>
+	</div>
+<</if>>
 <</widget>>
 
-<<widget "edenSyncChildren">><<silently>>
+<<widget "edenSyncChildren">>
+<<if typeof window.EdenChildData?.syncRegistry is "function">><<silently>>
 	<<run window.EdenChildData.syncRegistry($eden)>>
-<</silently>><</widget>>
+<</silently>><<else>>
+	<div class="eden-panel red">孩子资料模块未加载，已暂停孩子同步并保留原有资料。请安装新版生育拓展后重新启动游戏。</div>
+<</if>><</widget>>
 
 :: Eden Journal Index
 <<edenSetup>>

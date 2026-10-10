@@ -5,6 +5,8 @@ import shutil
 import httpx
 import json
 import os
+import re
+from datetime import datetime
 
 from pathlib import Path
 from typing import Any
@@ -396,10 +398,24 @@ class GameMod:
             with open(DIR_RESULTS_ROOT / name / "boot.json", encoding="utf-8") as fp:
                 data = json.load(fp)
             filename = data["name"] or name
-            with ZipFile(DIR_RESULTS_ROOT / f"{filename}.mod.zip", "w", compression=ZIP_DEFLATED, compresslevel=5) as zfp:
+            version = re.sub(r"[^A-Za-z0-9._-]", "_", str(data.get("version", "unknown"))).removeprefix("v")
+            latest = DIR_RESULTS_ROOT / f"{filename}.mod.zip"
+            # Preserve the last pre-versioned build when upgrading the packager.
+            if latest.is_file() and not any(DIR_RESULTS_ROOT.glob(f"{filename}-v*.mod.zip")):
+                with ZipFile(latest) as previous:
+                    previous_version = json.loads(previous.read("boot.json")).get("version", "unknown")
+                previous_version = re.sub(r"[^A-Za-z0-9._-]", "_", str(previous_version)).removeprefix("v")
+                stamp = datetime.fromtimestamp(latest.stat().st_mtime).strftime("%Y%m%d-%H%M%S-%f")
+                shutil.copy2(latest, DIR_RESULTS_ROOT / f"{filename}-v{previous_version}-{stamp}-legacy.mod.zip")
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+            archive = DIR_RESULTS_ROOT / f"{filename}-v{version}-{stamp}.mod.zip"
+            # Exclusive creation protects even against concurrent same-time builds.
+            with ZipFile(archive, "x", compression=ZIP_DEFLATED, compresslevel=5) as zfp:
                 for root, dir_list, file_list in os.walk(DIR_RESULTS_ROOT / name):
                     for file in file_list:
                         zfp.write(filename=Path(root) / file, arcname=(Path(root) / file).relative_to(DIR_RESULTS_ROOT / name))
+            shutil.copyfile(archive, latest)
+            logger.info(f"Versioned package: {archive.name}")
             shutil.copyfile(
                 DIR_RESULTS_ROOT / f"{filename}.mod.zip",
                 DIR_MODLOADER_MODS / f"{filename}.mod.zip"
@@ -455,7 +471,12 @@ class GameMod:
     def _drop_dirs():
         """Cleaning"""
         logger.info(locale(Langs.DropResultsDirsStartInfo))
-        shutil.rmtree(DIR_RESULTS_ROOT, ignore_errors=True)
+        # Clean only generated working trees; keep all packaged release archives.
+        if DIR_MODS_ROOT.is_dir():
+            for source in DIR_MODS_ROOT.iterdir():
+                target = DIR_RESULTS_ROOT / source.name
+                if source.is_dir() and target.is_dir() and not target.is_symlink():
+                    shutil.rmtree(target)
         shutil.rmtree(DIR_TEMP_ROOT, ignore_errors=True)
         logger.info(locale(Langs.DropResultsDirsFinishInfo))
 

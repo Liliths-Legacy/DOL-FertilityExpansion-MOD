@@ -40,8 +40,10 @@
 在本仓库的 [Releases](https://github.com/Liliths-Legacy/DOL-FertilityExpansion-MOD/releases) 下载 `FertilityExpansion.mod.zip`，通过游戏的 Mod 管理器添加，然后重新载入游戏。无需解压模组包。
 
 - 当前本地适配包：DoL `0.5.12.13`（Lyra `1.0.1a` / goose `1004.1`）。安装包位于 `results/FertilityExpansion.mod.zip`；线上 Releases 是否更新以发布说明为准。
+
+本地打包同时生成 `results/FertilityExpansion-v版本号-日期-时间-微秒.mod.zip`，版本号读取模组的 `boot.json`。带版本号的历史包不会被后续打包清理或覆盖，同一版本重复打包也会保留。无后缀的 `FertilityExpansion.mod.zip` 仅作为本地测试使用的最新副本；分发、留档请使用带版本号的包。首次使用新打包方式会额外保留原有最新包，文件名带 `legacy`。
 - 前置：ModLoader `^2.101.0`、TweeReplacer `^1.7.0`；本地测试使用 ModLoader `2.101.1`。
-- 支持在原版迁移 0.5.11 存档时同步转换伊甸园资料。请使用升级前的原始存档；详情与验证范围见 [0.5.12.13 验证记录](docs/0.5.12-release-validation.md)。
+- 支持在原版迁移 0.5.11 存档时同步转换伊甸园资料，也支持先被原版转换、之后才更新模组的存档自动恢复关联。剩余资料无法唯一确认时保留原记录，提示使用升级前备份；详情与验证范围见 [0.5.12.13 验证记录](docs/0.5.12-release-validation.md)。
 
 ## 工具来源
 
@@ -56,4 +58,3 @@
 D.O.L.I模组
 
 感谢其作者Number_Sir、ArsNativa开发的优秀工具与模组。
-

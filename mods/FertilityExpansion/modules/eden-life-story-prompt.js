@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	/* The creative brief is editable; the profile and JSON contract are always appended by code. */

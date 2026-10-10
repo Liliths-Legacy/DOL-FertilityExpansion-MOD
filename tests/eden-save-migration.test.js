@@ -4,7 +4,9 @@ const path = require("node:path");
 const vm = require("node:vm");
 const test = require("node:test");
 
-const modSource = fs.readFileSync(path.join(__dirname, "../mods/FertilityExpansion/modules/eden-save-migration.js"), "utf8");
+const modRoot = process.env.EDEN_MOD_DIR || path.join(__dirname, "../mods/FertilityExpansion");
+const modSource = fs.readFileSync(path.join(modRoot, "modules/eden-save-migration.js"), "utf8");
+const recoverySource = fs.readFileSync(path.join(modRoot, "modules/eden-save-recovery.js"), "utf8");
 const runtimePath = process.env.DOL_0512_HTML || path.resolve(__dirname, "../../DoL-0.5.12.13-Lyra-1.0.1a-goose-1004.1/Degrees of Lewdity.html");
 
 function nativeSources() {
@@ -33,6 +35,7 @@ function fixture(vars = {}) {
 		C: { npc: {} }, random: () => 0, console,
 	});
 	vm.runInContext("Math.clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));", context);
+	vm.runInContext(recoverySource, context);
 	vm.runInContext(modSource, context);
 	return { context, vars, script, api: context.window.EdenSaveMigration };
 }
@@ -355,4 +358,209 @@ test("stored NPC and mod copies of the same pregnancy are linked once and leave 
 	assert.equal(f.vars.eden.children["0"].adult.pregnancy.pregnancyId, 1);
 	assert.equal(f.vars.pregnancies[1].carrier, "Eden child 0");
 	assert.equal(f.vars.storedNPCs.pregnancy_0, undefined);
+});
+
+function recoverableSave() {
+	const ids = ["m0b0d1f0", "m0b1d1f1"];
+	const vars = JSON.parse(JSON.stringify(legacySave()).replaceAll("old-parent", ids[0]).replaceAll("old-twin", ids[1]));
+	vars.parentList = {
+		mothers: [{ id: 0, name: "pc", kids: 2, births: 1 }],
+		fathers: [{ id: 0, name: "pc", kids: 0 }, { id: 1, name: "Robin", kids: 2 }],
+	};
+	for (const id of ids) vars.eden.children[id].innate.groupKey = "identical|pc|Robin|0|human|2025-October-1|2026-January-1";
+	return vars;
+}
+
+function convertWithoutEdenHook(vars) {
+	const f = fixture(vars);
+	vm.runInContext(native, f.context);
+	f.context.childBaseSpecies = species => ["wolfboy", "wolfgirl"].includes(species) ? "wolf" : species === "harpy" ? "hawk" : species;
+	vm.runInContext("migratePregnancyData()", f.context);
+	assert.equal(vars.children, undefined);
+	assert.equal(vars.eden.recordsMigration, undefined);
+	return f;
+}
+
+test("already-converted identical twins recover via parent counters and dates, preserve records and reload once", actualRuntime, () => {
+	const vars = recoverableSave();
+	const oldEden = structuredClone(vars.eden);
+	const f = convertWithoutEdenHook(vars);
+	const nativeBefore = structuredClone(vars.childRecords);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(vars.eden.recordsMigration.source, "0.5.12-recovery");
+	assert.equal(vars.eden.recordsMigration.recovery.method, "parent-census");
+	assert.equal(vars.eden.recordsMigration.childMap.m0b0d1f0, 0);
+	assert.equal(vars.eden.recordsMigration.childMap.m0b1d1f1, 1);
+	assert.equal(vars.eden.selectedChildId, "0");
+	assert.equal(vars.eden.children[0].profile, oldEden.children.m0b0d1f0.profile);
+	assert.equal(vars.eden.children[0].training.skills.knowledge, 90);
+	assert.equal(vars.eden.children[0].adult.lifeStory.inputSnapshot.childId, "m0b0d1f0");
+	assert.equal(vars.eden.children[1].affection, 86);
+	assert.equal(vars.per_npc["eden_child:0"].virginity.vaginal, false);
+	assert.deepEqual(structuredClone(vars.childRecords), nativeBefore);
+	assert.deepEqual(vars.eden.recordsMigration.legacyBackup.eden, oldEden);
+	assert.deepEqual(vars.eden.recordsMigration.legacyBackup.records.childRecords, nativeBefore);
+	const after = JSON.stringify(vars);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(JSON.stringify(vars), after);
+	const reloaded = fixture(JSON.parse(after));
+	assert.equal(reloaded.api.ensureReady(), true);
+	assert.equal(JSON.stringify(reloaded.vars), after);
+});
+
+test("recovery follows conception order rather than the native array's birth order", actualRuntime, () => {
+	const vars = recoverableSave();
+	for (const child of Object.values(vars.children)) child.features.identical = false;
+	vars.children.m0b0d1f0.conceived = { year: 2025, month: "September", day: 1 };
+	vars.children.m0b1d1f1.conceived = { year: 2025, month: "October", day: 1 };
+	vars.children = { m0b1d1f1: vars.children.m0b1d1f1, m0b0d1f0: vars.children.m0b0d1f0 };
+	for (const record of Object.values(vars.eden.children)) delete record.innate.groupKey;
+	const f = convertWithoutEdenHook(vars);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(vars.eden.recordsMigration.childMap.m0b0d1f0, 1);
+	assert.equal(vars.eden.recordsMigration.childMap.m0b1d1f1, 0);
+	assert.equal(vars.eden.selectedChildId, "1");
+});
+
+function addRecoveryPregnancy(vars, stored = false) {
+	vars.parentList.mothers.push({ id: 1, name: "Eden child m0b0d1f0", kids: 2, births: 0 });
+	vars.parentList.fathers[0].kids = 2;
+	const pregnancy = { type: "human", timer: 45, timerEnd: 90, due: true, deliveryBlocked: true, lastDeliveryError: "retry",
+		fetus: [legacyChild("m1b0d0f0", { mother: "Eden child m0b0d1f0", father: "pc", edenGeneticParentId: "m0b0d1f0" }),
+			legacyChild("m1b1d0f1", { mother: "Eden child m0b0d1f0", father: "pc", edenGeneticParentId: "m0b0d1f0" })] };
+	vars.eden.children.m0b0d1f0.adult.pregnancy = structuredClone(pregnancy);
+	if (stored) vars.storedNPCs.pregnancy_0 = { npc: { fullDescription: "Eden child m0b0d1f0", type: "human" }, pregnancy };
+}
+
+for (const stored of [false, true]) test(`recovery preserves adult pregnancy progress and twins (${stored ? "native stored copy" : "mod-only copy"})`, actualRuntime, () => {
+	const vars = recoverableSave();
+	addRecoveryPregnancy(vars, stored);
+	const f = convertWithoutEdenHook(vars);
+	assert.equal(vars.childRecords.length, stored ? 4 : 2);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(vars.childRecords.length, 4);
+	assert.equal(vars.pregnancies.length, 2);
+	assert.equal(vars.eden.recordsMigration.childMap.m1b0d0f0, 2);
+	assert.equal(vars.eden.recordsMigration.childMap.m1b1d0f1, 3);
+	assert.equal(vars.eden.recordsMigration.recovery.anchoredFetuses, stored ? 2 : 0);
+	assert.equal(vars.eden.recordsMigration.recovery.reservedFetuses, stored ? 0 : 2);
+	const descriptor = vars.eden.children[0].adult.pregnancy;
+	assert.equal(descriptor.pregnancyId, 1);
+	assert.equal(descriptor.due, true);
+	assert.equal(descriptor.deliveryBlocked, true);
+	assert.equal(descriptor.lastDeliveryError, "retry");
+	assert.equal(vars.pregnancies[1].carrier, "Eden child 0");
+	assert.equal(vars.childRecords[2].edenGeneticParentId, "0");
+	assert.equal(vars.childRecords[3].edenGeneticParentId, "0");
+	assert.equal(vars.storedNPCs.pregnancy_0, undefined);
+	const after = JSON.stringify(vars);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(JSON.stringify(vars), after);
+});
+
+for (const problem of ["counter-gap", "new-child", "duplicate-parent", "wrong-twin-date", "dangling-reference", "invalid-pregnancy", "unknown-inflight"]) {
+	test(`recovery fails atomically and can retry after ${problem}`, actualRuntime, () => {
+		const vars = recoverableSave();
+		if (problem === "invalid-pregnancy") addRecoveryPregnancy(vars);
+		if (problem === "unknown-inflight") {
+			vars.parentList.mothers[0].kids++;
+			vars.parentList.fathers[1].kids++;
+			vars.sexStats = { vagina: { pregnancy: { type: "human", timer: 45, timerEnd: 90,
+				fetus: [legacyChild("m0b2d1f2")] } } };
+		}
+		const f = convertWithoutEdenHook(vars);
+		const supported = structuredClone(vars);
+		if (problem === "counter-gap") vars.parentList.mothers[0].kids++;
+		if (problem === "new-child") vars.childRecords.push({ ...vars.childRecords[0], childId: 2 });
+		if (problem === "duplicate-parent") vars.parentList.fathers.push({ ...vars.parentList.fathers[1], id: 2 });
+		if (problem === "wrong-twin-date") vars.eden.children.m0b0d1f0.innate.groupKey = "identical|pc|Robin|0|human|2024-October-1|2026-January-1";
+		if (problem === "dangling-reference") vars.eden.bedVisit.activeChildId = "missing";
+		if (problem === "invalid-pregnancy") vars.eden.children.m0b0d1f0.adult.pregnancy.timerEnd = 0;
+		const before = structuredClone(vars);
+		for (let attempt = 0; attempt < 2; attempt++) {
+			assert.equal(f.api.ensureReady(), false);
+			assert.equal(vars.eden.recordsMigration.status, "needsRecovery");
+			assert.ok(vars.eden.recordsMigration.error);
+			const actual = structuredClone(vars);
+			delete actual.eden.recordsMigration;
+			assert.deepEqual(actual, before);
+		}
+		if (problem !== "unknown-inflight") {
+			for (const key of Object.keys(vars)) delete vars[key];
+			Object.assign(vars, supported);
+			assert.equal(f.api.ensureReady(), true);
+		}
+	});
+}
+
+test("same-day separate litters with the same parents are ambiguous even when child names differ", actualRuntime, () => {
+	const vars = recoverableSave();
+	vars.children.m0b1d1f1.birthId = 1;
+	vars.children.m0b1d1f1.name = "另一个名字";
+	for (const record of Object.values(vars.eden.children)) delete record.innate.groupKey;
+	const f = convertWithoutEdenHook(vars);
+	assert.equal(f.api.ensureReady(), false);
+	assert.match(vars.eden.recordsMigration.error, /同一天/);
+	assert.equal(vars.eden.selectedChildId, "m0b0d1f0");
+});
+
+test("a sole rescued hawk has its special legacy ID recovered", actualRuntime, () => {
+	const vars = recoverableSave();
+	const hawk = legacyChild("orphanHawk1", { type: "hawk", mother: "unknown hawk", father: "unknown hawk",
+		laid: { year: 2025, month: "December", day: 1 }, features: {}, birthId: 0 });
+	vars.children.orphanHawk1 = hawk;
+	vars.eden.children.orphanHawk1 = record("orphanHawk1");
+	const f = convertWithoutEdenHook(vars);
+	assert.equal(f.api.ensureReady(), true);
+	assert.equal(vars.eden.recordsMigration.childMap.orphanHawk1, 2);
+	assert.equal(vars.eden.children[2].childId, "2");
+});
+
+test("a new child cannot fill a lost legacy counter and masquerade as the old registered child", actualRuntime, () => {
+	const vars = recoverableSave();
+	// Counter 0 belonged to a lost, unregistered pregnancy; counter 1 is the old child.
+	delete vars.children.m0b0d1f0;
+	delete vars.eden.children.m0b0d1f0;
+	vars.eden.selectedChildId = "m0b1d1f1";
+	vars.eden.activeEncounterChildId = null;
+	vars.eden.bedVisit = {};
+	vars.eden.breeding = {};
+	vars.per_npc = {};
+	vars.NPCList = [];
+	delete vars.eden.children.m0b1d1f1.innate.groupKey;
+	const f = convertWithoutEdenHook(vars);
+	const nativeNewPregnancy = f.context.window.pushPregnancyRecord({ carrier: "pc", donor: "Robin", donorSpecies: "human",
+		conceivedDate: Date.UTC(2026, 2, 1) / 1000, deliveredDate: Date.UTC(2026, 5, 1) / 1000 });
+	f.context.window.pushChildRecord({ pregnancyId: nativeNewPregnancy, species: "human", gender: "f", features: {},
+		bornDate: Date.UTC(2026, 5, 1) / 1000, development: {} });
+	const before = JSON.stringify(vars.childRecords);
+	assert.equal(f.api.ensureReady(), false);
+	assert.match(vars.eden.recordsMigration.error, /旧登记/);
+	assert.equal(JSON.stringify(vars.childRecords), before);
+	assert.ok(vars.eden.children.m0b1d1f1);
+});
+
+test("merged same-day pregnancies with reversed counter order fail the old sibling-order check", actualRuntime, () => {
+	const vars = recoverableSave();
+	for (const child of Object.values(vars.children)) child.features.identical = false;
+	for (const record of Object.values(vars.eden.children)) delete record.innate.groupKey;
+	vars.children = { m0b1d1f1: vars.children.m0b1d1f1, m0b0d1f0: vars.children.m0b0d1f0 };
+	vars.eden.children = { m0b1d1f1: vars.eden.children.m0b1d1f1, m0b0d1f0: vars.eden.children.m0b0d1f0 };
+	const f = convertWithoutEdenHook(vars);
+	assert.equal(f.api.ensureReady(), false);
+	assert.match(vars.eden.recordsMigration.error, /旧登记顺序/);
+});
+
+for (const stored of [false, true]) test(`duplicate fetal counter slots are rejected (${stored ? "converted copy" : "reserved copy"})`, actualRuntime, () => {
+	const vars = recoverableSave();
+	addRecoveryPregnancy(vars, stored);
+	vars.parentList.mothers[1].kids = 1;
+	vars.eden.children.m0b0d1f0.adult.pregnancy.fetus[1].childId = "m1b0d0f1";
+	if (stored) vars.storedNPCs.pregnancy_0.pregnancy.fetus[1].childId = "m1b0d0f1";
+	const f = convertWithoutEdenHook(vars);
+	const before = JSON.stringify(vars.childRecords);
+	assert.equal(f.api.ensureReady(), false);
+	assert.match(vars.eden.recordsMigration.error, /计数重复/);
+	assert.equal(JSON.stringify(vars.childRecords), before);
+	assert.equal(vars.eden.children.m0b0d1f0.adult.pregnancy.fetus.length, 2);
 });

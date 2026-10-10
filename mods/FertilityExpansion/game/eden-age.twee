@@ -1,5 +1,6 @@
 :: Eden Age Widgets [widget]
-<<widget "edenNormalizeAgeSettings">><<silently>>
+<<widget "edenNormalizeAgeSettings">>
+<<if typeof window.EdenRuntime?.isReady is "function" and window.EdenRuntime.isReady()>><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
 		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false }>>
 	<</if>>
@@ -8,7 +9,9 @@
 	<<if window.EdenSaveMigration?.ensureReady() isnot false>>
 		<<run window.EdenAge.syncAll($eden, window.EdenChildData.collection())>>
 	<</if>>
-<</silently>><</widget>>
+<</silently>><<else>>
+	<div class="eden-panel red">生育拓展功能尚未加载完整，暂时无法应用成长设置，原有设置已保留。请重新启动游戏。</div>
+<</if>><</widget>>
 
 <<widget "edenAgeSettingsPanel">>
 		<div class="settingsHeader">生育拓展·成长设置</div>
@@ -68,4 +71,6 @@
 		</div>
 	<div id="eden-llm-settings" class="solidBorderContainer settings-container"></div>
 	<<run setTimeout(() => window.EdenLLM?.renderSettings?.(document.getElementById("eden-llm-settings")), 0)>>
+	<div id="eden-chat-settings" class="solidBorderContainer settings-container"></div>
+	<<run setTimeout(() => window.EdenChatUI?.renderSettings?.(document.getElementById("eden-chat-settings")), 0)>>
 <</widget>>

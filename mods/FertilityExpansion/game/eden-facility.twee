@@ -17,7 +17,7 @@
 			<<if $eden.facility.owned>>
 				<<edenLocationIcon>><<link [[前往伊甸园 (0:05)|Eden Home]]>><<set $eden.lifeStoryVisitHandled to false>><<pass 5>><</link>>
 			<<else>>
-				<<link [[查看待售房产|Eden Property]]>><</link>>
+				<<edenLocationIcon>><<link [[查看待售房产|Eden Property]]>><</link>>
 			<</if>>
 		</div>
 	<</if>>

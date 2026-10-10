@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 	const labels = Object.freeze({
 		knowledge: "学识", fitness: "体能", social: "社交", awareness: "意识",

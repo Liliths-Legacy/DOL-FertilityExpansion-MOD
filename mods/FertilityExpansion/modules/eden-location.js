@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	function injectFarmlandEntry() {
@@ -9,13 +9,27 @@
 		if (variables?.farm_stage === undefined) return;
 
 		const passage = document.querySelector("#passages .passage");
-		if (!passage || passage.querySelector("[data-eden-farmland-entry]")) return;
+		if (!passage) return;
 		if (!passage.querySelector('a.link-internal[data-passage="Meadow"]')) return;
 
-		const entry = document.createElement("div");
-		entry.dataset.edenFarmlandEntry = "true";
-		new sugarCube.Wikifier(entry, "<<edenFarmlandLink>>");
-		passage.append(entry);
+		let entry = passage.querySelector("[data-eden-farmland-entry]");
+		if (!entry) {
+			entry = document.createElement("div");
+			entry.dataset.edenFarmlandEntry = "true";
+			new sugarCube.Wikifier(entry, "<<edenFarmlandLink>>");
+			/* The source passage already leaves a blank line above the moor group. */
+			entry.append(document.createElement("br"));
+		}
+		/* Keep Eden with the upper farm options; the moor and town links start the lower group. */
+		const moorLink = passage.querySelector('a[data-passage="Moor"]');
+		if (moorLink) {
+			/* Numberify may wrap all choices in one container, so never climb to a passage-level ancestor. */
+			const icon = moorLink.previousElementSibling;
+			const anchor = icon?.matches("img, .icon") ? icon : moorLink;
+			if (anchor.previousElementSibling !== entry) anchor.before(entry);
+		} else {
+			passage.append(entry);
+		}
 		window.Links?.generate?.();
 	}
 
@@ -62,4 +76,6 @@
 		fixNurseryActivityReturn();
 		injectFurnitureShopEntry();
 	});
+	/* Reposition an existing entry after other passage-display handlers finish. */
+	$(document).on(":passageend.edenLocation", injectFarmlandEntry);
 })();

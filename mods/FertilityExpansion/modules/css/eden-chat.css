@@ -1,0 +1,12 @@
+.eden-chat-field { display: block; margin: 0.6em 0; }
+.eden-chat-field input, .eden-chat-field textarea { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.eden-chat-field textarea { resize: vertical; }
+.eden-chat-edit { color: var(--link, #77aaff); cursor: pointer; }
+.eden-chat-history { max-height: 60vh; overflow-y: auto; overflow-wrap: anywhere; margin: 1em 0; }
+.eden-chat-message { margin: 0.8em 0; padding: 0.4em 0.7em; border-left: 2px solid #777; }
+.eden-chat-player { margin-left: 1.5em; border-left-color: #77aaff; }
+.eden-chat-message > div { white-space: pre-wrap; }
+#eden-chat-panel button, #eden-chat-settings button { margin: 0.35em 0.5em 0.35em 0; }
+#eden-chat-panel [hidden] { display: none; }
+.eden-chat-send-actions { display: flex; justify-content: flex-end; width: 100%; }
+#eden-chat-panel .eden-chat-send-actions button { margin-right: 0; }

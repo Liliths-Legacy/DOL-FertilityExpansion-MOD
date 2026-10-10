@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const monthNames = Object.freeze(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]);

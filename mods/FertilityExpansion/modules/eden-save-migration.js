@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const version = 1;
@@ -235,10 +235,17 @@
 		for (const [id, record] of Object.entries(children)) record.childId = id;
 		restoreGeneticLinks(vars, legacyEden);
 		vars.eden.recordsMigration = {
-			version, status: "complete", source: "0.5.11", childMap: { ...transaction.childMap }, adultPregnancies,
+			version, status: "complete", source: transaction.source || "0.5.11", childMap: { ...transaction.childMap }, adultPregnancies,
 			legacyBackup: { eden: copy(legacyEden), children: copy(transaction.snapshot.children || {}) },
 		};
 		delete vars.eden.recordsMigration.legacyBackup.eden.recordsMigration;
+		if (transaction.recovery) {
+			vars.eden.recordsMigration.recovery = transaction.recovery;
+			vars.eden.recordsMigration.legacyBackup.records = {
+				childRecords: copy(transaction.snapshot.childRecords), pregnancies: copy(transaction.snapshot.pregnancies),
+				parentList: copy(transaction.snapshot.parentList),
+			};
+		}
 	}
 
 	function runNativeMigration(original) {
@@ -285,11 +292,26 @@
 			vars.eden.recordsMigration = { version, status: "complete", source: "new-save", childMap: {}, adultPregnancies: 0 };
 			return true;
 		}
-		vars.eden.recordsMigration = {
-			version: 0, status: "needsRecovery",
-			error: "原版已转换孩子资料，但没有伊甸园的旧编号对应记录。请载入升级前的存档备份。",
-		};
-		return false;
+		if (transaction) return false;
+		let snapshot;
+		try {
+			if (!window.EdenSaveRecovery) throw new Error("旧资料恢复模块尚未加载。");
+			const recovered = window.EdenSaveRecovery.infer(vars);
+			snapshot = copy(vars);
+			transaction = { snapshot, childMap: recovered.childMap, legacyByNewId: recovered.legacyByNewId,
+				source: "0.5.12-recovery", recovery: recovered.evidence };
+			migrateEden(vars);
+			return true;
+		} catch (error) {
+			if (snapshot) {
+				for (const key of Object.keys(vars)) delete vars[key];
+				Object.assign(vars, snapshot);
+			}
+			vars.eden.recordsMigration = { version: 0, status: "needsRecovery", error: String(error.message || error) };
+			return false;
+		} finally {
+			transaction = null;
+		}
 	}
 
 	function patchSource(code) {

@@ -1,0 +1,6 @@
+:: Eden Chat
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div id="eden-chat-panel"></div>
+<<run setTimeout(() => window.EdenChatUI?.mount(document.getElementById("eden-chat-panel"), window.SugarCube.State.variables.eden.selectedChildId), 0)>>
+<br>
+<<link [[返回通讯录|Eden Contacts]]>><</link>>

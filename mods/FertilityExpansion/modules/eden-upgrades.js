@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 	const config = Object.freeze({
 		nurseryMultiplier: 1.25,

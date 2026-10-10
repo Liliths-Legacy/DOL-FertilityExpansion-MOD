@@ -6,19 +6,26 @@ import fs from 'node:fs/promises';
 const endpoint = process.env.EDEN_CDP_URL || 'http://127.0.0.1:9227';
 const base = process.env.EDEN_GAME_URL || 'http://127.0.0.1:52525/';
 const targets = await (await fetch(`${endpoint}/json/list`)).json();
-const target = targets.find(t => t.type === 'page' && t.url === base) || targets.find(t => t.type === 'page');
+const target = targets.find(t => t.type === 'page' && t.url === base) || targets.find(t => t.type === 'page') ||
+ await (await fetch(`${endpoint}/json/new?about:blank`, {method: 'PUT'})).json();
 assert.ok(target, 'Start Chrome with an isolated temporary profile and a debugging port.');
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(resolve => ws.addEventListener('open', resolve, {once: true}));
 let serial = 0;
 const pending = new Map();
 const exceptions = [];
+const expectedScriptError = process.env.EDEN_EXPECT_SCRIPT_ERROR;
+const expectedDialogs = [];
 ws.addEventListener('message', event => {
  const message = JSON.parse(event.data);
  if (message.id) {
   const callback = pending.get(message.id);
   if (callback) { pending.delete(message.id); clearTimeout(callback.timer); message.error ? callback.reject(message.error) : callback.resolve(message.result); }
  } else if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails.text);
+ else if (message.method === 'Page.javascriptDialogOpening' && expectedScriptError && message.params.type === 'alert' && message.params.message.includes(`Error [tw-user-script-0]: ${expectedScriptError}.`)) {
+  expectedDialogs.push(message.params.message);
+  call('Page.handleJavaScriptDialog', {accept: true}).catch(error => exceptions.push(String(error)));
+ }
 });
 const call = (method, params = {}) => new Promise((resolve, reject) => {
  const id = ++serial;
@@ -32,27 +39,59 @@ const evaluate = async expression => {
 };
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 try {
+ await call('Page.enable');
  await call('Runtime.enable');
  if (target.url !== base) await call('Page.navigate', {url: base});
  for (let attempt = 0; attempt < 120; attempt++) {
   if (await evaluate('Boolean(window.SugarCube && window.EdenChildData && document.querySelector("#textbox-savename"))')) break;
   await delay(250);
  }
- const initial = JSON.parse(await evaluate(`JSON.stringify({version:StartConfig.version,bridge:EdenBirthBridgeStatus,mods:modUtils.getModListName(),migration:window.migratePregnancyData.toString().includes('runNativeMigration'),patches:[
+ const initial = JSON.parse(await evaluate(`JSON.stringify({version:StartConfig.version,bridge:EdenBirthBridgeStatus,mods:modUtils.getModListName(),bannerPatch:window.EdenRuntime?.bannerPatchStatus(),isolated:window.EdenScriptLoader?.status(),isolatedCount:window.EdenScriptLoader?.count(),migration:window.migratePregnancyData.toString().includes('runNativeMigration'),patches:[
  ['StoryCaption','<<edenSetup>>'],['Children Activity Events','<<edenRecordChildInteraction'],['Widgets children','EdenInteractions.usesStagePool'],['Widgets Sleep','EdenBedVisit.trySleepInterrupt'],['Bird Tower','EdenChildData.entries({ scope: "born", location: "tower" })'],['Widgets Combat','recordGwylanFairyContact(_args[0], $_type, "hand")'],['Widgets Combat','recordGwylanFairyContact(_args[0], $_type, "kiss")']
  ].map(([name,needle])=>modUtils.getPassageData(name).content.includes(needle))})`));
  assert.equal(initial.version, '0.5.12.13');
  assert.equal(initial.bridge, 'native-records');
+ assert.equal(initial.bannerPatch, 'patched');
+ assert.equal(initial.isolated, 'isolated');
+ assert.equal(initial.isolatedCount, 18);
+ if (expectedScriptError) assert.equal(expectedDialogs.length, 1, 'The predecessor must really fail before checking isolation.');
  assert.ok(initial.migration && initial.mods.includes('Lyra') && initial.mods.includes('ModI18N') && initial.mods.includes('FertilityExpansion'));
  assert.deepEqual(initial.patches, Array(7).fill(true));
  console.log('PASS: native early hooks and all seven final passage injections coexist with Lyra/i18n');
- await evaluate(`(() => {const verify=document.getElementById('checkbox--verify');if(verify && !verify.checked) verify.click(); Array.from(document.querySelectorAll('button')).find(e=>e.innerText.endsWith('进入游戏'))?.click(); Array.from(document.querySelectorAll('button')).find(e=>e.innerText.endsWith('开始游戏！'))?.click();})()`);
+ await evaluate(`(() => {const verify=document.getElementById('checkbox--verify');if(verify && !verify.checked) verify.click(); Array.from(document.querySelectorAll('button')).find(e=>e.textContent.trim().endsWith('进入游戏'))?.click(); Array.from(document.querySelectorAll('button')).find(e=>e.textContent.trim().endsWith('开始游戏！'))?.click();})()`);
  await delay(150);
  const fresh = JSON.parse(await evaluate(`JSON.stringify({errors:Array.from(document.querySelectorAll('#passages .error')).map(e=>e.innerText),children:SugarCube.State.variables.childRecords?.length,marker:SugarCube.State.variables.eden?.recordsMigration?.source})`));
  assert.deepEqual(fresh.errors, []);
  assert.equal(fresh.children, 0);
  assert.equal(fresh.marker, 'new-save');
  console.log('PASS: fresh game initializes the native record schema and Eden');
+ const registrations = await evaluate(`['edenProfile','edenOptions','edenLocation','edenPregnancySettings'].map(namespace => (jQuery._data(document,'events')[':passagedisplay'] || []).filter(handler => handler.namespace === namespace).length)`);
+ assert.deepEqual(registrations, [1, 1, 1, 1]);
+ console.log('PASS: isolated UI modules register their passage handlers exactly once');
+ const partial = JSON.parse(await evaluate(`(() => {
+  const v=SugarCube.State.variables, before=JSON.stringify(v.eden), options=JSON.stringify(v.options);
+  const api=window.EdenChildData, runtime=window.EdenRuntime;
+  const outcomes=[];
+  try {
+   window.EdenChildData=undefined;
+   for(const widget of ['edenSetup','edenSyncChildren','edenNormalizeAgeSettings']) {
+    const root=document.createElement('div');new SugarCube.Wikifier(root,'<<'+widget+'>>');
+    outcomes.push({widget,text:root.textContent,errors:root.querySelectorAll('.error').length});
+   }
+   const saved=JSON.stringify(v.eden)===before && JSON.stringify(v.options)===options;
+   window.EdenChildData=api;window.EdenRuntime=undefined;
+   const root=document.createElement('div');new SugarCube.Wikifier(root,'<<edenSetup>>');
+   outcomes.push({widget:'missing runtime',text:root.textContent,errors:root.querySelectorAll('.error').length});
+   return JSON.stringify({version:runtime.version,saved,outcomes,savedAgain:JSON.stringify(v.eden)===before});
+  } finally {window.EdenChildData=api;window.EdenRuntime=runtime;}
+ })()`));
+ assert.equal(partial.version, '1.6.0');
+ assert.ok(partial.saved && partial.savedAgain);
+ for(const result of partial.outcomes) {
+  assert.equal(result.errors, 0, result.widget);
+  assert.match(result.text, /未加载|加载不完整|加载完整/, result.widget);
+ }
+ console.log('PASS: missing child-data/runtime APIs pause sidebar, direct sync and settings without errors or save changes');
  await evaluate(`SugarCube.Save.onLoad.add(save => {window.edenAuditBefore = structuredClone(save.state.history[save.state.index].variables);})`);
  for (const filename of process.argv.slice(2)) {
   const encoded = await fs.readFile(filename, 'utf8');

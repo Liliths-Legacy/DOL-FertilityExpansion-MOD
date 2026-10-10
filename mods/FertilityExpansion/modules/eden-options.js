@@ -1,4 +1,4 @@
-(() => {
+;(() => {
 	"use strict";
 
 	const tabAttribute = "data-eden-options-tab";
