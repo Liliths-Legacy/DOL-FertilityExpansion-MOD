@@ -4,7 +4,7 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.6.0",
+  "version": "1.6.10",
   "scriptFileList_inject_early": [
     "modules/eden-child-data.js",
     "modules/eden-runtime.js",
@@ -16,7 +16,30 @@
   "styleFileList": [],
   "scriptFileList": [],
   "tweeFileList": [],
-  "imgFileList": [],
+  "imgFileList": [
+    "img/background/eden/eden-hall-undecorated.png",
+    "img/furniture/eden/sofa.png",
+    "img/furniture/eden/bookcase.png",
+    "img/furniture/eden/rug.png",
+    "img/furniture/eden/table-and-chairs.png",
+    "img/furniture/eden/potted-plant.png",
+    "img/furniture/eden/toy-pile.png",
+    "img/furniture/eden/wall-painting.png",
+    "img/furniture/eden/abstract-painting.png",
+    "img/furniture/eden/window-frame.png",
+    "img/background/eden/eden-background-sunny-day.png",
+    "img/background/eden/eden-background-sunny-dawn-dusk.png",
+    "img/background/eden/eden-background-sunny-night.png",
+    "img/background/eden/eden-background-overcast-day.png",
+    "img/background/eden/eden-background-overcast-dawn-dusk.png",
+    "img/background/eden/eden-background-overcast-night.png",
+    "img/background/eden/eden-background-light-rain-day.png",
+    "img/background/eden/eden-background-light-rain-dawn-dusk.png",
+    "img/background/eden/eden-background-light-rain-night.png",
+    "img/background/eden/eden-background-storm-day.png",
+    "img/background/eden/eden-background-storm-dawn-dusk.png",
+    "img/background/eden/eden-background-storm-night.png"
+  ],
   "additionFile": [
     "README.md"
   ],
@@ -46,12 +69,12 @@
         {
           "passage": "Widgets children",
           "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $children[_args[0]].type>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
-          "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>",
+          "replace": "<div class=\"eden-child-activity\" @data-eden-activity-child=\"_args[0]\">\n\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $children[_args[0]].type>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>\n</div>",
           "debug": false,
           "all": false,
           "edenRecords": {
             "findString": "\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t<<updateChildActivity _args[0]>>\n\t\t<hr>\n\t\t<<switch $childRecords[_args[0]].species>>\n\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t<</switch>>",
-            "replace": "\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $childRecords[_args[0]].species>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>"
+            "replace": "<div class=\"eden-child-activity\" @data-eden-activity-child=\"_args[0]\">\n\t\t<<if $location is \"eden_home\" and typeof window.EdenInteractions is \"object\" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _args[0])>>\n\t\t\t<hr>\n\t\t\t<<edenStageChildActivity _args[0]>>\n\t\t<<else>>\n\t\t\t/*'updateChildActivity' Changes the current event if enough time has passed*/\n\t\t\t<<updateChildActivity _args[0]>>\n\t\t\t<hr>\n\t\t\t<<switch $childRecords[_args[0]].species>>\n\t\t\t\t<<case \"human\">><<humanChildActivity _args[0]>>\n\t\t\t\t<<case \"wolf\" \"wolfboy\" \"wolfgirl\">><<wolfChildActivity _args[0]>>\n\t\t\t\t<<case \"hawk\">><<hawkChildActivity _args[0]>>\n\t\t\t<</switch>>\n\t\t<</if>>\n</div>"
           }
         },
         {
@@ -111,6 +134,12 @@
           }
         }
       ]
+    },
+    {
+      "modName": "ModLoader DoL ImageLoaderHook",
+      "addonName": "ImageLoaderAddon",
+      "modVersion": "^2.3.0",
+      "params": []
     }
   ],
   "dependenceInfo": [
@@ -125,6 +154,10 @@
     {
       "modName": "TweeReplacer",
       "version": "^1.7.0"
+    },
+    {
+      "modName": "ModLoader DoL ImageLoaderHook",
+      "version": "^2.3.0"
     }
   ]
 }

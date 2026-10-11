@@ -1,4 +1,73 @@
 :: Eden Facility Widgets [widget]
+<<widget "edenHallHotspots">>
+	<div class="eden-hall-hotspot eden-hall-hotspot-bedroom"><<link [[前往卧室|Eden Safehouse Bedroom]]>><</link>></div>
+	<div class="eden-hall-hotspot eden-hall-hotspot-nursery"><<link [[前往育儿室|Eden Nursery]]>><</link>></div>
+	<div class="eden-hall-hotspot eden-hall-hotspot-contacts"><<link [[查看通讯录|Eden Contacts]]>><</link>></div>
+	<div class="eden-hall-hotspot eden-hall-hotspot-handbook"><<link [[查看育儿手册|Eden Handbook]]>><</link>></div>
+	<div class="eden-hall-hotspot eden-hall-hotspot-exit"><<link [[返回农场道路 (0:05)|Farmland]]>><<pass 5>><</link>></div>
+<</widget>>
+
+<<widget "edenHallScene">>
+	<div class="eden-hall-scene">
+		<img src="img/background/eden/eden-hall-undecorated.png" alt="伊甸园大厅：木质房间、两侧房门、入口地毯和右侧小桌">
+		<<if $options.eden.showHallHotspots isnot false>>
+			<div class="eden-hall-hotspots-layer eden-hall-hotspots-visible"><<edenHallHotspots>></div>
+		<<else>>
+			<div class="eden-hall-hotspots-layer eden-hall-hotspots-hidden"><<edenHallHotspots>></div>
+		<</if>>
+	</div>
+<</widget>>
+<<widget "edenNurseryBedIcons">>
+	<<set _edenNurseryAssignments to window.EdenFacility.syncBedAssignments($eden, _childrenIds, $eden.facility.expanded)>>
+	<<set _edenNurserySlots to $eden.facility.expanded ? ["top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"] : ["top-right", "middle-right", "bottom-right"]>>
+	<<for _edenNurseryIndex to 0; _edenNurseryIndex lt _edenNurserySlots.length; _edenNurseryIndex++>>
+		<<set _edenNurseryChildId to _edenNurseryAssignments[_edenNurserySlots[_edenNurseryIndex]]>>
+		<<if _edenNurseryChildId isnot undefined>>
+			<div @class="'eden-nursery-bed-occupant eden-nursery-bed-' + _edenNurserySlots[_edenNurseryIndex]"><<childrenicon _edenNurseryChildId>></div>
+		<</if>>
+	<</for>>
+<</widget>>
+
+<<widget "edenNurseryChildHotspots">>
+	<<set _edenNurserySlots to $eden.facility.expanded ? ["top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"] : ["top-right", "middle-right", "bottom-right"]>>
+	<<set _edenNurseryAssignments to $eden.facility.bedAssignments or {}>>
+	<<for _edenNurseryIndex to 0; _edenNurseryIndex lt _edenNurserySlots.length; _edenNurseryIndex++>>
+		<<set _edenNurserySlot to _edenNurserySlots[_edenNurseryIndex]>>
+		<<set _edenNurseryChildId to _edenNurseryAssignments[_edenNurserySlot]>>
+		<<if _edenNurseryChildId isnot undefined>>
+			<div hidden @data-eden-hotspot-child="_edenNurseryChildId" @class="'eden-nursery-child-hotspot eden-nursery-child-hotspot-' + _edenNurserySlot">
+				<<capture _edenNurseryChildId>>
+					<<link "查看互动" "Eden Child Interaction Menu">>
+						<<set $eden.interactionMenuChildId to _edenNurseryChildId>>
+					<</link>>
+				<</capture>>
+				<img class="eden-nursery-thought-bubble" src="img/misc/icon/thought-bubble.png" alt="有可互动内容">
+			</div>
+		<</if>>
+	<</for>>
+<</widget>>
+
+<<widget "edenNurseryScene">>
+	<div class="eden-nursery-scene">
+		<<if $eden.facility.expanded>>
+			<img src="img/background/eden/eden-nursery-undecorated.png" alt="伊甸园育儿室：浅色房间、左侧房门和六张单人床">
+		<<else>>
+			<img src="img/background/eden/eden-nursery-unexpanded.png" alt="伊甸园育儿室：浅色房间、左侧房门和三张单人床">
+		<</if>>
+		<<if $options.eden.showHallHotspots isnot false>>
+			<div class="eden-hall-hotspots-layer eden-hall-hotspots-visible">
+				<div class="eden-hall-hotspot eden-nursery-hotspot-door"><<link [[返回伊甸园大厅|Eden Home]]>><</link>></div>
+			</div>
+		<<else>>
+			<div class="eden-hall-hotspots-layer eden-hall-hotspots-hidden">
+				<div class="eden-hall-hotspot eden-nursery-hotspot-door"><<link [[返回伊甸园大厅|Eden Home]]>><</link>></div>
+			</div>
+		<</if>>
+		<<edenNurseryBedIcons>>
+		<<edenNurseryChildHotspots>>
+	</div>
+<</widget>>
+
 <<widget "edenLocationIcon">><img class="icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAFKUlEQVR4nO2Wa0yTZxTHf2/lJlTEoiC3KmLpnBE+oLuQKXPdIkRQo9Nlmc5NIirb8DIwYDaXLWZB2HBozQRHNVl1Bu/BDNA4h2YYombqUhGxIlgYFK32oiKXPvvQra4izjk/LZ7k/fDmOc//9/6f85yTF57F/z2kpy0YrFAJ4ewFwHKraUB92ZMIBytUYqD1XXGwPswbTfgdHpXn9W+gW8fFisQYiTaHk6sdsSK3w6V7w9IoASiCokVYzruEAYrqSmLqO8g/8h/BL0QpSZkeRcbeC5TOeZ7wiybygcQYiffPKYXxtq8EsOVMDQDdddfY2+g3oN5j19iQqhY5BhvpadGUVTSxcpSccLmMWqMgxs8HY1c3MX4+hKx7i4bqSgAy9J3u03gwHqvGpmyNqDUKCrSZABRoMyk12+BPx6ERPSTGuPSlb/Wop6Vwqr7jkZr/CDakqoX1oolTgXcJHyUH4PMcLSXlueQYbAx9LhKANocTgI5Wb05mf4/F1s2uuCcEG1LVotYoKO68Q37ZKuIKNzLi5k0AhgxXo92eRcbeCwAMsvoSGtFD39B7jA4VLB/hz9UOCUVQ9ENv9oDgI6+qRJvDyWHJSm5BJsvqNhEYDEtHdHFykj9bf8slSh2PdnsWtUZBrCaUWqMgXC4jXC5jx+VuAPZEBzye42CFSpiyNQJg910XZIquFP10LbYbrpym9ZvRVtoJW5xJlDoexRvDsV40kTI9ilqjoNYoiJa83fU3pKr7uX7ojQtWqMRrI218VvghrZFH0J02kaSUcyijk8gQVwfmFmSSerAUc6NgX9Bg9JccmMyuiZUdFAxAaEQPbQ4nx9p72dLuOcm8HgTesDRKPfH3pMN+fmK93Iv0omt0WQROYwf6ilzmpxWgr1hNW7ODCeMljja6zGw+WAKA/XqDW29+WsF9hzK5hzk3OFihYuexMOauuCcClYOomrcIgC6LoKdXsPOnbXy64CPixvpTsFLL+ct3CBjsJCTZn87eYQB8MHMJN+3dxETch+grVpOcsqFfP/+9xkJ32kT+miC6LILkch1TdKXsWKfE28u1Z9K4UPcDYEj2Z8PCKLeAItAHgLVFM1hbNIP0tGgAhnv19JvbbvANi7eUpJSjrbTz89J07GYnVfMW8c4nLXyRFehxTNV11wBorXfy3dsNPBgnnGc44TzjHiKppSPoib/nkeMGH18gxKGMTsyNAv0329GpIkj8ait+Com1G23Yrze4haa96HLZVLiCqcWhLGlqA8Bic7XQZFkCk2UJGFsdbpD3Od+HgzuHDSNgsJN9QYPdi9smRPLyqTtMNd4lNq+4n7PYvGLeG6lBM0tG2OJMdvlLlJTn0iUpUa7ZT0l5Lq/oNpJXZOX1wj6PYeJxq5vtvsy+dZfZtj4A5Ole3K6QERnixZizTjL0S9y5rXUldDucTNx2AHOjoEb4MjQhkmV1mwDQzJJxdkEZhzVjeCnkClV7+rDeau7fTsutv3PpxzmccJ7hWHYrp+o7UJoDWH5Axd6MJnRbFvdz7COXYfq1jwsJKj4e18Qvx69QfdGHxL4uDOPHMn7kZTDY2d8+hLnNnjV2f0HkwmjRZRH4KSTKVkVhNN9CW2l3T6vzOVkAHCvd7d68qLGV5DcHkaSU86Xejq2lj6/b/cge7Qnx9pK4XnHVo508XoamjPK48hHjZByamUFRzVEAViVpAKjq/oGaFgeLJkaiO20CIEkpp6bFwV+dMWG8RJJSTl6RFWtl81P/t3sWz2LA+AOakBOQerbd7wAAAABJRU5ErkJggg=="> <</widget>>
 <<widget "edenResidentIds">><<silently>>
 	<<set _edenResidentIds to window.EdenFacility.residentIds()>>
@@ -73,6 +142,7 @@
 		<<edenResidentIds>>
 		<p>这座小屋位于小镇外，紧邻Alex的农场。远离镇上的喧嚣后，周围显得格外安静。</p>
 		<p>当前入住：<<= _edenResidentCount>> / <<= $eden.facility.capacity>></p>
+		<<edenHallScene>>
 		<<furnitureicon "catalogue">><<link [[室内陈设|Eden Decorations]]>><</link>>
 		<br>
 		<<if !$eden.facility.expanded>>
@@ -115,7 +185,7 @@
 		<</if>>
 	<</if>>
 	<br><br>
-	<<link [[返回伊甸园|Eden Home]]>><</link>>
+	<<link [[返回伊甸园大厅|Eden Home]]>><</link>>
 </div>
 
 :: Eden Nursery
@@ -127,6 +197,7 @@
 		<<if $storedChildrenToys is undefined>><<set $storedChildrenToys to {}>><</if>>
 		<<if $storedChildrenToys["eden_home"] is undefined>><<set $storedChildrenToys["eden_home"] to []>><</if>>
 		<<getChildrenIds `{location: "eden_home"}` "both">>
+		<<edenNurseryScene>>
 		<<if _childrenIds.length>>
 			<p>你在育儿室里找到了自己的<<= _childrenIds.length > 1 ? "孩子们" : "孩子">>。</p>
 			<<childViewerDisplay _childrenIds>>
@@ -135,7 +206,26 @@
 		<</if>>
 	<</if>>
 	<br>
-	<<link [[返回伊甸园|Eden Home]]>><</link>>
+	<<link [[返回伊甸园大厅|Eden Home]]>><</link>>
+</div>
+
+:: Eden Child Interaction Menu
+<<edenSetup>><<set $outside to 0>><<set $location to "eden_home">><<effects>>
+<div class="eden-panel eden-child-interaction-menu">
+	<<set _edenMenuChildId to $eden.interactionMenuChildId>>
+	<<set _edenMenuChild to window.EdenChildData.get(_edenMenuChildId)>>
+	<<if _edenMenuChild>>
+		<h3><<childrenicon _edenMenuChildId>><<= Util.escapeMarkup(_edenMenuChild.name || "孩子")>>的互动</h3>
+		<<if typeof window.EdenInteractions is "object" and window.EdenInteractions.usesStagePool($eden, window.EdenChildData.collection(), _edenMenuChildId)>>
+			<<edenStageChildActivity _edenMenuChildId>>
+		<<else>>
+			<<childActivity _edenMenuChildId>>
+		<</if>>
+	<<else>>
+		<p class="red">无法找到这个孩子，互动可能已经结束。</p>
+	<</if>>
+	<br>
+	<<link [[返回育儿室|Eden Nursery]]>><</link>>
 </div>
 
 :: Eden Child Transfer

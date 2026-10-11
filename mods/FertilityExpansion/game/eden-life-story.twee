@@ -7,7 +7,7 @@
 	<<set _edenChild to window.EdenChildData.get(_edenChildId)>>
 	<<if !_edenRecord or !_edenChild>>
 		<p class="red">无法找到这封来信对应的孩子。</p>
-		<<link [[返回伊甸园|Eden Home]]>><</link>>
+		<<link [[返回伊甸园大厅|Eden Home]]>><</link>>
 	<<else>>
 		<<run window.EdenLifeStory.markDiscovered(_edenRecord)>>
 		<p>这是<<= Util.escapeMarkup(_edenChild.name || "这个孩子")>>寄来的，里面是长长的一封信，还附带着几张照片。</p>

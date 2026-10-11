@@ -9,6 +9,37 @@
 		return window.EdenChildData.entries({ location: "eden_home" }, vars).map(([id]) => id);
 	}
 
+	const bedSlots = Object.freeze({
+		unexpanded: Object.freeze(["top-right", "middle-right", "bottom-right"]),
+		expanded: Object.freeze(["top-left", "top-right", "middle-left", "middle-right", "bottom-left", "bottom-right"]),
+	});
+
+	function syncBedAssignments(eden, residents, expanded = eden?.facility?.expanded === true) {
+		if (!eden?.facility) return {};
+		if (!eden.facility.bedAssignments || typeof eden.facility.bedAssignments !== "object" || Array.isArray(eden.facility.bedAssignments)) eden.facility.bedAssignments = {};
+		const slots = expanded ? bedSlots.expanded : bedSlots.unexpanded;
+		const residentSet = new Set((Array.isArray(residents) ? residents : []).map(id => String(id)));
+		const assignments = eden.facility.bedAssignments;
+		const occupied = new Set();
+		// Preserve each valid existing assignment, releasing departed children.
+		slots.forEach(slot => {
+			const childId = assignments[slot];
+			if (childId === undefined || childId === null || !residentSet.has(String(childId)) || occupied.has(String(childId))) delete assignments[slot];
+			else { assignments[slot] = String(childId); occupied.add(String(childId)); }
+		});
+		Object.keys(assignments).forEach(slot => { if (!slots.includes(slot)) delete assignments[slot]; });
+		// New residents take the first free bed in layout order.
+		(Array.isArray(residents) ? residents : []).forEach(id => {
+			const childId = String(id);
+			if (occupied.has(childId)) return;
+			const freeSlot = slots.find(slot => assignments[slot] === undefined);
+			if (!freeSlot) return;
+			assignments[freeSlot] = childId;
+			occupied.add(childId);
+		});
+		return assignments;
+	}
+
 	function inspectTransfer(eden, childId, source, vars = variables()) {
 		const data = window.EdenChildData;
 		const child = data.get(childId, vars);
@@ -60,5 +91,5 @@
 		return { ok: true, eligible: true, code: "moved", cost: check.cost, childId: String(childId), message: "孩子已经入住伊甸园。" };
 	}
 
-	window.EdenFacility = Object.freeze({ transferFee, sources, residentIds, inspectTransfer, move });
+	window.EdenFacility = Object.freeze({ transferFee, sources, bedSlots, residentIds, syncBedAssignments, inspectTransfer, move });
 })();

@@ -31,3 +31,6 @@ __pycache__/
 .DS_Store
 .env.*
 *.log
+
+# Keep image assets local; distribute them inside release packages
+/mods/FertilityExpansion/img/

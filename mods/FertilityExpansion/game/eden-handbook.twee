@@ -29,4 +29,4 @@
 <<else>>
 	<p>你还没有买下伊甸园。</p>
 <</if>>
-<<link [[返回伊甸园|Eden Home]]>><</link>>
+<<link [[返回伊甸园大厅|Eden Home]]>><</link>>

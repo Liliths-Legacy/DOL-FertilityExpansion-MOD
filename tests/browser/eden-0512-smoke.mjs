@@ -85,7 +85,7 @@ try {
    return JSON.stringify({version:runtime.version,saved,outcomes,savedAgain:JSON.stringify(v.eden)===before});
   } finally {window.EdenChildData=api;window.EdenRuntime=runtime;}
  })()`));
- assert.equal(partial.version, '1.6.0');
+ assert.equal(partial.version, '1.6.10');
  assert.ok(partial.saved && partial.savedAgain);
  for(const result of partial.outcomes) {
   assert.equal(result.errors, 0, result.widget);

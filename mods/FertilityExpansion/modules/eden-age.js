@@ -47,6 +47,7 @@
 		settings.lifeStoryPrompt = typeof settings.lifeStoryPrompt === "string" ? settings.lifeStoryPrompt : "";
 		settings.immediateLifeStory = settings.immediateLifeStory === true;
 		settings.allowSterilePregnancy = settings.allowSterilePregnancy === true;
+		settings.showHallHotspots = settings.showHallHotspots !== false;
 	}
 
 	function inferSpecies(child, storedSpecies) {

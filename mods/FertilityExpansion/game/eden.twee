@@ -18,12 +18,14 @@
 				allowHumanDescendants: false,
 				lifeStoryPrompt: "",
 				immediateLifeStory: false,
-				allowSterilePregnancy: false
+				allowSterilePregnancy: false,
+				showHallHotspots: true
 			},
 			facility: {
 				owned: false,
 				expanded: false,
 				capacity: 3,
+				bedAssignments: {},
 				baileyIntroduced: false,
 				transferIntroduced: {
 					wolf_cave: false,
@@ -136,6 +138,7 @@
 		<<if $eden.schemaVersion lt 13>>
 			<<if $eden.settings is undefined or typeof $eden.settings isnot "object" or Array.isArray($eden.settings)>><<set $eden.settings to {}>><</if>>
 			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
+		<<if typeof $eden.settings.showHallHotspots isnot "boolean">><<set $eden.settings.showHallHotspots to true>><</if>>
 			<<set $eden.schemaVersion to 13>>
 		<</if>>
 		/* Schema 13 -> 14: remember the first transfer negotiation at each external nursery. */
@@ -176,6 +179,7 @@
 			<<if typeof $eden.settings.lifeStoryPrompt isnot "string">><<set $eden.settings.lifeStoryPrompt to "">><</if>>
 			<<if typeof $eden.settings.immediateLifeStory isnot "boolean">><<set $eden.settings.immediateLifeStory to false>><</if>>
 			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
+		<<if typeof $eden.settings.showHallHotspots isnot "boolean">><<set $eden.settings.showHallHotspots to true>><</if>>
 		<</if>>
 		<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
 			<<set $eden.facility to {}>>
@@ -183,6 +187,7 @@
 		<<if typeof $eden.facility.owned isnot "boolean">><<set $eden.facility.owned to false>><</if>>
 		<<if typeof $eden.facility.expanded isnot "boolean">><<set $eden.facility.expanded to false>><</if>>
 		<<if typeof $eden.facility.baileyIntroduced isnot "boolean">><<set $eden.facility.baileyIntroduced to false>><</if>>
+		<<if $eden.facility.bedAssignments is undefined or typeof $eden.facility.bedAssignments isnot "object" or Array.isArray($eden.facility.bedAssignments)>><<set $eden.facility.bedAssignments to {}>><</if>>
 		<<if $eden.facility.transferIntroduced is undefined or typeof $eden.facility.transferIntroduced isnot "object" or Array.isArray($eden.facility.transferIntroduced)>><<set $eden.facility.transferIntroduced to {}>><</if>>
 		<<if typeof $eden.facility.transferIntroduced.wolf_cave isnot "boolean">><<set $eden.facility.transferIntroduced.wolf_cave to Object.values($eden.children).some(record => record?.transferSource === "wolf_cave")>><</if>>
 		<<if typeof $eden.facility.transferIntroduced.tower isnot "boolean">><<set $eden.facility.transferIntroduced.tower to Object.values($eden.children).some(record => record?.transferSource === "tower")>><</if>>
@@ -228,7 +233,7 @@
 	<div class="eden-panel red">伊甸园旧存档转换未完成，原有数据已保留。请保留升级前的存档备份，处理转换错误后重试。</div>
 <</if>>
 <<else>>
-	<div class="eden-panel red">生育拓展 1.6.0 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
+	<div class="eden-panel red">生育拓展 1.6.10 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
 	<<if typeof window.EdenRuntime?.missing is "function">><br>未加载的功能：<<= window.EdenRuntime.missing().join("、")>><</if>>
 	</div>
 <</if>>

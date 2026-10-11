@@ -6,7 +6,6 @@ import httpx
 import json
 import os
 import re
-from datetime import datetime
 
 from pathlib import Path
 from typing import Any
@@ -398,19 +397,24 @@ class GameMod:
             with open(DIR_RESULTS_ROOT / name / "boot.json", encoding="utf-8") as fp:
                 data = json.load(fp)
             filename = data["name"] or name
-            version = re.sub(r"[^A-Za-z0-9._-]", "_", str(data.get("version", "unknown"))).removeprefix("v")
+            source_version = re.sub(r"[^A-Za-z0-9._-]", "_", str(data.get("version", "0.0.0"))).removeprefix("v")
+            version_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", source_version)
+            existing_versions = []
+            archive_pattern = re.compile(rf"{re.escape(filename)}-v(\d+)\.(\d+)\.(\d+)(?:-.*)?\.mod\.zip")
+            for candidate in DIR_RESULTS_ROOT.glob(f"{filename}-v*.mod.zip"):
+                match = archive_pattern.fullmatch(candidate.name)
+                if match:
+                    existing_versions.append(tuple(map(int, match.groups())))
+            if existing_versions:
+                major, minor, patch = max(existing_versions)
+                version = f"{major}.{minor}.{patch + 1}"
+            elif version_match:
+                version = source_version
+            else:
+                version = "0.0.1"
             latest = DIR_RESULTS_ROOT / f"{filename}.mod.zip"
-            # Preserve the last pre-versioned build when upgrading the packager.
-            if latest.is_file() and not any(DIR_RESULTS_ROOT.glob(f"{filename}-v*.mod.zip")):
-                with ZipFile(latest) as previous:
-                    previous_version = json.loads(previous.read("boot.json")).get("version", "unknown")
-                previous_version = re.sub(r"[^A-Za-z0-9._-]", "_", str(previous_version)).removeprefix("v")
-                stamp = datetime.fromtimestamp(latest.stat().st_mtime).strftime("%Y%m%d-%H%M%S-%f")
-                shutil.copy2(latest, DIR_RESULTS_ROOT / f"{filename}-v{previous_version}-{stamp}-legacy.mod.zip")
-            stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-            archive = DIR_RESULTS_ROOT / f"{filename}-v{version}-{stamp}.mod.zip"
-            # Exclusive creation protects even against concurrent same-time builds.
-            with ZipFile(archive, "x", compression=ZIP_DEFLATED, compresslevel=5) as zfp:
+            archive = DIR_RESULTS_ROOT / f"{filename}-v{version}.mod.zip"
+            with ZipFile(archive, "w", compression=ZIP_DEFLATED, compresslevel=5) as zfp:
                 for root, dir_list, file_list in os.walk(DIR_RESULTS_ROOT / name):
                     for file in file_list:
                         zfp.write(filename=Path(root) / file, arcname=(Path(root) / file).relative_to(DIR_RESULTS_ROOT / name))

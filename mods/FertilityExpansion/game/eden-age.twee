@@ -2,8 +2,9 @@
 <<widget "edenNormalizeAgeSettings">>
 <<if typeof window.EdenRuntime?.isReady is "function" and window.EdenRuntime.isReady()>><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
-		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false }>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false, showHallHotspots: true }>>
 	<</if>>
+	<<if typeof $options.eden.showHallHotspots isnot "boolean">><<set $options.eden.showHallHotspots to true>><</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
 	<<set $eden.settings to clone($options.eden)>>
 	<<if window.EdenSaveMigration?.ensureReady() isnot false>>
@@ -58,6 +59,11 @@
 		<label><<checkbox "$options.eden.allowSterilePregnancy" false true autocheck>> 不准绝育</label>
 		<br>
 		<small>开启后，Bailey、Leighton 与 Gwylan 可按原版生理与怀孕规则参与受孕或授孕；Gwylan 的裸手牵手和无遮挡接吻在奇幻怀孕模式下也可触发受孕，概率、周期、药物与怀孕开关仍按原版规则判断（旧版为童话模式）。这些角色没有完整的专属怀孕剧情，剧情可能不会回应怀孕状态。若关闭时角色已怀孕，模组会暂时保留该孕程的支持，防止存档数据被原版清除。</small>
+	</div>
+	<div class="settingsToggleItemWide">
+		<label><<checkbox "$options.eden.showHallHotspots" false true autocheck>> 显示伊甸园大厅可点击范围</label>
+		<br>
+		<small>关闭后仍可点击房间中的对应位置，只隐藏白色提示框。</small>
 	</div>
 <</widget>>
 
