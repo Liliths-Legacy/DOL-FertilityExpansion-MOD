@@ -142,7 +142,7 @@
 		<<edenResidentIds>>
 		<p>这座小屋位于小镇外，紧邻Alex的农场。远离镇上的喧嚣后，周围显得格外安静。</p>
 		<p>当前入住：<<= _edenResidentCount>> / <<= $eden.facility.capacity>></p>
-		<<edenHallScene>>
+		<<edenHallPresentation>>
 		<<furnitureicon "catalogue">><<link [[室内陈设|Eden Decorations]]>><</link>>
 		<br>
 		<<if !$eden.facility.expanded>>
@@ -197,7 +197,7 @@
 		<<if $storedChildrenToys is undefined>><<set $storedChildrenToys to {}>><</if>>
 		<<if $storedChildrenToys["eden_home"] is undefined>><<set $storedChildrenToys["eden_home"] to []>><</if>>
 		<<getChildrenIds `{location: "eden_home"}` "both">>
-		<<edenNurseryScene>>
+		<<edenNurseryPresentation>>
 		<<if _childrenIds.length>>
 			<p>你在育儿室里找到了自己的<<= _childrenIds.length > 1 ? "孩子们" : "孩子">>。</p>
 			<<childViewerDisplay _childrenIds>>

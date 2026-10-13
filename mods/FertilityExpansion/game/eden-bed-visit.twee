@@ -10,7 +10,7 @@
 	<<set _edenBedCombatKind to window.EdenBedVisit.resolveCombatStart($eden.encounterContext, $player, $NPCList[0])>>
 	<<set _edenBedName to Util.escapeMarkup(_edenBedChild.name || "孩子")>>
 	<<set _edenBedPronoun to _edenBedChild.gender is "m" ? "他" : "她">>
-	<<set _parentTitle to _edenBedChild?.mother is "pc" ? "妈妈" : "爸爸">>
+	<<set _parentTitle to window.EdenChildData.parentTitleOf(_edenBedChild)>>
 
 	<p>朦朦胧胧之中，你觉得自己的小腹感到一阵灼热，好像有什么在你的身体里涌动着。
 	<p>随着这种感觉愈发强烈，你猛地睁开眼睛。</p>

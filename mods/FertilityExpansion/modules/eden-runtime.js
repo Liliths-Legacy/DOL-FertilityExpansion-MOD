@@ -29,7 +29,7 @@
 			.replace(onload,
 				"\t\t\tif (!bannerSkybox[0]?.isConnected) return;\n\t\t\tbannerSkybox.empty().append($(bannerFallbackImage));\n\t\t\tbannerSkybox.css(\"padding-top\", 0);");
 	}
-	window.EdenRuntime = Object.freeze({ version: "1.6.10", missing, isReady: () => missing().length === 0,
+	window.EdenRuntime = Object.freeze({ version: "1.6.15", missing, isReady: () => missing().length === 0,
 		patchSource, bannerPatchStatus: () => bannerPatchStatus });
 
 	function install() {

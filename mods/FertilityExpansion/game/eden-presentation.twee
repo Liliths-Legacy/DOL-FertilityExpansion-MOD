@@ -1,0 +1,49 @@
+:: Eden Edition Presentation Widgets [widget]
+/*
+	Lite 版的环境文案集中在这里。只描写当前实际呈现的装修与挂画，
+	不根据“拥有但未摆出”的装饰生成描述。
+*/
+<<widget "edenLiteHallDescription">>
+	<<set _edenLiteUpgrades to window.EdenUpgrades.ensure($eden)>>
+	<<set _edenLitePainting to window.EdenUpgrades.hanging($eden)>>
+	<div class="eden-lite-furnishings">
+		<<if _edenLiteUpgrades.owned.library>>
+			<p>大厅一侧的房间已经被整理成图书室。结实的书架沿墙摆开，上面分门别类地放着适合不同年龄阅读的书。</p>
+		<</if>>
+		<<if _edenLitePainting is "landscape">>
+			<p>大厅的墙上挂着一幅宁静的风景画。柔和的色彩让屋里的气氛也显得安稳了一些。</p>
+		<<elseif _edenLitePainting is "abstract">>
+			<p>大厅的墙上挂着一幅色彩强烈的抽象画。交错的形状很容易吸引经过者的目光。</p>
+		<</if>>
+	</div>
+<</widget>>
+
+<<widget "edenLiteNurseryDescription">>
+	<<set _edenLiteUpgrades to window.EdenUpgrades.ensure($eden)>>
+	<div class="eden-lite-furnishings">
+		<<if $eden.facility.expanded>>
+			<p>育儿室里整齐地摆放着六张床，每个床位旁都留出了放置个人物品的空间。</p>
+		<<else>>
+			<p>育儿室里整齐地摆放着三张床，每个床位旁都留出了放置个人物品的空间。</p>
+		<</if>>
+		<<if _edenLiteUpgrades.owned.nursery>>
+			<p>翻修后的墙面干净明亮，柔软的地毯、收拾整齐的玩具和更舒适的家具让这里显得温暖许多。</p>
+		<</if>>
+	</div>
+<</widget>>
+
+<<widget "edenHallPresentation">>
+	<<if window.EdenEdition?.usesLargeArtwork is false>>
+		<<edenLiteHallDescription>>
+	<<else>>
+		<<edenHallScene>>
+	<</if>>
+<</widget>>
+
+<<widget "edenNurseryPresentation">>
+	<<if window.EdenEdition?.usesLargeArtwork is false>>
+		<<edenLiteNurseryDescription>>
+	<<else>>
+		<<edenNurseryScene>>
+	<</if>>
+<</widget>>

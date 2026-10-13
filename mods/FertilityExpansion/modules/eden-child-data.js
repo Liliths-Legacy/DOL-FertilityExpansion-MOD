@@ -70,6 +70,21 @@
 		};
 	}
 
+	function parentTitleOf(child, settings, player, vars = variables()) {
+		const parents = parentsOf(child, vars);
+		const relationshipTitle = parents.mother === "pc" ? "妈妈" : "爸爸";
+		const activeSettings = settings || vars.options?.eden || vars.eden?.settings;
+		const activePlayer = player || vars.player;
+		switch (activeSettings?.parentTitleSource) {
+			case "identity":
+				return activePlayer?.gender === "f" ? "妈妈" : activePlayer?.gender === "m" ? "爸爸" : relationshipTitle;
+			case "appearance":
+				return activePlayer?.gender_appearance === "f" ? "妈妈" : activePlayer?.gender_appearance === "m" ? "爸爸" : relationshipTitle;
+			default:
+				return relationshipTitle;
+		}
+	}
+
 	function isAdopted(child) {
 		return isRecord(child) ? Number.isFinite(child.development?.adoptedDate) : Boolean(child?.adopted);
 	}
@@ -195,7 +210,7 @@
 
 	window.EdenChildData = Object.freeze({
 		version: 1, hasId, usesRecords, isRecord, get, pregnancyOf, baseSpecies, typeOf,
-		phaseOf, parentsOf, isAdopted, locationOf, setLocation, bornOf, conceivedOf, laidOf, adoptedOf, developmentOf,
+		phaseOf, parentsOf, parentTitleOf, isAdopted, locationOf, setLocation, bornOf, conceivedOf, laidOf, adoptedOf, developmentOf,
 		serialDay, currentSerialDay, ageDays, identicalGroup, isIdentical, entries, collection, syncRegistry,
 	});
 })();

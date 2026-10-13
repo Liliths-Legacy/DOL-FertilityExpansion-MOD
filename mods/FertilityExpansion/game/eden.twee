@@ -19,7 +19,9 @@
 				lifeStoryPrompt: "",
 				immediateLifeStory: false,
 				allowSterilePregnancy: false,
-				showHallHotspots: true
+				showHallHotspots: true,
+				parentTitleSource: "parentage",
+				enableNightVisits: true
 			},
 			facility: {
 				owned: false,
@@ -180,6 +182,8 @@
 			<<if typeof $eden.settings.immediateLifeStory isnot "boolean">><<set $eden.settings.immediateLifeStory to false>><</if>>
 			<<if typeof $eden.settings.allowSterilePregnancy isnot "boolean">><<set $eden.settings.allowSterilePregnancy to false>><</if>>
 		<<if typeof $eden.settings.showHallHotspots isnot "boolean">><<set $eden.settings.showHallHotspots to true>><</if>>
+			<<if !["parentage", "identity", "appearance"].includes($eden.settings.parentTitleSource)>><<set $eden.settings.parentTitleSource to "parentage">><</if>>
+			<<if typeof $eden.settings.enableNightVisits isnot "boolean">><<set $eden.settings.enableNightVisits to true>><</if>>
 		<</if>>
 		<<if $eden.facility is undefined or typeof $eden.facility isnot "object" or Array.isArray($eden.facility)>>
 			<<set $eden.facility to {}>>
@@ -233,7 +237,7 @@
 	<div class="eden-panel red">伊甸园旧存档转换未完成，原有数据已保留。请保留升级前的存档备份，处理转换错误后重试。</div>
 <</if>>
 <<else>>
-	<div class="eden-panel red">生育拓展 1.6.10 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
+	<div class="eden-panel red">生育拓展 1.6.15 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
 	<<if typeof window.EdenRuntime?.missing is "function">><br>未加载的功能：<<= window.EdenRuntime.missing().join("、")>><</if>>
 	</div>
 <</if>>

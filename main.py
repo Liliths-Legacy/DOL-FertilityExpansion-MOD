@@ -10,6 +10,7 @@ from src.core import GameSourceCode, GameMod
 from src.exceptions import _BaseHelperException
 from src.langs import locale, Langs
 from src.log import logger
+from src.release_variants import build_fertility_expansion_variants
 from src.server import app
 from src.validator import validate_all
 
@@ -27,7 +28,8 @@ def build():
     mod = GameMod(test_flag=False)
     mod.build_boot_json()
     mod.process_results(auto_apply=False)
-    mod.package()
+    archives = mod.package()
+    build_fertility_expansion_variants(archives.get("FertilityExpansion"))
 
 
 def serve(open_browser: bool = False):

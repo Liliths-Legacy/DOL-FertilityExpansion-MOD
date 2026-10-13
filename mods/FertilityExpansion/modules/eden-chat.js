@@ -47,6 +47,8 @@
 		person.career = careers?.[record.adult.career]?.label || window.EdenAdult?.careerLabel?.(record) || record.adult.career || "未定";
 		person.destination = record.adult.destination;
 		person.education = record.adult.education || "未指定";
+		person.pcParentTitle = window.EdenChildData.parentTitleOf?.(child)
+			|| (person.pcParentRole === "mother" ? "妈妈" : person.pcParentRole === "father" ? "爸爸" : "家长");
 		return { person, identity: { ...identity() }, characterCard: state.characterCard, background: state.background,
 			experiences: state.experiences.map(item => ({ ...item })), letter: record.adult.lifeStory?.content || null, time: timeLabel(now()) };
 	}

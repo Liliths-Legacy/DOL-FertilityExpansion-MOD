@@ -58,6 +58,19 @@ test("bed visits interrupt sleep after at least one completed hour, not after wa
 	assert.equal(f.api.trySleepInterrupt(f.eden, f.children, 2, () => 0), null);
 });
 
+test("the global option prevents new and pending bedroom visits", () => {
+	const f = fixture();
+	f.eden.settings = { enableNightVisits: false };
+	assert.equal(f.api.select(f.eden, f.children, () => 0), null);
+	assert.equal(f.api.trySleepInterrupt(f.eden, f.children, 1, () => 0), null);
+	f.eden.bedVisit.activeChildId = "one";
+	f.eden.bedVisit.variant = "A";
+	f.eden.bedVisit.interruptedSleep = true;
+	assert.equal(f.api.current(f.eden, f.children), null);
+	assert.equal(f.eden.bedVisit.activeChildId, null);
+	assert.equal(f.eden.bedVisit.interruptedSleep, false);
+});
+
 test("each eligible sleep hour has an independent ten-percent roll", () => {
 	const f = fixture();
 	assert.equal(f.api.trySleepInterrupt(f.eden, f.children, 1, () => 0.1), null);

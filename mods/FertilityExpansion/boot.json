@@ -4,7 +4,8 @@
     "cn": "生育拓展",
     "en": "FertilityExpansion"
   },
-  "version": "1.6.10",
+  "version": "1.6.15",
+  "edition": "visual",
   "scriptFileList_inject_early": [
     "modules/eden-child-data.js",
     "modules/eden-runtime.js",

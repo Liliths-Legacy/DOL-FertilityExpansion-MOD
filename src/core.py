@@ -390,6 +390,7 @@ class GameMod:
 
         packaged = {}
         mod_info = {}
+        versioned_archives = {}
         for name in sorted(self._boot_json):
             if not os.listdir(DIR_RESULTS_ROOT / name):
                 logger.warning(locale(Langs.PackageEmptyModInfo, name=name))
@@ -425,6 +426,7 @@ class GameMod:
                 DIR_MODLOADER_MODS / f"{filename}.mod.zip"
             )
             packaged[filename] = f"mods/{filename}.mod.zip"
+            versioned_archives[filename] = archive
             mod_info[filename] = data.get("dependenceInfo", [])
 
             logger.info(locale(Langs.PackageFinishModInfo, filename=filename))
@@ -432,6 +434,7 @@ class GameMod:
         loading_order = self.build_loading_orders(mod_info)
         self._write_modlist_file([packaged[name] for name in loading_order])
         logger.info(locale(Langs.PackageFinishInfo))
+        return versioned_archives
 
     def build_loading_orders(self, mod_info: dict):
         """Order mods so dependencies built in this project are loaded first."""

@@ -2,7 +2,7 @@
 <<widget "edenNormalizeAgeSettings">>
 <<if typeof window.EdenRuntime?.isReady is "function" and window.EdenRuntime.isReady()>><<silently>>
 	<<if $options.eden is undefined or typeof $options.eden isnot "object" or Array.isArray($options.eden)>>
-		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false, showHallHotspots: true }>>
+		<<set $options.eden to { maturityDays: 90, neverAutoAdult: false, resetAgeOnTransfer: false, allowHumanDescendants: false, lifeStoryPrompt: "", immediateLifeStory: false, allowSterilePregnancy: false, showHallHotspots: true, parentTitleSource: "parentage", enableNightVisits: true }>>
 	<</if>>
 	<<if typeof $options.eden.showHallHotspots isnot "boolean">><<set $options.eden.showHallHotspots to true>><</if>>
 	<<run window.EdenAge.normalizeSettings($options.eden)>>
@@ -15,7 +15,7 @@
 <</if>><</widget>>
 
 <<widget "edenAgeSettingsPanel">>
-		<div class="settingsHeader">生育拓展·成长设置</div>
+		<div class="settingsHeader">生育扩展·主选项</div>
 		<div class="settingsToggleItemWide">
 			<label>
 				成年基准天数：
@@ -44,6 +44,17 @@
 			<small>开启后可以将培养对象扩展至非动物转化的纯人类。仅为功能性选项，不考虑年龄逻辑。</small>
 		</div>
 		<div class="settingsToggleItemWide">
+			<label>孩子对你的称呼来源：
+				<<listbox "$options.eden.parentTitleSource" autoselect>>
+					<<option "根据受孕／授孕角色（默认）" "parentage">>
+					<<option "根据自我的性别认知" "identity">>
+					<<option "根据外表表现动态判断" "appearance">>
+				<</listbox>>
+			</label>
+			<br>
+			<small>分别依据你是否生下孩子、你在原版中的自我性别认知，或当前外表被判断为男性／女性来使用“爸爸”或“妈妈”。自我认知为“两者皆非”时沿用默认亲缘称呼。</small>
+		</div>
+		<div class="settingsToggleItemWide">
 			<span class="gold">种族成年修正：</span>
 			鸟 ×0.75｜猫 ×0.9｜狐狸 ×1｜狼 ×1.1｜牛 ×1.25｜其他 ×1
 		</div>
@@ -60,10 +71,19 @@
 		<br>
 		<small>开启后，Bailey、Leighton 与 Gwylan 可按原版生理与怀孕规则参与受孕或授孕；Gwylan 的裸手牵手和无遮挡接吻在奇幻怀孕模式下也可触发受孕，概率、周期、药物与怀孕开关仍按原版规则判断（旧版为童话模式）。这些角色没有完整的专属怀孕剧情，剧情可能不会回应怀孕状态。若关闭时角色已怀孕，模组会暂时保留该孕程的支持，防止存档数据被原版清除。</small>
 	</div>
+<</widget>>
+
+<<widget "edenFacilitySettingsPanel">>
+	<div class="settingsHeader">生育拓展·伊甸园设置</div>
 	<div class="settingsToggleItemWide">
 		<label><<checkbox "$options.eden.showHallHotspots" false true autocheck>> 显示伊甸园大厅可点击范围</label>
 		<br>
 		<small>关闭后仍可点击房间中的对应位置，只隐藏白色提示框。</small>
+	</div>
+	<div class="settingsToggleItemWide">
+		<label><<checkbox "$options.eden.enableNightVisits" false true autocheck>> 开启伊甸园夜袭剧情</label>
+		<br>
+		<small>关闭后，在伊甸园睡觉时不会触发任何成年孩子的卧室来访；尚未播放的来访也会取消。</small>
 	</div>
 <</widget>>
 
@@ -75,6 +95,9 @@
 		<div id="eden-pregnancy-settings" class="solidBorderContainer settings-container">
 			<<edenPregnancySettingsPanel>>
 		</div>
+	<div id="eden-facility-settings" class="solidBorderContainer settings-container">
+		<<edenFacilitySettingsPanel>>
+	</div>
 	<div id="eden-llm-settings" class="solidBorderContainer settings-container"></div>
 	<<run setTimeout(() => window.EdenLLM?.renderSettings?.(document.getElementById("eden-llm-settings")), 0)>>
 	<div id="eden-chat-settings" class="solidBorderContainer settings-container"></div>

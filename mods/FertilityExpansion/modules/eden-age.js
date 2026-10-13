@@ -48,6 +48,8 @@
 		settings.immediateLifeStory = settings.immediateLifeStory === true;
 		settings.allowSterilePregnancy = settings.allowSterilePregnancy === true;
 		settings.showHallHotspots = settings.showHallHotspots !== false;
+		settings.parentTitleSource = ["parentage", "identity", "appearance"].includes(settings.parentTitleSource) ? settings.parentTitleSource : "parentage";
+		settings.enableNightVisits = settings.enableNightVisits !== false;
 	}
 
 	function inferSpecies(child, storedSpecies) {

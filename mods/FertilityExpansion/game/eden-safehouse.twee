@@ -68,9 +68,11 @@
 :: Eden Safehouse Sleep
 <<edenSafehouse "bedroom">><<set _autosavehere to true>>
 <<sleep>>
-<<if $eden.bedVisit?.interruptedSleep>>
+<<if $eden.bedVisit?.interruptedSleep and window.EdenBedVisit.isEnabled($eden)>>
 	<<set $eden.bedVisit.interruptedSleep to false>>
 	<<goto "Eden Bed Visit">><<exitAll>>
+<<elseif $eden.bedVisit?.interruptedSleep>>
+	<<set $eden.bedVisit.interruptedSleep to false>><<run window.EdenBedVisit.clear($eden)>>
 <</if>>
 <<if !_dreaming>>
 	/* Time has advanced: finish daily training before any adult decisions. */

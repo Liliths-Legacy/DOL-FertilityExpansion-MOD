@@ -12,6 +12,11 @@
 		return Number(window.Time?.days) || 0;
 	}
 
+	function isEnabled(eden) {
+		const option = window.SugarCube?.State?.variables?.options?.eden?.enableNightVisits;
+		return typeof option === "boolean" ? option : eden?.settings?.enableNightVisits !== false;
+	}
+
 	function normalizeState(eden) {
 		if (!eden || typeof eden !== "object") return null;
 		if (!eden.bedVisit || typeof eden.bedVisit !== "object" || Array.isArray(eden.bedVisit)) {
@@ -63,7 +68,7 @@
 
 	function select(eden, children, random = Math.random) {
 		const state = normalizeState(eden);
-		if (!state) return null;
+		if (!state || !isEnabled(eden)) return null;
 		if (state.lastTriggeredDay !== null && currentDay() - state.lastTriggeredDay < config.cooldownDays) return null;
 		const ids = eligibleIds(eden, children);
 		if (!ids.length) return null;
@@ -76,6 +81,12 @@
 
 	function trySleepInterrupt(eden, children, sleptHours, random = Math.random) {
 		const state = normalizeState(eden);
+		if (state && !isEnabled(eden)) {
+			state.activeChildId = null;
+			state.variant = null;
+			state.interruptedSleep = false;
+			return null;
+		}
 		if (!state || Number(sleptHours) < 1) return null;
 		if (state.lastTriggeredDay !== null && currentDay() - state.lastTriggeredDay < config.cooldownDays) return null;
 		if (random() >= config.hourlyChance) return null;
@@ -86,6 +97,12 @@
 
 	function current(eden, children) {
 		const state = normalizeState(eden);
+		if (state && !isEnabled(eden)) {
+			state.activeChildId = null;
+			state.variant = null;
+			state.interruptedSleep = false;
+			return null;
+		}
 		const childId = state?.activeChildId;
 		if (childId === null || childId === undefined || childId === "" || !eden.children?.[childId] || !children?.[childId]) return null;
 		return { childId, variant: state.variant || "A", record: eden.children[childId], child: children[childId] };
@@ -166,7 +183,7 @@
 	}
 
 	window.EdenBedVisit = Object.freeze({
-		config, normalizeState, normalizeEncounterContext, isEligible, eligibleIds, select, trySleepInterrupt, current, clear,
+		config, isEnabled, normalizeState, normalizeEncounterContext, isEligible, eligibleIds, select, trySleepInterrupt, current, clear,
 		forbid, restore, hasPenis, hasVagina, prepareEncounter, clearEncounterContext, resolveCombatStart,
 	});
 })();

@@ -30,7 +30,8 @@
 	}
 	function conversation(context, history, messages) {
 		const person = context.person;
-		const role = person.pcParentRole === "mother" ? "妈妈" : person.pcParentRole === "father" ? "爸爸" : "家长";
+		const role = ["妈妈", "爸爸"].includes(person.pcParentTitle) ? person.pcParentTitle
+			: person.pcParentRole === "mother" ? "妈妈" : person.pcParentRole === "father" ? "爸爸" : "家长";
 		const formatMessages = list => list.map(item => `<${item.sender}><${window.EdenChat.timeLabel(item.time)}>：${item.content}`).join("\n");
 		return pack([
 			`【角色定位】\n你的名字叫“${person.name}”，是一名已经成年的${person.gender}，种族为${person.species}。你是对话对象的孩子。\n${describe(person)}\n除此之外，你还需要满足以下人设：${context.characterCard || "以已有档案为准"}`,

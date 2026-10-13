@@ -64,6 +64,24 @@ test("zero IDs work and invalid IDs never alias the first record", () => {
 	assert.equal(f.api.hasId(0), true);
 });
 
+test("parent title follows the selected source and keeps parentage as the safe default", () => {
+	const child = record(0);
+	const f = fixture({ childRecords: [child], pregnancies: [pregnancy()], player: { gender: "m", gender_appearance: "m" }, options: { eden: {} } });
+	assert.equal(f.api.parentTitleOf(child), "妈妈");
+	f.vars.options.eden.parentTitleSource = "identity";
+	assert.equal(f.api.parentTitleOf(child), "爸爸");
+	f.vars.player.gender = "n";
+	assert.equal(f.api.parentTitleOf(child), "妈妈");
+	f.vars.options.eden.parentTitleSource = "appearance";
+	assert.equal(f.api.parentTitleOf(child), "爸爸");
+	f.vars.player.gender_appearance = "f";
+	assert.equal(f.api.parentTitleOf(child), "妈妈");
+	f.vars.pregnancies[0].carrier = "Robin";
+	f.vars.pregnancies[0].donor = "pc";
+	f.vars.options.eden.parentTitleSource = "unexpected";
+	assert.equal(f.api.parentTitleOf(child), "爸爸");
+});
+
 test("legacy composite keys stay exact; new arrays take priority over stale legacy data", () => {
 	const old = { childId: "pc|Robin|0", type: "human", location: "home" };
 	const f = fixture({ children: { "pc|Robin|0": old } });
