@@ -42,7 +42,9 @@
     "img/background/eden/eden-background-storm-night.png"
   ],
   "additionFile": [
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "LICENSE-MIT"
   ],
   "ignoreList": [
     "img/ui/eden-letter-opening.png"

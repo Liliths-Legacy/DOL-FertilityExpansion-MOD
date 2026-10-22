@@ -46,16 +46,25 @@
 - 支持在原版迁移 0.5.11 存档时同步转换伊甸园资料，也支持先被原版转换、之后才更新模组的存档自动恢复关联。剩余资料无法唯一确认时保留原记录，提示使用升级前备份；
 - visual版本包含伊甸园可视化的图片包；lite版本用文字替代，更加轻量；可根据需求选择版本；
 
-## 工具来源
+## 许可证
 
-仓库保留了模组编写小助手的构建工具及其原有 `LICENSE`（MIT，Copyright (c) 2023 Number_Sir）。该文件记录原工具的授权；本仓库未另行声明模组内容及第三方游戏素材的统一许可证。
+除另有说明的第三方内容及下述构建工具外，「生育拓展 / FertilityExpansion」模组的代码、剧情文本、文档与美术资源（包括随安装包发布的资源），在本项目有权许可的范围内，采用 [知识共享 署名—非商业性使用—相同方式共享 4.0 国际许可协议（CC-BY-NC-SA-4.0）](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans)。完整条款见 [LICENSE](LICENSE)。
+
+分享或修改这些内容时，请保留「Liliths-Legacy 与 FertilityExpansion 贡献者」的署名、[本仓库链接](https://github.com/Liliths-Legacy/DOL-FertilityExpansion-MOD)及已有的第三方署名，注明所做修改和许可证；仅限非商业性使用，分享改编作品时须遵守相同方式共享条款。本段为条款摘要，以完整许可文本为准。
+
+沿用及修改自模组编写助手的构建工具（`src/`、`main.py` 及相关构建配置）继续采用 MIT 许可。原有 MIT 许可全文及 `Copyright (c) 2023 Number_Sir` 声明保存在 [LICENSE-MIT](LICENSE-MIT)，不因模组采用 CC 许可而移除或替换。
+
+原版 Degrees of Lewdity、D.O.L.I 及其他第三方代码和素材保留各自的作者署名与适用许可；本项目的许可声明仅适用于本项目有权许可的内容，不替代第三方授权。相关来源见下方致谢。
+
+## AI 使用说明
 
 本模组使用了codex生成的代码与美术资源。
 
 ## 致谢
 开发过程中参考了以下模组的部分实现：
 
-模组编写助手
-D.O.L.I模组
+- 模组编写助手：Number_Sir，MIT 许可，原始版权及许可文本见 [LICENSE-MIT](LICENSE-MIT)。
+- [D.O.L.I](https://github.com/ArsNativa/Degrees-of-Lewdity-Intelligence)：ArsNativa，CC-BY-NC-SA-4.0。
+- [Degrees of Lewdity](https://gitgud.io/Vrelnir/degrees-of-lewdity)：Vrelnir 与原作贡献者，原版游戏代码、文本与素材遵循各自适用许可。
 
 感谢其作者Number_Sir、ArsNativa开发的优秀工具与模组。

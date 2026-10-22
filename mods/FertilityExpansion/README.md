@@ -2,6 +2,18 @@
 
 这是面向 DoL `0.5.12.13` 的生育与育儿扩展 Mod。本地验证版本为 Lyra `1.0.1a` / goose `1004.1`。
 
+## 许可证与来源
+
+除另有说明的第三方内容外，本模组的代码、剧情文本、文档与美术资源，在本项目有权许可的范围内，采用 [知识共享 署名—非商业性使用—相同方式共享 4.0 国际许可协议（CC-BY-NC-SA-4.0）](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans)。完整条款见随包附带的 [LICENSE](LICENSE)。
+
+分享或修改时，请保留「Liliths-Legacy 与 FertilityExpansion 贡献者」的署名、[源码仓库链接](https://github.com/Liliths-Legacy/DOL-FertilityExpansion-MOD)及已有的第三方署名，注明修改和许可证；仅限非商业性使用，分享改编作品时须遵守相同方式共享条款。本段为条款摘要，以完整许可文本为准。
+
+开发过程中参考了 Number_Sir 的模组编写助手及 ArsNativa 的 [D.O.L.I](https://github.com/ArsNativa/Degrees-of-Lewdity-Intelligence)（CC-BY-NC-SA-4.0）。沿用及修改自模组编写助手的仓库构建工具继续采用 MIT 许可，原文及 `Copyright (c) 2023 Number_Sir` 声明见 [LICENSE-MIT](LICENSE-MIT)。[Degrees of Lewdity](https://gitgud.io/Vrelnir/degrees-of-lewdity)（Vrelnir 与原作贡献者）及其他第三方代码、文本和素材保留各自署名与适用许可，本声明不替代其授权。
+
+本模组使用了 Codex 生成的代码与美术资源。
+
+## 功能与开发说明
+
 当前 `1.6.0` 版本包括：
 
 - 成年孩子聊天：独立的经历与会话模型、身份卡与人设卡、经历记忆和聊天记录；回复按字数延迟逐句显示，玩家每次发送推进游戏内一分钟。
@@ -91,7 +103,7 @@ uv run main.py build
 uv run main.py dev --open
 ```
 
-打包结果位于 `results/FertilityExpansion.mod.zip`。
+打包结果位于 `results/FertilityExpansion.mod.zip`；每次构建还会生成一个只带版本号的历史包，例如 `FertilityExpansion-v1.6.1.mod.zip`。版本号取已有最高包的第三段并自动加一。
 
 ## 从 Eden 旧版本更新
 
