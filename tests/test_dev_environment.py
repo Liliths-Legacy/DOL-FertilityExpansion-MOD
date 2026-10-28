@@ -53,7 +53,7 @@ class DevelopmentEnvironmentTest(unittest.TestCase):
             self.assertIsNone(archive.testzip())
             boot = json.loads(archive.read("boot.json"))
             self.assertEqual("FertilityExpansion", boot["name"])
-            self.assertEqual("1.6.15", boot["version"])
+            self.assertEqual("1.7.0", boot["version"])
             self.assertIn("modules/eden-child-data.js", boot["scriptFileList_inject_early"])
             self.assertIn("modules/eden-runtime.js", boot["scriptFileList_inject_early"])
             self.assertIn("modules/eden-script-loader.js", boot["scriptFileList_inject_early"])

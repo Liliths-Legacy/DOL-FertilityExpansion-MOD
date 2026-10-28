@@ -122,6 +122,7 @@
 		if (current === null) return false;
 		record.growthStartSerialDay = current;
 		record.ageResetAtTransfer = true;
+		delete record.forcedAdult;
 		return true;
 	}
 
@@ -153,7 +154,7 @@
 		const bodyForm = inferBodyForm(child);
 		const ageDays = getAgeDays(child, record);
 		const thresholds = getThresholds(speciesKey, settings);
-		const lifeStage = getStage(ageDays, thresholds, settings.neverAutoAdult);
+		const lifeStage = record.forcedAdult === true ? "adult" : getStage(ageDays, thresholds, settings.neverAutoAdult);
 
 		record.species = speciesKey;
 		record.speciesLabel = species[speciesKey].label;

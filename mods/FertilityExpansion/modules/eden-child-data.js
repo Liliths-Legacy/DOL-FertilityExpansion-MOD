@@ -20,7 +20,7 @@
 			const index = indexOf(id);
 			if (index === null) return undefined;
 			const child = vars.childRecords[index];
-			return child && typeof child === "object" && child.childId === index ? child : undefined;
+			return child && typeof child === "object" && child.childId === index && child.edenDeleted !== true ? child : undefined;
 		}
 		return vars.children && Object.hasOwn(vars.children, id) ? vars.children[id] : undefined;
 	}
@@ -49,6 +49,7 @@
 
 	function phaseOf(child, vars = variables()) {
 		if (!child) return "missing";
+		if (child.edenDeleted === true) return "removed";
 		if (!isRecord(child)) return child.eggTimer !== undefined ? "egg" : "born";
 		const pregnancy = pregnancyOf(child, vars);
 		if (pregnancy?.carrier === "cleared") return "removed";

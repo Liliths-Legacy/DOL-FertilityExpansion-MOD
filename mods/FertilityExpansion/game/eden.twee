@@ -237,7 +237,7 @@
 	<div class="eden-panel red">伊甸园旧存档转换未完成，原有数据已保留。请保留升级前的存档备份，处理转换错误后重试。</div>
 <</if>>
 <<else>>
-	<div class="eden-panel red">生育拓展 1.6.15 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
+	<div class="eden-panel red">生育拓展 1.7.0 加载不完整，已暂停伊甸园同步并保留原有资料。请完整重启游戏；若仍提示，请保留启动时的首条报错与下方未加载功能。
 	<<if typeof window.EdenRuntime?.missing is "function">><br>未加载的功能：<<= window.EdenRuntime.missing().join("、")>><</if>>
 	</div>
 <</if>>

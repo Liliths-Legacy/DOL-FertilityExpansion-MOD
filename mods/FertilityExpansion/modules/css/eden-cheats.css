@@ -1,0 +1,24 @@
+.eden-cheats .eden-cheat-fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
+	gap: 0.6em 1em;
+	margin-block: 0.8em;
+}
+
+.eden-cheats .eden-cheat-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2em;
+	min-width: 0;
+}
+
+.eden-cheats .eden-cheat-field input,
+.eden-cheats .eden-cheat-field select {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+}
+
+.eden-cheats .eden-cheat-action { margin-block: 0.7em; }
+.eden-cheats .eden-cheat-warning { display: block; margin-top: 0.25em; font-size: 0.8em; }
+.eden-cheats .tooltip-anchor { touch-action: pan-y; user-select: none; -webkit-touch-callout: none; }

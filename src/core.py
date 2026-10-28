@@ -402,17 +402,27 @@ class GameMod:
             version_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", source_version)
             existing_versions = []
             archive_pattern = re.compile(rf"{re.escape(filename)}-v(\d+)\.(\d+)\.(\d+)(?:-.*)?\.mod\.zip")
-            for candidate in DIR_RESULTS_ROOT.glob(f"{filename}-v*.mod.zip"):
+            # Archived builds still reserve their version numbers, including after
+            # the latest files are manually moved out of the results directory.
+            candidates = [*DIR_RESULTS_ROOT.glob(f"{filename}-v*.mod.zip"),
+                          *(DIR_RESULTS_ROOT / "oldversion").glob(f"{filename}-v*.mod.zip")]
+            for candidate in candidates:
                 match = archive_pattern.fullmatch(candidate.name)
                 if match:
                     existing_versions.append(tuple(map(int, match.groups())))
-            if existing_versions:
+            if version_match and (not existing_versions or tuple(map(int, version_match.groups())) > max(existing_versions)):
+                version = source_version
+            elif existing_versions:
                 major, minor, patch = max(existing_versions)
                 version = f"{major}.{minor}.{patch + 1}"
             elif version_match:
                 version = source_version
             else:
                 version = "0.0.1"
+            # The loader reads boot.json, not the archive filename, for updates.
+            data["version"] = version
+            with open(DIR_RESULTS_ROOT / name / "boot.json", "w", encoding="utf-8") as fp:
+                json.dump(data, fp, ensure_ascii=False, indent=2)
             latest = DIR_RESULTS_ROOT / f"{filename}.mod.zip"
             archive = DIR_RESULTS_ROOT / f"{filename}-v{version}.mod.zip"
             with ZipFile(archive, "w", compression=ZIP_DEFLATED, compresslevel=5) as zfp:
